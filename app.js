@@ -3,7 +3,7 @@ var app = express();
 var port = process.env.PORT || 3000;
 
 app.get('/', function (req, res) {
-	  res.send(req.headers);
+	  res.send(req.header('x-ms-client-principal-name'));
 });
 
 app.listen(port, function () {
