@@ -1,24 +1,34 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<title><%= title %></title>
-		<link rel="stylesheet" type="text/css" href="<%= mainCss %>">
-		<script type="text/javascript" src="/components/requirejs/require.js" data-main="<%= mainJs %>"></script>
-	</head>
-	<body>
-            <p id="greeting">Hello <%= userId %> </p>
-	<div class="navbar">
-		<div class="navbar-inner">
-			<a class="brand" href="/">Backbone SPA</a>
-			<ul class="nav">
-				<li><a href="/inbox">Inbox</a></li>
-				<li><a href="/contacts">Contacts</a></li>
-				<li><a href="/tasks">Tasks</a></li>
-			</ul>
-		</div>
-	</div>
-	<div class="container">
-		<div id="app" class="container" data-transition="fadeOutLeft"></div>
-	</div>
-	</body>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        
+        <title><%= title %></title>
+    </head>
+    <body>
+        <header class="navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar">
+
+            <a class="navbar-brand mr-0 mr-md-2" href="/" aria-label="Oscar Picks">Oscar Picks</a>
+
+            <div class="navbar-nav-scroll">
+                <ul class="navbar-nav bd-navbar-nav flex-row">
+                    <li class="nav-item">
+                        <a class="nav-link " href="/">Home</a>
+                    </li>
+                </ul>
+                <p id="greeting">Hello <%= userId %></p>
+            </div>
+        </header>
+
+        <div class="container">
+            <div id="app" class="container"></div>
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    </body>
 </html>

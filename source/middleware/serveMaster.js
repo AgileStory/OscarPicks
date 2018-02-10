@@ -7,28 +7,30 @@ function skipMaster (req) {
     });
 }
 
-function hander(title, mainJs, mainCss) {
+function handler(title, mainJs, mainCss) {
+
     return function (req, res, next) {
+
         if (skipMaster(req)) {
             return next();
         }
 
-        var userId = '';
+        var userId = 'Jared (local dev)';
 
         if (req.header('x-ms-client-principal-name') !== undefined) {
             userId = req.header('x-ms-client-principal-name');
         }
 
-        res.render('master', { title: title, userId: userId ,mainJs: mainJs, mainCss: mainCss});
+        res.render('master', { title: title, userId: userId });
     };
 }
 
 module.exports = {
 	development: function () {
-		return hander('SPA Boilerplate | Development', '/js/main.js', '/css/main.css');
+		return handler('Oscar Picks | Development');
 	},
 
 	production: function () {
-		return hander('SPA Boilerplate | Production', client.js, client.css);
+		return handler('Oscar Picks');
 	}
 };

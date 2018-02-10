@@ -33,7 +33,8 @@ if ('development' == env) {
 
 if ('production' == env) {
   //  app.use(express.compress());
-    app.use(express.static(path.join(__dirname, 'public'), { maxAge: oneMonth }));
+    app.use(express.static(path.join(__dirname, 'public')));
+    //app.use(express.static(path.join(__dirname, 'public'), { maxAge: oneMonth }));
     app.use(middleware.serveMaster.production());
 }
 
@@ -45,5 +46,5 @@ require('./source/api/tasks')(app);
 
 http.createServer(app).listen(app.get('port'), function(){
 	var environment = process.env.NODE_ENV || 'development';
-	console.log('SPA boilerplate started: ' + app.get('port') + ' (' + environment + ')');
+	console.log('Oscar Picks started: ' + app.get('port') + ' (' + environment + ')');
 });
