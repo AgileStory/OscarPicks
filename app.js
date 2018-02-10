@@ -4,6 +4,11 @@ var favicon = require('serve-favicon');
 var http = require('http');
 var path = require('path');
 var middleware = require('./source/middleware');
+var mongoose = require('mongoose');
+
+var mongoUrl = process.env.MONGO_URL || 'mongodb://localhost/oscarPicks'
+
+mongoose.connect(mongoUrl);
 
 var app = express();
 
