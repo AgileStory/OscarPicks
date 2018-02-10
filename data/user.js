@@ -5,6 +5,8 @@ var mongoose = require('mongoose');
 
 var mongoUrl = process.env.MONGO_URL || 'mongodb://localhost/oscarPicks';
 
+console.log(mongoUrl);
+
 mongoose.connect(mongoUrl);
 
 var UserSchema = new mongoose.Schema({
