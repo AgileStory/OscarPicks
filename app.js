@@ -1,28 +1,49 @@
-'use strict';
-
+var bodyParser = require('body-parser');
 var express = require('express');
+var favicon = require('serve-favicon');
+var http = require('http');
+var path = require('path');
+var middleware = require('./source/middleware');
+
 var app = express();
-var port = process.env.PORT || 3000;
 
-app.get('/', function (req, res) {
+var env = process.env.NODE_ENV || 'development';
 
-    var i, keys, html;
+var oneMonth = 2678400000;
 
-    html = '<html><body><p>Hello ' + req.header('x-ms-client-principal-name') + '</p>';
+app.set('port', process.env.PORT || 3000);
+app.set('views', __dirname + '/views');
+app.set('view engine', 'ejs');
+app.use(middleware.cors());
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')))
+//app.use(express.logger('dev'));
 
-    html += '<table><thead><tr><th>Header</th><th>Value</th></tr></thead><tbody>';
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }));
 
-    keys = Object.keys(req.headers);
+// parse application/json
+app.use(bodyParser.json());
+//app.use(express.methodOverride());
 
-    for (i = 0; i < keys.length; i = i + 1) {
-        html += '<tr><td>' + keys[i] + '</td><td>' + req.header(keys[i]) + '</td></tr>';
-    }
+if ('development' == env) {
+ //   app.use(express.errorHandler());
+    app.use(express.static(path.join(__dirname, 'public')));
+    app.use(middleware.serveMaster.development());
+}
 
-    html += '</tbody></table></html>';
+if ('production' == env) {
+  //  app.use(express.compress());
+    app.use(express.static(path.join(__dirname, 'public'), { maxAge: oneMonth }));
+    app.use(middleware.serveMaster.production());
+}
 
-    res.send(html);
-});
+// api endpoinds
+require('./source/api/auth')(app);
+require('./source/api/emails')(app);
+require('./source/api/contacts')(app);
+require('./source/api/tasks')(app);
 
-app.listen(port, function () {
-    console.log('Example app listening on port ' + port + '!');
+http.createServer(app).listen(app.get('port'), function(){
+	var environment = process.env.NODE_ENV || 'development';
+	console.log('SPA boilerplate started: ' + app.get('port') + ' (' + environment + ')');
 });

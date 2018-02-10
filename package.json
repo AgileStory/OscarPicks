@@ -4,9 +4,10 @@
   "description": "",
   "main": "app.js",
   "engines": {
-    "node": ">=8.1.0"
+    "node": ">=8.9.4"
   },
   "scripts": {
+    "start": "node app",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -20,6 +21,12 @@
   },
   "homepage": "https://github.com/AgileStory/OscarPicks#readme",
   "dependencies": {
-    "express": "^4.16.2"
+    "bcrypt-nodejs": "*",
+    "body-parser": "^1.18.2",
+    "ejs": "*",
+    "express": "^4.16.2",
+    "moment": "*",
+    "serve-favicon": "^2.4.5",
+    "underscore": "*"
   }
 }
