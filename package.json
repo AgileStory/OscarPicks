@@ -1,14 +1,14 @@
 {
   "name": "oscarpicks",
   "version": "1.0.0",
-  "description": "",
+  "description": "Oscar Pool application",
   "main": "app.js",
   "engines": {
     "node": ">=8.9.4"
   },
   "scripts": {
     "start": "node app",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jslint --color=true app.js configure-express.js data/*.js middleware/*.js"
   },
   "repository": {
     "type": "git",
