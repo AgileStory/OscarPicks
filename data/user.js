@@ -18,6 +18,17 @@ var User = mongoose.model('User', UserSchema);
 
 module.exports = {
 
+    list: function (callback) {
+
+        User.find(function (err, users) {
+            if (err) {
+                callback(err, undefined);
+            } else {
+                callback(undefined, users);
+            }
+        });
+    },
+
     logUserRequest: function (userData) {
 
         var self = this;

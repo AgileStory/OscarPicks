@@ -5,12 +5,12 @@ var _ = require('underscore');
 var userData = require('../data/user');
 
 function skipMaster(req) {
-    return _.any(['/api', '/components', '/css', '/js', '/build'], function (url) {
+    return _.any(['/api', '/components', '/css', '/js', '/build', '/users'], function (url) {
         return req.url.substr(0, url.length) === url;
     });
 }
 
-function handler(title) {
+function handler(title, appJavascriptPath) {
 
     return function (req, res, next) {
 
@@ -18,7 +18,7 @@ function handler(title) {
             return next();
         }
 
-        res.render('master', { title: title, userData: req.userData });
+        res.render('master', { title: title, userData: req.userData, appJavascriptPath: appJavascriptPath });
 
         userData.logUserRequest(req.userData);
     };
@@ -27,10 +27,10 @@ function handler(title) {
 module.exports = {
 
     development: function () {
-        return handler('Oscar Picks | Development');
+        return handler('Oscar Picks | Development', 'bundle.debug.js');
     },
 
     production: function () {
-        return handler('Oscar Picks');
+        return handler('Oscar Picks', 'bundle.min.js');
     }
 };
