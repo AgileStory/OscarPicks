@@ -30,19 +30,21 @@
     "bcrypt-nodejs": "*",
     "body-parser": "^1.18.2",
     "bootstrap": "^4.0.0",
-    "browserify": "^16.0.0",
-    "browserify-handlebars": "^1.0.0",
     "ejs": "*",
     "express": "^4.16.2",
     "handlebars": "^4.0.11",
     "jquery": "^3.3.1",
-    "lessify": "^1.0.1",
     "moment": "^2.20.1",
     "mongoose": "^5.0.4",
     "popper.js": "^1.12.9",
-    "rollupify": "^0.4.0",
     "serve-favicon": "^2.4.5",
-    "uglifyify": "^4.0.5",
     "underscore": "*"
+  },
+  "devDependencies": {
+    "browserify": "^16.0.0",
+    "browserify-handlebars": "^1.0.0",
+    "lessify": "^1.0.1",
+    "rollupify": "^0.4.0",
+    "uglifyify": "^4.0.5"
   }
 }
