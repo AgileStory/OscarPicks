@@ -9,25 +9,16 @@
         <title><%= title %></title>
     </head>
     <body>
-        <header class="navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar">
 
-            <a class="navbar-brand mr-0 mr-md-2" href="/" aria-label="Oscar Picks">Oscar Picks</a>
-
-            <div class="navbar-nav-scroll">
-                <ul class="navbar-nav bd-navbar-nav flex-row">
-                    <li class="nav-item">
-                        <a class="nav-link " href="/">Home</a>
-                    </li>
-                </ul>
-                <p id="greeting">Hello <%= userData.user_id %></p>
-                <p id="last_accessed">Last accessed: <%= userData.last_accessed %></p>
+        <div id="app-layout"></div>
+        
+        <footer class="page-footer text-white center-on-small-only bg-dark">
+            <div class="footer-copyright">
+                <div class="container-fluid"><%= userModel.get('user_id') %><code class="float-right"><%= userModel.displayTime('last_accessed') %></code></div>
             </div>
-        </header>
-
-        <div class="container">
-            <div id="app" class="container"></div>
-        </div>
+        </footer>
 
         <script src="<%= appJavascriptPath %>"></script>
+        <script type="text/javascript">window.userId = "<%= userModel.get('_id') %>";</script>
     </body>
 </html>

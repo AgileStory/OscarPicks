@@ -13,16 +13,15 @@ module.exports = function (req, res, next) {
         req.userId = req.header('x-ms-client-principal-name');
     }
 
-    userDataRepository.withUserData(req.userId, function (err, userData) {
+    userDataRepository.withUserModel(req.userId, function (err, userModel) {
 
         if (err) {
             console.error(err);
         } else {
 
-            req.userData = userData;
+            req.userModel = userModel;
 
             next();
         }
     });
 };
-

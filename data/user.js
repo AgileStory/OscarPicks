@@ -5,8 +5,6 @@ var mongoose = require('mongoose');
 
 var mongoUrl = process.env.MONGO_URL || 'mongodb://localhost/oscarPicks';
 
-console.log(mongoUrl);
-
 mongoose.connect(mongoUrl);
 
 var UserSchema = new mongoose.Schema({
@@ -15,8 +13,20 @@ var UserSchema = new mongoose.Schema({
 });
 
 var User = mongoose.model('User', UserSchema);
+var UserModel = require('../models/user');
 
 module.exports = {
+
+    get: function (userId, callback) {
+
+        User.findById(userId, function (err, user) {
+            if (err) {
+                callback(err, undefined);
+            } else {
+                callback(undefined, new UserModel(user));
+            }
+        });
+    },
 
     list: function (callback) {
 
@@ -29,23 +39,23 @@ module.exports = {
         });
     },
 
-    logUserRequest: function (userData) {
+    logUserRequest: function (userModel) {
 
         var self = this;
 
-        User.findOneAndUpdate({ user_id: userData.user_id }, { last_accessed: Date.now() }, function (err, data) {
+        User.findOneAndUpdate({ user_id: userModel.get('user_id') }, { last_accessed: Date.now() }, function (err, data) {
             if (err) {
                 console.error(err);
             } else {
 
                 if (data === null) {
-                    self._createUserRecord(userData.user_id);
+                    self._createUserRecord(userModel.get('user_id'));
                 }
             }
         });
     },
 
-    withUserData: function (userId, callback) {
+    withUserModel: function (userId, callback) {
 
         var self = this;
 
@@ -56,10 +66,10 @@ module.exports = {
             } else {
                 if (data === undefined || data === null) {
                     self._createUserRecord(userId, function (createErr, createdData) {
-                        callback(createErr, createdData);
+                        callback(createErr, new UserModel(createdData));
                     });
                 } else {
-                    callback(undefined, data);
+                    callback(undefined, new UserModel(data));
                 }
             }
         });
@@ -67,7 +77,9 @@ module.exports = {
 
     _createUserRecord: function (userId, callback) {
 
-        User.create({ user_id: userId }, function (err, data) {
+        var userModel = new UserModel({ user_id: userId, last_accessed: Date.now() });
+
+        User.create(userModel.toJSON(), function (err, data) {
             if (err) {
                 console.error(err);
                 callback(err, undefined);

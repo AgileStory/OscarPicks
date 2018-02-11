@@ -1,9 +1,17 @@
 'use strict';
 
-// Bootstrap needs jQuery on the Window
+/*jslint browser: true, nomen: true */
+
 window.jQuery = window.$ = require('jquery');
-// include popper.js if you want Bootstrap tooltips
+
+window._ = require('underscore');
+
 window.Popper = require('popper.js');
-// include bootstrap js libs (not the CSS libs as yet)
 require('bootstrap');
 
+var App = require('./app.js');
+
+window.$(document).ready(function () {
+    var app = new App();
+    app.start();
+});

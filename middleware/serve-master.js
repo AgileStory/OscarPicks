@@ -2,7 +2,6 @@
 /*jslint node: true, nomen: true */
 
 var _ = require('underscore');
-var userData = require('../data/user');
 
 function skipMaster(req) {
     return _.any(['/api', '/components', '/css', '/js', '/build', '/users'], function (url) {
@@ -18,9 +17,7 @@ function handler(title, appJavascriptPath) {
             return next();
         }
 
-        res.render('master', { title: title, userData: req.userData, appJavascriptPath: appJavascriptPath });
-
-        userData.logUserRequest(req.userData);
+        res.render('master', { title: title, userModel: req.userModel, appJavascriptPath: appJavascriptPath });
     };
 }
 

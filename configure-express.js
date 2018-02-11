@@ -4,6 +4,7 @@
 var bodyParser = require('body-parser');
 var express = require('express');
 var favicon = require('serve-favicon');
+var logging = require('./middleware/logging');
 var path = require('path');
 var serveMaster = require('./middleware/serve-master');
 var user = require('./middleware/user');
@@ -27,6 +28,7 @@ app.use(bodyParser.json());
 //app.use(express.methodOverride());
 
 app.use(user);
+app.use(logging);
 
 if ('development' === env) {
  //   app.use(express.errorHandler());

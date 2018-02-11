@@ -1,15 +1,7154 @@
 (function(){function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s}return e})()({1:[function(require,module,exports){
 'use strict';
 
-// Bootstrap needs jQuery on the Window
+/*jslint browser: true, nomen: true */
+
+var AppLayoutView = require('./views/appLayout');
+var Backbone = require('backbone');
+var DefaultController = require('./controllers/user');
+var Marionette = require('backbone.marionette');
+var UserModel = require('../models/user');
+
+module.exports = Marionette.Application.extend({
+
+    initialize: function () {
+        this.controller = new DefaultController({ application: this });
+        this.router = new Marionette.AppRouter({ controller: this.controller });
+    },
+
+    onBeforeStart: function () {
+        this.layout = new AppLayoutView();
+        this.layout.render();
+    },
+
+    onStart: function () {
+
+        var self = this;
+
+        Backbone.history.start({ pushState: true });
+
+        this.userModel = new UserModel({ _id: window.userId });
+
+        this.userModel.fetch({
+            success: function () {
+                self.controller.list();
+            }
+        });
+    }
+});
+
+},{"../models/user":11,"./controllers/user":2,"./views/appLayout":7,"backbone":14,"backbone.marionette":12}],2:[function(require,module,exports){
+'use strict';
+
+/*jslint nomen: true */
+
+var ListView = require('../views/users');
+var Marionette = require('backbone.marionette');
+var Users = require('../../collections/users');
+
+module.exports = Marionette.Object.extend({
+
+    initialize: function (options) {
+        this.application = options.application;
+    },
+
+    list: function () {
+
+        var self, users, view;
+
+        self = this;
+
+        users = new Users();
+
+        users.fetch({
+            success: function (collection) {
+
+                view = new ListView({ collection: collection });
+
+                self._showMainView(view);
+                // self._updateUrl("/users");
+            }
+        });
+    },
+
+    _showMainView: function (view) {
+        this.application.layout.showChildView("Main", view);
+    },
+
+    _updateUrl: function (url) {
+        this.application.router.navigate(url);
+    }
+});
+
+},{"../../collections/users":10,"../views/users":9,"backbone.marionette":12}],3:[function(require,module,exports){
+'use strict';
+
+/*jslint browser: true, nomen: true */
+
 window.jQuery = window.$ = require('jquery');
-// include popper.js if you want Bootstrap tooltips
+
+window._ = require('underscore');
+
 window.Popper = require('popper.js');
-// include bootstrap js libs (not the CSS libs as yet)
 require('bootstrap');
 
+var App = require('./app.js');
 
-},{"bootstrap":2,"jquery":3,"popper.js":4}],2:[function(require,module,exports){
+window.$(document).ready(function () {
+    var app = new App();
+    app.start();
+});
+
+},{"./app.js":1,"bootstrap":15,"jquery":35,"popper.js":37,"underscore":38}],4:[function(require,module,exports){
+var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
+    return "\n<header id=\"header\" class=\"navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar bg-dark\">\n\n    <a class=\"navbar-brand mr-0 mr-md-2\" href=\"/\" aria-label=\"Oscar Picks\">Oscar Picks</a>\n\n    <div class=\"navbar-nav-scroll\">\n        <ul class=\"navbar-nav bd-navbar-nav flex-row\">\n            <li class=\"nav-item\">\n                <a class=\"nav-link \" href=\"/\">Home</a>\n            </li>\n        </ul>\n    </div>\n</header>\n\n<div id=\"main\" class=\"container\">\n</div>\n\n";
+},"useData":true});
+},{"handlebars/runtime":34}],5:[function(require,module,exports){
+var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
+    var alias1=container.lambda, alias2=container.escapeExpression;
+
+  return "<td>"
+    + alias2(alias1((depth0 != null ? depth0.user_id : depth0), depth0))
+    + "</td>\n<td>"
+    + alias2(alias1((depth0 != null ? depth0.is_admin : depth0), depth0))
+    + "</td>\n";
+},"useData":true});
+},{"handlebars/runtime":34}],6:[function(require,module,exports){
+var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
+    return "<thead>\n    <th scope=\"col\">User Id</th>\n    <th scope=\"col\">Admin</th>\n</thead>\n<tbody></tbody>\n";
+},"useData":true});
+},{"handlebars/runtime":34}],7:[function(require,module,exports){
+
+var Marionette = require('backbone.marionette');
+var Template = require('../templates/appLayout.handlebars');
+
+module.exports = Marionette.View.extend({
+
+    template: Template,
+
+    el: "#app-layout",
+
+    regions: {
+        "Header" : "#header",
+        "Main" : "#main"
+    }
+});
+
+},{"../templates/appLayout.handlebars":4,"backbone.marionette":12}],8:[function(require,module,exports){
+'use strict';
+
+var Marionette = require('backbone.marionette');
+var Template = require('../templates/userRow.handlebars');
+
+module.exports = Marionette.View.extend({
+
+    tagName: 'tr',
+
+    template: Template
+
+});
+
+},{"../templates/userRow.handlebars":5,"backbone.marionette":12}],9:[function(require,module,exports){
+'use strict';
+
+var Marionette = require('backbone.marionette');
+var Template = require('../templates/users.handlebars');
+var UserRowView = require('../views/userRow');
+
+var TableBody = Marionette.CollectionView.extend({
+    childView: UserRowView,
+    tagName: 'tbody'
+});
+
+module.exports = Marionette.View.extend({
+
+    className: 'table',
+
+    tagName: 'table',
+
+    template: Template,
+
+    regions: {
+        body: {
+            el: 'tbody',
+            replaceElement: true
+        }
+    },
+
+    onRender: function () {
+        this.showChildView('body', new TableBody({
+            collection: this.collection
+        }));
+    }
+});
+
+},{"../templates/users.handlebars":6,"../views/userRow":8,"backbone.marionette":12}],10:[function(require,module,exports){
+'use strict';
+
+var Backbone = require('backbone');
+var User = require('../models/user');
+
+module.exports = Backbone.Collection.extend({
+
+    model:  User,
+
+    url: "/users"
+});
+
+},{"../models/user":11,"backbone":14}],11:[function(require,module,exports){
+'use strict';
+
+var Backbone = require('backbone');
+var moment = require('moment');
+
+module.exports = Backbone.Model.extend({
+
+    idAttribute: "_id",
+
+    urlRoot: "/users",
+
+    displayTime: function (attributeName) {
+
+        return moment(this.get(attributeName)).format();
+    }
+});
+
+},{"backbone":14,"moment":36}],12:[function(require,module,exports){
+/**
+* @license
+* MarionetteJS (Backbone.Marionette)
+* ----------------------------------
+* v3.5.1
+*
+* Copyright (c)2017 Derick Bailey, Muted Solutions, LLC.
+* Distributed under MIT license
+*
+* http://marionettejs.com
+*/
+
+
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('backbone'), require('underscore'), require('backbone.radio')) :
+	typeof define === 'function' && define.amd ? define(['backbone', 'underscore', 'backbone.radio'], factory) :
+	(global.Marionette = factory(global.Backbone,global._,global.Backbone.Radio));
+}(this, (function (Backbone,_,Radio) { 'use strict';
+
+Backbone = Backbone && Backbone.hasOwnProperty('default') ? Backbone['default'] : Backbone;
+_ = _ && _.hasOwnProperty('default') ? _['default'] : _;
+Radio = Radio && Radio.hasOwnProperty('default') ? Radio['default'] : Radio;
+
+var version = "3.5.1";
+
+//Internal utility for creating context style global utils
+var proxy = function proxy(method) {
+  return function (context) {
+    for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      args[_key - 1] = arguments[_key];
+    }
+
+    return method.apply(context, args);
+  };
+};
+
+// Marionette.extend
+// -----------------
+
+// Borrow the Backbone `extend` method so we can use it as needed
+var extend = Backbone.Model.extend;
+
+/* global console */
+
+var deprecate = function deprecate(message, test) {
+  if (_.isObject(message)) {
+    message = message.prev + ' is going to be removed in the future. ' + 'Please use ' + message.next + ' instead.' + (message.url ? ' See: ' + message.url : '');
+  }
+
+  if (!Marionette.DEV_MODE) {
+    return;
+  }
+
+  if ((test === undefined || !test) && !deprecate._cache[message]) {
+    deprecate._warn('Deprecation warning: ' + message);
+    deprecate._cache[message] = true;
+  }
+};
+
+/* istanbul ignore next: can't clear console */
+deprecate._console = typeof console !== 'undefined' ? console : {};
+deprecate._warn = function () {
+  var warn = deprecate._console.warn || deprecate._console.log || _.noop;
+  return warn.apply(deprecate._console, arguments);
+};
+deprecate._cache = {};
+
+// Marionette.isNodeAttached
+// -------------------------
+
+// Determine if `el` is a child of the document
+var isNodeAttached = function isNodeAttached(el) {
+  return document.documentElement.contains(el && el.parentNode);
+};
+
+// Merge `keys` from `options` onto `this`
+var mergeOptions = function mergeOptions(options, keys) {
+  var _this = this;
+
+  if (!options) {
+    return;
+  }
+
+  _.each(keys, function (key) {
+    var option = options[key];
+    if (option !== undefined) {
+      _this[key] = option;
+    }
+  });
+};
+
+// Marionette.getOption
+// --------------------
+
+// Retrieve an object, function or other value from the
+// object or its `options`, with `options` taking precedence.
+var getOption = function getOption(optionName) {
+  if (!optionName) {
+    return;
+  }
+  if (this.options && this.options[optionName] !== undefined) {
+    return this.options[optionName];
+  } else {
+    return this[optionName];
+  }
+};
+
+// Marionette.normalizeMethods
+// ----------------------
+
+// Pass in a mapping of events => functions or function names
+// and return a mapping of events => functions
+var normalizeMethods = function normalizeMethods(hash) {
+  var _this = this;
+
+  return _.reduce(hash, function (normalizedHash, method, name) {
+    if (!_.isFunction(method)) {
+      method = _this[method];
+    }
+    if (method) {
+      normalizedHash[name] = method;
+    }
+    return normalizedHash;
+  }, {});
+};
+
+// Trigger Method
+// --------------
+
+// split the event name on the ":"
+var splitter = /(^|:)(\w)/gi;
+
+// take the event section ("section1:section2:section3")
+// and turn it in to uppercase name onSection1Section2Section3
+function getEventName(match, prefix, eventName) {
+  return eventName.toUpperCase();
+}
+
+var getOnMethodName = _.memoize(function (event) {
+  return 'on' + event.replace(splitter, getEventName);
+});
+
+// Trigger an event and/or a corresponding method name. Examples:
+//
+// `this.triggerMethod("foo")` will trigger the "foo" event and
+// call the "onFoo" method.
+//
+// `this.triggerMethod("foo:bar")` will trigger the "foo:bar" event and
+// call the "onFooBar" method.
+function triggerMethod(event) {
+  for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+    args[_key - 1] = arguments[_key];
+  }
+
+  // get the method name from the event name
+  var methodName = getOnMethodName(event);
+  var method = getOption.call(this, methodName);
+  var result = void 0;
+
+  // call the onMethodName if it exists
+  if (_.isFunction(method)) {
+    // pass all args, except the event name
+    result = method.apply(this, args);
+  }
+
+  // trigger the event
+  this.trigger.apply(this, arguments);
+
+  return result;
+}
+
+// triggerMethodOn invokes triggerMethod on a specific context
+//
+// e.g. `Marionette.triggerMethodOn(view, 'show')`
+// will trigger a "show" event or invoke onShow the view.
+function triggerMethodOn(context) {
+  for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+    args[_key2 - 1] = arguments[_key2];
+  }
+
+  if (_.isFunction(context.triggerMethod)) {
+    return context.triggerMethod.apply(context, args);
+  }
+
+  return triggerMethod.apply(context, args);
+}
+
+// DOM Refresh
+// -----------
+
+// Trigger method on children unless a pure Backbone.View
+function triggerMethodChildren(view, event, shouldTrigger) {
+  if (!view._getImmediateChildren) {
+    return;
+  }
+  _.each(view._getImmediateChildren(), function (child) {
+    if (!shouldTrigger(child)) {
+      return;
+    }
+    triggerMethodOn(child, event, child);
+  });
+}
+
+function shouldTriggerAttach(view) {
+  return !view._isAttached;
+}
+
+function shouldAttach(view) {
+  if (!shouldTriggerAttach(view)) {
+    return false;
+  }
+  view._isAttached = true;
+  return true;
+}
+
+function shouldTriggerDetach(view) {
+  return view._isAttached;
+}
+
+function shouldDetach(view) {
+  if (!shouldTriggerDetach(view)) {
+    return false;
+  }
+  view._isAttached = false;
+  return true;
+}
+
+function triggerDOMRefresh(view) {
+  if (view._isAttached && view._isRendered) {
+    triggerMethodOn(view, 'dom:refresh', view);
+  }
+}
+
+function triggerDOMRemove(view) {
+  if (view._isAttached && view._isRendered) {
+    triggerMethodOn(view, 'dom:remove', view);
+  }
+}
+
+function handleBeforeAttach() {
+  triggerMethodChildren(this, 'before:attach', shouldTriggerAttach);
+}
+
+function handleAttach() {
+  triggerMethodChildren(this, 'attach', shouldAttach);
+  triggerDOMRefresh(this);
+}
+
+function handleBeforeDetach() {
+  triggerMethodChildren(this, 'before:detach', shouldTriggerDetach);
+  triggerDOMRemove(this);
+}
+
+function handleDetach() {
+  triggerMethodChildren(this, 'detach', shouldDetach);
+}
+
+function handleBeforeRender() {
+  triggerDOMRemove(this);
+}
+
+function handleRender() {
+  triggerDOMRefresh(this);
+}
+
+// Monitor a view's state, propagating attach/detach events to children and firing dom:refresh
+// whenever a rendered view is attached or an attached view is rendered.
+function monitorViewEvents(view) {
+  if (view._areViewEventsMonitored || view.monitorViewEvents === false) {
+    return;
+  }
+
+  view._areViewEventsMonitored = true;
+
+  view.on({
+    'before:attach': handleBeforeAttach,
+    'attach': handleAttach,
+    'before:detach': handleBeforeDetach,
+    'detach': handleDetach,
+    'before:render': handleBeforeRender,
+    'render': handleRender
+  });
+}
+
+// Error
+// -----
+
+var errorProps = ['description', 'fileName', 'lineNumber', 'name', 'message', 'number'];
+
+var MarionetteError = extend.call(Error, {
+  urlRoot: 'http://marionettejs.com/docs/v' + version + '/',
+
+  constructor: function constructor(message, options) {
+    if (_.isObject(message)) {
+      options = message;
+      message = options.message;
+    } else if (!options) {
+      options = {};
+    }
+
+    var error = Error.call(this, message);
+    _.extend(this, _.pick(error, errorProps), _.pick(options, errorProps));
+
+    this.captureStackTrace();
+
+    if (options.url) {
+      this.url = this.urlRoot + options.url;
+    }
+  },
+  captureStackTrace: function captureStackTrace() {
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, MarionetteError);
+    }
+  },
+  toString: function toString() {
+    return this.name + ': ' + this.message + (this.url ? ' See: ' + this.url : '');
+  }
+});
+
+MarionetteError.extend = extend;
+
+// Bind Entity Events & Unbind Entity Events
+// -----------------------------------------
+//
+// These methods are used to bind/unbind a backbone "entity" (e.g. collection/model)
+// to methods on a target object.
+//
+// The first parameter, `target`, must have the Backbone.Events module mixed in.
+//
+// The second parameter is the `entity` (Backbone.Model, Backbone.Collection or
+// any object that has Backbone.Events mixed in) to bind the events from.
+//
+// The third parameter is a hash of { "event:name": "eventHandler" }
+// configuration. Multiple handlers can be separated by a space. A
+// function can be supplied instead of a string handler name.
+
+// Bind/unbind the event to handlers specified as a string of
+// handler names on the target object
+function bindFromStrings(target, entity, evt, methods, actionName) {
+  var methodNames = methods.split(/\s+/);
+
+  if (methodNames.length > 1) {
+    deprecate('Multiple handlers for a single event are deprecated. If needed, use a single handler to call multiple methods.');
+  }
+
+  _.each(methodNames, function (methodName) {
+    var method = target[methodName];
+    if (!method) {
+      throw new MarionetteError('Method "' + methodName + '" was configured as an event handler, but does not exist.');
+    }
+
+    target[actionName](entity, evt, method);
+  });
+}
+
+// generic looping function
+function iterateEvents(target, entity, bindings, actionName) {
+  // type-check bindings
+  if (!_.isObject(bindings)) {
+    throw new MarionetteError({
+      message: 'Bindings must be an object.',
+      url: 'marionette.functions.html#marionettebindevents'
+    });
+  }
+
+  // iterate the bindings and bind/unbind them
+  _.each(bindings, function (method, evt) {
+
+    // allow for a list of method names as a string
+    if (_.isString(method)) {
+      bindFromStrings(target, entity, evt, method, actionName);
+      return;
+    }
+
+    target[actionName](entity, evt, method);
+  });
+}
+
+function bindEvents(entity, bindings) {
+  if (!entity || !bindings) {
+    return this;
+  }
+
+  iterateEvents(this, entity, bindings, 'listenTo');
+  return this;
+}
+
+function unbindEvents(entity, bindings) {
+  if (!entity) {
+    return this;
+  }
+
+  if (!bindings) {
+    this.stopListening(entity);
+    return this;
+  }
+
+  iterateEvents(this, entity, bindings, 'stopListening');
+  return this;
+}
+
+// Bind/Unbind Radio Requests
+// -----------------------------------------
+//
+// These methods are used to bind/unbind a backbone.radio request
+// to methods on a target object.
+//
+// The first parameter, `target`, will set the context of the reply method
+//
+// The second parameter is the `Radio.channel` to bind the reply to.
+//
+// The third parameter is a hash of { "request:name": "replyHandler" }
+// configuration. A function can be supplied instead of a string handler name.
+
+function iterateReplies(target, channel, bindings, actionName) {
+  // type-check bindings
+  if (!_.isObject(bindings)) {
+    throw new MarionetteError({
+      message: 'Bindings must be an object.',
+      url: 'marionette.functions.html#marionettebindrequests'
+    });
+  }
+
+  var normalizedRadioRequests = normalizeMethods.call(target, bindings);
+
+  channel[actionName](normalizedRadioRequests, target);
+}
+
+function bindRequests(channel, bindings) {
+  if (!channel || !bindings) {
+    return this;
+  }
+
+  iterateReplies(this, channel, bindings, 'reply');
+  return this;
+}
+
+function unbindRequests(channel, bindings) {
+  if (!channel) {
+    return this;
+  }
+
+  if (!bindings) {
+    channel.stopReplying(null, null, this);
+    return this;
+  }
+
+  iterateReplies(this, channel, bindings, 'stopReplying');
+  return this;
+}
+
+// Internal utility for setting options consistently across Mn
+var setOptions = function setOptions(options) {
+  this.options = _.extend({}, _.result(this, 'options'), options);
+};
+
+var CommonMixin = {
+
+  // Imports the "normalizeMethods" to transform hashes of
+  // events=>function references/names to a hash of events=>function references
+  normalizeMethods: normalizeMethods,
+
+  _setOptions: setOptions,
+
+  // A handy way to merge passed-in options onto the instance
+  mergeOptions: mergeOptions,
+
+  // Enable getting options from this or this.options by name.
+  getOption: getOption,
+
+  // Enable binding view's events from another entity.
+  bindEvents: bindEvents,
+
+  // Enable unbinding view's events from another entity.
+  unbindEvents: unbindEvents
+};
+
+// MixinOptions
+// - channelName
+// - radioEvents
+// - radioRequests
+
+var RadioMixin = {
+  _initRadio: function _initRadio() {
+    var channelName = _.result(this, 'channelName');
+
+    if (!channelName) {
+      return;
+    }
+
+    /* istanbul ignore next */
+    if (!Radio) {
+      throw new MarionetteError({
+        name: 'BackboneRadioMissing',
+        message: 'The dependency "backbone.radio" is missing.'
+      });
+    }
+
+    var channel = this._channel = Radio.channel(channelName);
+
+    var radioEvents = _.result(this, 'radioEvents');
+    this.bindEvents(channel, radioEvents);
+
+    var radioRequests = _.result(this, 'radioRequests');
+    this.bindRequests(channel, radioRequests);
+
+    this.on('destroy', this._destroyRadio);
+  },
+  _destroyRadio: function _destroyRadio() {
+    this._channel.stopReplying(null, null, this);
+  },
+  getChannel: function getChannel() {
+    return this._channel;
+  },
+
+
+  // Proxy `bindEvents`
+  bindEvents: bindEvents,
+
+  // Proxy `unbindEvents`
+  unbindEvents: unbindEvents,
+
+  // Proxy `bindRequests`
+  bindRequests: bindRequests,
+
+  // Proxy `unbindRequests`
+  unbindRequests: unbindRequests
+
+};
+
+// Object
+// ------
+
+var ClassOptions = ['channelName', 'radioEvents', 'radioRequests'];
+
+// A Base Class that other Classes should descend from.
+// Object borrows many conventions and utilities from Backbone.
+var MarionetteObject = function MarionetteObject(options) {
+  if (!this.hasOwnProperty('options')) {
+    this._setOptions(options);
+  }
+  this.mergeOptions(options, ClassOptions);
+  this._setCid();
+  this._initRadio();
+  this.initialize.apply(this, arguments);
+};
+
+MarionetteObject.extend = extend;
+
+// Object Methods
+// --------------
+
+// Ensure it can trigger events with Backbone.Events
+_.extend(MarionetteObject.prototype, Backbone.Events, CommonMixin, RadioMixin, {
+  cidPrefix: 'mno',
+
+  // for parity with Marionette.AbstractView lifecyle
+  _isDestroyed: false,
+
+  isDestroyed: function isDestroyed() {
+    return this._isDestroyed;
+  },
+
+
+  //this is a noop method intended to be overridden by classes that extend from this base
+  initialize: function initialize() {},
+  _setCid: function _setCid() {
+    if (this.cid) {
+      return;
+    }
+    this.cid = _.uniqueId(this.cidPrefix);
+  },
+  destroy: function destroy() {
+    if (this._isDestroyed) {
+      return this;
+    }
+
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    this.triggerMethod.apply(this, ['before:destroy', this].concat(args));
+
+    this._isDestroyed = true;
+    this.triggerMethod.apply(this, ['destroy', this].concat(args));
+    this.stopListening();
+
+    return this;
+  },
+
+
+  triggerMethod: triggerMethod
+});
+
+// Template Cache
+// --------------
+
+// Manage templates stored in `<script>` blocks,
+// caching them for faster access.
+var TemplateCache = function TemplateCache(templateId) {
+  this.templateId = templateId;
+};
+
+// TemplateCache object-level methods. Manage the template
+// caches from these method calls instead of creating
+// your own TemplateCache instances
+_.extend(TemplateCache, {
+
+  templateCaches: {},
+
+  // Get the specified template by id. Either
+  // retrieves the cached version, or loads it
+  // from the DOM.
+  get: function get(templateId, options) {
+    var cachedTemplate = this.templateCaches[templateId];
+
+    if (!cachedTemplate) {
+      cachedTemplate = new TemplateCache(templateId);
+      this.templateCaches[templateId] = cachedTemplate;
+    }
+
+    return cachedTemplate.load(options);
+  },
+
+
+  // Clear templates from the cache. If no arguments
+  // are specified, clears all templates:
+  // `clear()`
+  //
+  // If arguments are specified, clears each of the
+  // specified templates from the cache:
+  // `clear("#t1", "#t2", "...")`
+  clear: function clear() {
+    var i = void 0;
+
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    var length = args.length;
+
+    if (length > 0) {
+      for (i = 0; i < length; i++) {
+        delete this.templateCaches[args[i]];
+      }
+    } else {
+      this.templateCaches = {};
+    }
+  }
+});
+
+// TemplateCache instance methods, allowing each
+// template cache object to manage its own state
+// and know whether or not it has been loaded
+_.extend(TemplateCache.prototype, {
+
+  // Internal method to load the template
+  load: function load(options) {
+    // Guard clause to prevent loading this template more than once
+    if (this.compiledTemplate) {
+      return this.compiledTemplate;
+    }
+
+    // Load the template and compile it
+    var template = this.loadTemplate(this.templateId, options);
+    this.compiledTemplate = this.compileTemplate(template, options);
+
+    return this.compiledTemplate;
+  },
+
+
+  // Load a template from the DOM, by default. Override
+  // this method to provide your own template retrieval
+  // For asynchronous loading with AMD/RequireJS, consider
+  // using a template-loader plugin as described here:
+  // https://github.com/marionettejs/backbone.marionette/wiki/Using-marionette-with-requirejs
+  loadTemplate: function loadTemplate(templateId, options) {
+    var $template = Backbone.$(templateId);
+
+    if (!$template.length) {
+      throw new MarionetteError({
+        name: 'NoTemplateError',
+        message: 'Could not find template: "' + templateId + '"'
+      });
+    }
+    return $template.html();
+  },
+
+
+  // Pre-compile the template before caching it. Override
+  // this method if you do not need to pre-compile a template
+  // (JST / RequireJS for example) or if you want to change
+  // the template engine used (Handebars, etc).
+  compileTemplate: function compileTemplate(rawTemplate, options) {
+    return _.template(rawTemplate, options);
+  }
+});
+
+// Implementation of the invoke method (http://underscorejs.org/#invoke) with support for
+// lodash v3, v4, and underscore.js
+var _invoke = _.invokeMap || _.invoke;
+
+// MixinOptions
+// - behaviors
+
+// Takes care of getting the behavior class
+// given options and a key.
+// If a user passes in options.behaviorClass
+// default to using that.
+// If a user passes in a Behavior Class directly, use that
+// Otherwise delegate the lookup to the users `behaviorsLookup` implementation.
+function getBehaviorClass(options, key) {
+  if (options.behaviorClass) {
+    return options.behaviorClass;
+    //treat functions as a Behavior constructor
+  } else if (_.isFunction(options)) {
+    return options;
+  }
+
+  // behaviorsLookup can be either a flat object or a method
+  if (_.isFunction(Marionette.Behaviors.behaviorsLookup)) {
+    return Marionette.Behaviors.behaviorsLookup(options, key)[key];
+  }
+
+  return Marionette.Behaviors.behaviorsLookup[key];
+}
+
+// Iterate over the behaviors object, for each behavior
+// instantiate it and get its grouped behaviors.
+// This accepts a list of behaviors in either an object or array form
+function parseBehaviors(view, behaviors) {
+  return _.chain(behaviors).map(function (options, key) {
+    var BehaviorClass = getBehaviorClass(options, key);
+    //if we're passed a class directly instead of an object
+    var _options = options === BehaviorClass ? {} : options;
+    var behavior = new BehaviorClass(_options, view);
+    var nestedBehaviors = parseBehaviors(view, _.result(behavior, 'behaviors'));
+
+    return [behavior].concat(nestedBehaviors);
+  }).flatten().value();
+}
+
+var BehaviorsMixin = {
+  _initBehaviors: function _initBehaviors() {
+    this._behaviors = this._getBehaviors();
+  },
+  _getBehaviors: function _getBehaviors() {
+    var behaviors = _.result(this, 'behaviors');
+
+    // Behaviors defined on a view can be a flat object literal
+    // or it can be a function that returns an object.
+    return _.isObject(behaviors) ? parseBehaviors(this, behaviors) : {};
+  },
+  _getBehaviorTriggers: function _getBehaviorTriggers() {
+    var triggers = _invoke(this._behaviors, 'getTriggers');
+    return _.reduce(triggers, function (memo, _triggers) {
+      return _.extend(memo, _triggers);
+    }, {});
+  },
+  _getBehaviorEvents: function _getBehaviorEvents() {
+    var events = _invoke(this._behaviors, 'getEvents');
+    return _.reduce(events, function (memo, _events) {
+      return _.extend(memo, _events);
+    }, {});
+  },
+
+
+  // proxy behavior $el to the view's $el.
+  _proxyBehaviorViewProperties: function _proxyBehaviorViewProperties() {
+    _invoke(this._behaviors, 'proxyViewProperties');
+  },
+
+
+  // delegate modelEvents and collectionEvents
+  _delegateBehaviorEntityEvents: function _delegateBehaviorEntityEvents() {
+    _invoke(this._behaviors, 'delegateEntityEvents');
+  },
+
+
+  // undelegate modelEvents and collectionEvents
+  _undelegateBehaviorEntityEvents: function _undelegateBehaviorEntityEvents() {
+    _invoke(this._behaviors, 'undelegateEntityEvents');
+  },
+  _destroyBehaviors: function _destroyBehaviors() {
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    // Call destroy on each behavior after
+    // destroying the view.
+    // This unbinds event listeners
+    // that behaviors have registered for.
+    _invoke.apply(undefined, [this._behaviors, 'destroy'].concat(args));
+  },
+
+
+  // Remove a behavior
+  _removeBehavior: function _removeBehavior(behavior) {
+    // Don't worry about the clean up if the view is destroyed
+    if (this._isDestroyed) {
+      return;
+    }
+
+    // Remove behavior-only triggers and events
+    this.undelegate('.trig' + behavior.cid + ' .' + behavior.cid);
+
+    this._behaviors = _.without(this._behaviors, behavior);
+  },
+  _bindBehaviorUIElements: function _bindBehaviorUIElements() {
+    _invoke(this._behaviors, 'bindUIElements');
+  },
+  _unbindBehaviorUIElements: function _unbindBehaviorUIElements() {
+    _invoke(this._behaviors, 'unbindUIElements');
+  },
+  _triggerEventOnBehaviors: function _triggerEventOnBehaviors() {
+    var behaviors = this._behaviors;
+    // Use good ol' for as this is a very hot function
+    for (var i = 0, length = behaviors && behaviors.length; i < length; i++) {
+      triggerMethod.apply(behaviors[i], arguments);
+    }
+  }
+};
+
+// MixinOptions
+// - collectionEvents
+// - modelEvents
+
+var DelegateEntityEventsMixin = {
+  // Handle `modelEvents`, and `collectionEvents` configuration
+  _delegateEntityEvents: function _delegateEntityEvents(model, collection) {
+    var modelEvents = _.result(this, 'modelEvents');
+
+    if (modelEvents) {
+      unbindEvents.call(this, model, modelEvents);
+      bindEvents.call(this, model, modelEvents);
+    }
+
+    var collectionEvents = _.result(this, 'collectionEvents');
+
+    if (collectionEvents) {
+      unbindEvents.call(this, collection, collectionEvents);
+      bindEvents.call(this, collection, collectionEvents);
+    }
+  },
+  _undelegateEntityEvents: function _undelegateEntityEvents(model, collection) {
+    var modelEvents = _.result(this, 'modelEvents');
+    unbindEvents.call(this, model, modelEvents);
+
+    var collectionEvents = _.result(this, 'collectionEvents');
+    unbindEvents.call(this, collection, collectionEvents);
+  }
+};
+
+// Borrow event splitter from Backbone
+var delegateEventSplitter = /^(\S+)\s*(.*)$/;
+
+// Set event name to be namespaced using a unique index
+// to generate a non colliding event namespace
+// http://api.jquery.com/event.namespace/
+var getNamespacedEventName = function getNamespacedEventName(eventName, namespace) {
+  var match = eventName.match(delegateEventSplitter);
+  return match[1] + "." + namespace + " " + match[2];
+};
+
+// Add Feature flags here
+// e.g. 'class' => false
+var FEATURES = {
+  childViewEventPrefix: true,
+  triggersStopPropagation: true,
+  triggersPreventDefault: true
+};
+
+function isEnabled(name) {
+  return !!FEATURES[name];
+}
+
+function setEnabled(name, state) {
+  return FEATURES[name] = state;
+}
+
+// Internal method to create an event handler for a given `triggerDef` like
+// 'click:foo'
+function buildViewTrigger(view, triggerDef) {
+  if (_.isString(triggerDef)) {
+    triggerDef = { event: triggerDef };
+  }
+
+  var eventName = triggerDef.event;
+
+  var shouldPreventDefault = !!triggerDef.preventDefault;
+
+  if (isEnabled('triggersPreventDefault')) {
+    shouldPreventDefault = triggerDef.preventDefault !== false;
+  }
+
+  var shouldStopPropagation = !!triggerDef.stopPropagation;
+
+  if (isEnabled('triggersStopPropagation')) {
+    shouldStopPropagation = triggerDef.stopPropagation !== false;
+  }
+
+  return function (event) {
+    if (shouldPreventDefault) {
+      event.preventDefault();
+    }
+
+    if (shouldStopPropagation) {
+      event.stopPropagation();
+    }
+
+    view.triggerMethod(eventName, view, event);
+  };
+}
+
+var TriggersMixin = {
+
+  // Configure `triggers` to forward DOM events to view
+  // events. `triggers: {"click .foo": "do:foo"}`
+  _getViewTriggers: function _getViewTriggers(view, triggers) {
+    var _this = this;
+
+    // Configure the triggers, prevent default
+    // action and stop propagation of DOM events
+    return _.reduce(triggers, function (events, value, key) {
+      key = getNamespacedEventName(key, 'trig' + _this.cid);
+      events[key] = buildViewTrigger(view, value);
+      return events;
+    }, {});
+  }
+};
+
+// allows for the use of the @ui. syntax within
+// a given key for triggers and events
+// swaps the @ui with the associated selector.
+// Returns a new, non-mutated, parsed events hash.
+var _normalizeUIKeys = function _normalizeUIKeys(hash, ui) {
+  return _.reduce(hash, function (memo, val, key) {
+    var normalizedKey = _normalizeUIString(key, ui);
+    memo[normalizedKey] = val;
+    return memo;
+  }, {});
+};
+
+// utility method for parsing @ui. syntax strings
+// into associated selector
+var _normalizeUIString = function _normalizeUIString(uiString, ui) {
+  return uiString.replace(/@ui\.[a-zA-Z-_$0-9]*/g, function (r) {
+    return ui[r.slice(4)];
+  });
+};
+
+// allows for the use of the @ui. syntax within
+// a given value for regions
+// swaps the @ui with the associated selector
+var _normalizeUIValues = function _normalizeUIValues(hash, ui, properties) {
+  _.each(hash, function (val, key) {
+    if (_.isString(val)) {
+      hash[key] = _normalizeUIString(val, ui);
+    } else if (_.isObject(val) && _.isArray(properties)) {
+      _.extend(val, _normalizeUIValues(_.pick(val, properties), ui));
+      /* Value is an object, and we got an array of embedded property names to normalize. */
+      _.each(properties, function (property) {
+        var propertyVal = val[property];
+        if (_.isString(propertyVal)) {
+          val[property] = _normalizeUIString(propertyVal, ui);
+        }
+      });
+    }
+  });
+  return hash;
+};
+
+var UIMixin = {
+
+  // normalize the keys of passed hash with the views `ui` selectors.
+  // `{"@ui.foo": "bar"}`
+  normalizeUIKeys: function normalizeUIKeys(hash) {
+    var uiBindings = this._getUIBindings();
+    return _normalizeUIKeys(hash, uiBindings);
+  },
+
+
+  // normalize the passed string with the views `ui` selectors.
+  // `"@ui.bar"`
+  normalizeUIString: function normalizeUIString(uiString) {
+    var uiBindings = this._getUIBindings();
+    return _normalizeUIString(uiString, uiBindings);
+  },
+
+
+  // normalize the values of passed hash with the views `ui` selectors.
+  // `{foo: "@ui.bar"}`
+  normalizeUIValues: function normalizeUIValues(hash, properties) {
+    var uiBindings = this._getUIBindings();
+    return _normalizeUIValues(hash, uiBindings, properties);
+  },
+  _getUIBindings: function _getUIBindings() {
+    var uiBindings = _.result(this, '_uiBindings');
+    var ui = _.result(this, 'ui');
+    return uiBindings || ui;
+  },
+
+
+  // This method binds the elements specified in the "ui" hash inside the view's code with
+  // the associated jQuery selectors.
+  _bindUIElements: function _bindUIElements() {
+    var _this = this;
+
+    if (!this.ui) {
+      return;
+    }
+
+    // store the ui hash in _uiBindings so they can be reset later
+    // and so re-rendering the view will be able to find the bindings
+    if (!this._uiBindings) {
+      this._uiBindings = this.ui;
+    }
+
+    // get the bindings result, as a function or otherwise
+    var bindings = _.result(this, '_uiBindings');
+
+    // empty the ui so we don't have anything to start with
+    this._ui = {};
+
+    // bind each of the selectors
+    _.each(bindings, function (selector, key) {
+      _this._ui[key] = _this.$(selector);
+    });
+
+    this.ui = this._ui;
+  },
+  _unbindUIElements: function _unbindUIElements() {
+    var _this2 = this;
+
+    if (!this.ui || !this._uiBindings) {
+      return;
+    }
+
+    // delete all of the existing ui bindings
+    _.each(this.ui, function ($el, name) {
+      delete _this2.ui[name];
+    });
+
+    // reset the ui element to the original bindings configuration
+    this.ui = this._uiBindings;
+    delete this._uiBindings;
+    delete this._ui;
+  },
+  _getUI: function _getUI(name) {
+    return this._ui[name];
+  }
+};
+
+// DomApi
+//  ---------
+// Performant method for returning the jQuery instance
+function _getEl(el) {
+  return el instanceof Backbone.$ ? el : Backbone.$(el);
+}
+
+// Static setter
+function setDomApi(mixin) {
+  this.prototype.Dom = _.extend({}, this.prototype.Dom, mixin);
+  return this;
+}
+
+var DomApi = {
+
+  // Returns a new HTML DOM node instance
+  createBuffer: function createBuffer() {
+    return document.createDocumentFragment();
+  },
+
+
+  // Lookup the `selector` string
+  // Selector may also be a DOM element
+  // Returns an array-like object of nodes
+  getEl: function getEl(selector) {
+    return _getEl(selector);
+  },
+
+
+  // Finds the `selector` string with the el
+  // Returns an array-like object of nodes
+  findEl: function findEl(el, selector) {
+    var _$el = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : _getEl(el);
+
+    return _$el.find(selector);
+  },
+
+
+  // Returns true if the el contains the node childEl
+  hasEl: function hasEl(el, childEl) {
+    return el.contains(childEl && childEl.parentNode);
+  },
+
+
+  // Detach `el` from the DOM without removing listeners
+  detachEl: function detachEl(el) {
+    var _$el = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : _getEl(el);
+
+    _$el.detach();
+  },
+
+
+  // Remove `oldEl` from the DOM and put `newEl` in its place
+  replaceEl: function replaceEl(newEl, oldEl) {
+    if (newEl === oldEl) {
+      return;
+    }
+
+    var parent = oldEl.parentNode;
+
+    if (!parent) {
+      return;
+    }
+
+    parent.replaceChild(newEl, oldEl);
+  },
+
+
+  // Swaps the location of `el1` and `el2` in the DOM
+  swapEl: function swapEl(el1, el2) {
+    if (el1 === el2) {
+      return;
+    }
+
+    var parent1 = el1.parentNode;
+    var parent2 = el2.parentNode;
+
+    if (!parent1 || !parent2) {
+      return;
+    }
+
+    var next1 = el1.nextSibling;
+    var next2 = el2.nextSibling;
+
+    parent1.insertBefore(el2, next1);
+    parent2.insertBefore(el1, next2);
+  },
+
+
+  // Replace the contents of `el` with the HTML string of `html`
+  setContents: function setContents(el, html) {
+    var _$el = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : _getEl(el);
+
+    _$el.html(html);
+  },
+
+
+  // Takes the DOM node `el` and appends the DOM node `contents`
+  // to the end of the element's contents.
+  appendContents: function appendContents(el, contents) {
+    var _ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
+        _ref$_$el = _ref._$el,
+        _$el = _ref$_$el === undefined ? _getEl(el) : _ref$_$el,
+        _ref$_$contents = _ref._$contents,
+        _$contents = _ref$_$contents === undefined ? _getEl(contents) : _ref$_$contents;
+
+    _$el.append(_$contents);
+  },
+
+
+  // Does the el have child nodes
+  hasContents: function hasContents(el) {
+    return !!el && el.hasChildNodes();
+  },
+
+
+  // Remove the inner contents of `el` from the DOM while leaving
+  // `el` itself in the DOM.
+  detachContents: function detachContents(el) {
+    var _$el = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : _getEl(el);
+
+    _$el.contents().detach();
+  }
+};
+
+// ViewMixin
+//  ---------
+
+// MixinOptions
+// - behaviors
+// - childViewEventPrefix
+// - childViewEvents
+// - childViewTriggers
+// - collectionEvents
+// - modelEvents
+// - triggers
+// - ui
+
+
+var ViewMixin = {
+  Dom: DomApi,
+
+  supportsRenderLifecycle: true,
+  supportsDestroyLifecycle: true,
+
+  _isDestroyed: false,
+
+  isDestroyed: function isDestroyed() {
+    return !!this._isDestroyed;
+  },
+
+
+  _isRendered: false,
+
+  isRendered: function isRendered() {
+    return !!this._isRendered;
+  },
+
+
+  _isAttached: false,
+
+  isAttached: function isAttached() {
+    return !!this._isAttached;
+  },
+
+
+  // Overriding Backbone.View's `delegateEvents` to handle
+  // `events` and `triggers`
+  delegateEvents: function delegateEvents(eventsArg) {
+
+    this._proxyBehaviorViewProperties();
+    this._buildEventProxies();
+
+    var viewEvents = this._getEvents(eventsArg);
+
+    if (typeof eventsArg === 'undefined') {
+      this.events = viewEvents;
+    }
+
+    var combinedEvents = _.extend({}, this._getBehaviorEvents(), viewEvents, this._getBehaviorTriggers(), this.getTriggers());
+
+    Backbone.View.prototype.delegateEvents.call(this, combinedEvents);
+
+    return this;
+  },
+  _getEvents: function _getEvents(eventsArg) {
+    var events = eventsArg || this.events;
+
+    if (_.isFunction(events)) {
+      return this.normalizeUIKeys(events.call(this));
+    }
+
+    return this.normalizeUIKeys(events);
+  },
+
+
+  // Configure `triggers` to forward DOM events to view
+  // events. `triggers: {"click .foo": "do:foo"}`
+  getTriggers: function getTriggers() {
+    if (!this.triggers) {
+      return;
+    }
+
+    // Allow `triggers` to be configured as a function
+    var triggers = this.normalizeUIKeys(_.result(this, 'triggers'));
+
+    // Configure the triggers, prevent default
+    // action and stop propagation of DOM events
+    return this._getViewTriggers(this, triggers);
+  },
+
+
+  // Handle `modelEvents`, and `collectionEvents` configuration
+  delegateEntityEvents: function delegateEntityEvents() {
+    this._delegateEntityEvents(this.model, this.collection);
+
+    // bind each behaviors model and collection events
+    this._delegateBehaviorEntityEvents();
+
+    return this;
+  },
+
+
+  // Handle unbinding `modelEvents`, and `collectionEvents` configuration
+  undelegateEntityEvents: function undelegateEntityEvents() {
+    this._undelegateEntityEvents(this.model, this.collection);
+
+    // unbind each behaviors model and collection events
+    this._undelegateBehaviorEntityEvents();
+
+    return this;
+  },
+
+
+  // Handle destroying the view and its children.
+  destroy: function destroy() {
+    if (this._isDestroyed) {
+      return this;
+    }
+    var shouldTriggerDetach = this._isAttached && !this._shouldDisableEvents;
+
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    this.triggerMethod.apply(this, ['before:destroy', this].concat(args));
+    if (shouldTriggerDetach) {
+      this.triggerMethod('before:detach', this);
+    }
+
+    // unbind UI elements
+    this.unbindUIElements();
+
+    // remove the view from the DOM
+    this._removeElement();
+
+    if (shouldTriggerDetach) {
+      this._isAttached = false;
+      this.triggerMethod('detach', this);
+    }
+
+    // remove children after the remove to prevent extra paints
+    this._removeChildren();
+
+    this._isDestroyed = true;
+    this._isRendered = false;
+
+    // Destroy behaviors after _isDestroyed flag
+    this._destroyBehaviors.apply(this, args);
+
+    this.triggerMethod.apply(this, ['destroy', this].concat(args));
+
+    this.stopListening();
+
+    return this;
+  },
+
+
+  // Equates to this.$el.remove
+  _removeElement: function _removeElement() {
+    this.$el.off().removeData();
+    this.Dom.detachEl(this.el, this.$el);
+  },
+  bindUIElements: function bindUIElements() {
+    this._bindUIElements();
+    this._bindBehaviorUIElements();
+
+    return this;
+  },
+
+
+  // This method unbinds the elements specified in the "ui" hash
+  unbindUIElements: function unbindUIElements() {
+    this._unbindUIElements();
+    this._unbindBehaviorUIElements();
+
+    return this;
+  },
+  getUI: function getUI(name) {
+    return this._getUI(name);
+  },
+
+
+  // used as the prefix for child view events
+  // that are forwarded through the layoutview
+  childViewEventPrefix: function childViewEventPrefix() {
+    return isEnabled('childViewEventPrefix') ? 'childview' : false;
+  },
+
+
+  // import the `triggerMethod` to trigger events with corresponding
+  // methods if the method exists
+  triggerMethod: function triggerMethod$$1() {
+    var ret = triggerMethod.apply(this, arguments);
+
+    this._triggerEventOnBehaviors.apply(this, arguments);
+
+    return ret;
+  },
+
+
+  // Cache `childViewEvents` and `childViewTriggers`
+  _buildEventProxies: function _buildEventProxies() {
+    this._childViewEvents = _.result(this, 'childViewEvents');
+    this._childViewTriggers = _.result(this, 'childViewTriggers');
+  },
+  _proxyChildViewEvents: function _proxyChildViewEvents(view) {
+    this.listenTo(view, 'all', this._childViewEventHandler);
+  },
+  _childViewEventHandler: function _childViewEventHandler(eventName) {
+    var childViewEvents = this.normalizeMethods(this._childViewEvents);
+
+    // call collectionView childViewEvent if defined
+
+    for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+      args[_key2 - 1] = arguments[_key2];
+    }
+
+    if (typeof childViewEvents !== 'undefined' && _.isFunction(childViewEvents[eventName])) {
+      childViewEvents[eventName].apply(this, args);
+    }
+
+    // use the parent view's proxyEvent handlers
+    var childViewTriggers = this._childViewTriggers;
+
+    // Call the event with the proxy name on the parent layout
+    if (childViewTriggers && _.isString(childViewTriggers[eventName])) {
+      this.triggerMethod.apply(this, [childViewTriggers[eventName]].concat(args));
+    }
+
+    var prefix = _.result(this, 'childViewEventPrefix');
+
+    if (prefix !== false) {
+      var childEventName = prefix + ':' + eventName;
+
+      this.triggerMethod.apply(this, [childEventName].concat(args));
+    }
+  }
+};
+
+_.extend(ViewMixin, BehaviorsMixin, CommonMixin, DelegateEntityEventsMixin, TriggersMixin, UIMixin);
+
+function renderView(view) {
+  if (view._isRendered) {
+    return;
+  }
+
+  if (!view.supportsRenderLifecycle) {
+    triggerMethodOn(view, 'before:render', view);
+  }
+
+  view.render();
+
+  if (!view.supportsRenderLifecycle) {
+    view._isRendered = true;
+    triggerMethodOn(view, 'render', view);
+  }
+}
+
+function destroyView(view) {
+  if (view.destroy) {
+    view.destroy();
+    return;
+  }
+
+  if (!view.supportsDestroyLifecycle) {
+    triggerMethodOn(view, 'before:destroy', view);
+  }
+
+  var shouldTriggerDetach = view._isAttached && !view._shouldDisableEvents;
+
+  if (shouldTriggerDetach) {
+    triggerMethodOn(view, 'before:detach', view);
+  }
+
+  view.remove();
+
+  if (shouldTriggerDetach) {
+    view._isAttached = false;
+    triggerMethodOn(view, 'detach', view);
+  }
+
+  view._isDestroyed = true;
+
+  if (!view.supportsDestroyLifecycle) {
+    triggerMethodOn(view, 'destroy', view);
+  }
+}
+
+// Region
+// ------
+
+var ClassOptions$2 = ['allowMissingEl', 'parentEl', 'replaceElement'];
+
+var Region = MarionetteObject.extend({
+  Dom: DomApi,
+
+  cidPrefix: 'mnr',
+  replaceElement: false,
+  _isReplaced: false,
+  _isSwappingView: false,
+
+  constructor: function constructor(options) {
+    this._setOptions(options);
+
+    this.mergeOptions(options, ClassOptions$2);
+
+    // getOption necessary because options.el may be passed as undefined
+    this._initEl = this.el = this.getOption('el');
+
+    // Handle when this.el is passed in as a $ wrapped element.
+    this.el = this.el instanceof Backbone.$ ? this.el[0] : this.el;
+
+    if (!this.el) {
+      throw new MarionetteError({
+        name: 'NoElError',
+        message: 'An "el" must be specified for a region.'
+      });
+    }
+
+    this.$el = this.getEl(this.el);
+    MarionetteObject.call(this, options);
+  },
+
+
+  // Displays a backbone view instance inside of the region. Handles calling the `render`
+  // method for you. Reads content directly from the `el` attribute. The `preventDestroy`
+  // option can be used to prevent a view from the old view being destroyed on show.
+  show: function show(view, options) {
+    if (!this._ensureElement(options)) {
+      return;
+    }
+
+    view = this._getView(view, options);
+
+    if (view === this.currentView) {
+      return this;
+    }
+
+    this._isSwappingView = !!this.currentView;
+
+    this.triggerMethod('before:show', this, view, options);
+
+    // Assume an attached view is already in the region for pre-existing DOM
+    if (!view._isAttached) {
+      this.empty(options);
+    }
+
+    this._setupChildView(view);
+
+    this.currentView = view;
+
+    renderView(view);
+
+    this._attachView(view, options);
+
+    this.triggerMethod('show', this, view, options);
+
+    this._isSwappingView = false;
+
+    return this;
+  },
+  _setupChildView: function _setupChildView(view) {
+    monitorViewEvents(view);
+
+    this._proxyChildViewEvents(view);
+
+    // We need to listen for if a view is destroyed in a way other than through the region.
+    // If this happens we need to remove the reference to the currentView since once a view
+    // has been destroyed we can not reuse it.
+    view.on('destroy', this._empty, this);
+  },
+  _proxyChildViewEvents: function _proxyChildViewEvents(view) {
+    var parentView = this._parentView;
+
+    if (!parentView) {
+      return;
+    }
+
+    parentView._proxyChildViewEvents(view);
+  },
+
+
+  // If the regions parent view is not monitoring its attach/detach events
+  _shouldDisableMonitoring: function _shouldDisableMonitoring() {
+    return this._parentView && this._parentView.monitorViewEvents === false;
+  },
+  _attachView: function _attachView(view) {
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+    var shouldTriggerAttach = !view._isAttached && isNodeAttached(this.el) && !this._shouldDisableMonitoring();
+    var shouldReplaceEl = typeof options.replaceElement === 'undefined' ? !!_.result(this, 'replaceElement') : !!options.replaceElement;
+
+    if (shouldTriggerAttach) {
+      triggerMethodOn(view, 'before:attach', view);
+    }
+
+    if (shouldReplaceEl) {
+      this._replaceEl(view);
+    } else {
+      this.attachHtml(view);
+    }
+
+    if (shouldTriggerAttach) {
+      view._isAttached = true;
+      triggerMethodOn(view, 'attach', view);
+    }
+  },
+  _ensureElement: function _ensureElement() {
+    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+    if (!_.isObject(this.el)) {
+      this.$el = this.getEl(this.el);
+      this.el = this.$el[0];
+      // Make sure the $el contains only the el
+      this.$el = this.Dom.getEl(this.el);
+    }
+
+    if (!this.$el || this.$el.length === 0) {
+      var allowMissingEl = typeof options.allowMissingEl === 'undefined' ? !!_.result(this, 'allowMissingEl') : !!options.allowMissingEl;
+
+      if (allowMissingEl) {
+        return false;
+      } else {
+        throw new MarionetteError('An "el" must exist in DOM for this region ' + this.cid);
+      }
+    }
+    return true;
+  },
+  _getView: function _getView(view) {
+    if (!view) {
+      throw new MarionetteError({
+        name: 'ViewNotValid',
+        message: 'The view passed is undefined and therefore invalid. You must pass a view instance to show.'
+      });
+    }
+
+    if (view._isDestroyed) {
+      throw new MarionetteError({
+        name: 'ViewDestroyedError',
+        message: 'View (cid: "' + view.cid + '") has already been destroyed and cannot be used.'
+      });
+    }
+
+    if (view instanceof Backbone.View) {
+      return view;
+    }
+
+    var viewOptions = this._getViewOptions(view);
+
+    return new View(viewOptions);
+  },
+
+
+  // This allows for a template or a static string to be
+  // used as a template
+  _getViewOptions: function _getViewOptions(viewOptions) {
+    if (_.isFunction(viewOptions)) {
+      return { template: viewOptions };
+    }
+
+    if (_.isObject(viewOptions)) {
+      return viewOptions;
+    }
+
+    var template = function template() {
+      return viewOptions;
+    };
+
+    return { template: template };
+  },
+
+
+  // Override this method to change how the region finds the DOM element that it manages. Return
+  // a jQuery selector object scoped to a provided parent el or the document if none exists.
+  getEl: function getEl(el) {
+    var context = _.result(this, 'parentEl');
+
+    if (context && _.isString(el)) {
+      return this.Dom.findEl(context, el);
+    }
+
+    return this.Dom.getEl(el);
+  },
+  _replaceEl: function _replaceEl(view) {
+    // always restore the el to ensure the regions el is present before replacing
+    this._restoreEl();
+
+    view.on('before:destroy', this._restoreEl, this);
+
+    this.Dom.replaceEl(view.el, this.el);
+
+    this._isReplaced = true;
+  },
+
+
+  // Restore the region's element in the DOM.
+  _restoreEl: function _restoreEl() {
+    // There is nothing to replace
+    if (!this._isReplaced) {
+      return;
+    }
+
+    var view = this.currentView;
+
+    if (!view) {
+      return;
+    }
+
+    this._detachView(view);
+
+    this._isReplaced = false;
+  },
+
+
+  // Check to see if the region's el was replaced.
+  isReplaced: function isReplaced() {
+    return !!this._isReplaced;
+  },
+
+
+  // Check to see if a view is being swapped by another
+  isSwappingView: function isSwappingView() {
+    return !!this._isSwappingView;
+  },
+
+
+  // Override this method to change how the new view is appended to the `$el` that the
+  // region is managing
+  attachHtml: function attachHtml(view) {
+    this.Dom.appendContents(this.el, view.el, { _$el: this.$el, _$contents: view.$el });
+  },
+
+
+  // Destroy the current view, if there is one. If there is no current view, it does
+  // nothing and returns immediately.
+  empty: function empty() {
+    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { allowMissingEl: true };
+
+    var view = this.currentView;
+
+    // If there is no view in the region we should only detach current html
+    if (!view) {
+      if (this._ensureElement(options)) {
+        this.detachHtml();
+      }
+      return this;
+    }
+
+    var shouldDestroy = !options.preventDestroy;
+
+    if (!shouldDestroy) {
+      deprecate('The preventDestroy option is deprecated. Use Region#detachView');
+    }
+
+    this._empty(view, shouldDestroy);
+    return this;
+  },
+  _empty: function _empty(view, shouldDestroy) {
+    view.off('destroy', this._empty, this);
+    this.triggerMethod('before:empty', this, view);
+
+    this._restoreEl();
+
+    delete this.currentView;
+
+    if (!view._isDestroyed) {
+      if (shouldDestroy) {
+        this.removeView(view);
+      } else {
+        this._detachView(view);
+      }
+      this._stopChildViewEvents(view);
+    }
+
+    this.triggerMethod('empty', this, view);
+  },
+  _stopChildViewEvents: function _stopChildViewEvents(view) {
+    var parentView = this._parentView;
+
+    if (!parentView) {
+      return;
+    }
+
+    this._parentView.stopListening(view);
+  },
+  destroyView: function destroyView$$1(view) {
+    if (view._isDestroyed) {
+      return view;
+    }
+
+    view._shouldDisableEvents = this._shouldDisableMonitoring();
+    destroyView(view);
+    return view;
+  },
+  removeView: function removeView(view) {
+    this.destroyView(view);
+  },
+
+
+  // Empties the Region without destroying the view
+  // Returns the detached view
+  detachView: function detachView() {
+    var view = this.currentView;
+
+    if (!view) {
+      return;
+    }
+
+    this._empty(view);
+
+    return view;
+  },
+  _detachView: function _detachView(view) {
+    var shouldTriggerDetach = view._isAttached && !this._shouldDisableMonitoring();
+    var shouldRestoreEl = this._isReplaced;
+    if (shouldTriggerDetach) {
+      triggerMethodOn(view, 'before:detach', view);
+    }
+
+    if (shouldRestoreEl) {
+      this.Dom.replaceEl(this.el, view.el);
+    } else {
+      this.detachHtml();
+    }
+
+    if (shouldTriggerDetach) {
+      view._isAttached = false;
+      triggerMethodOn(view, 'detach', view);
+    }
+  },
+
+
+  // Override this method to change how the region detaches current content
+  detachHtml: function detachHtml() {
+    this.Dom.detachContents(this.el, this.$el);
+  },
+
+
+  // Checks whether a view is currently present within the region. Returns `true` if there is
+  // and `false` if no view is present.
+  hasView: function hasView() {
+    return !!this.currentView;
+  },
+
+
+  // Reset the region by destroying any existing view and clearing out the cached `$el`.
+  // The next time a view is shown via this region, the region will re-query the DOM for
+  // the region's `el`.
+  reset: function reset(options) {
+    this.empty(options);
+
+    if (this.$el) {
+      this.el = this._initEl;
+    }
+
+    delete this.$el;
+    return this;
+  },
+  destroy: function destroy(options) {
+    if (this._isDestroyed) {
+      return this;
+    }
+
+    this.reset(options);
+
+    if (this._name) {
+      this._parentView._removeReferences(this._name);
+    }
+    delete this._parentView;
+    delete this._name;
+
+    return MarionetteObject.prototype.destroy.apply(this, arguments);
+  }
+}, {
+  setDomApi: setDomApi
+});
+
+// return the region instance from the definition
+var buildRegion = function (definition, defaults) {
+  if (definition instanceof Region) {
+    return definition;
+  }
+
+  return buildRegionFromDefinition(definition, defaults);
+};
+
+function buildRegionFromDefinition(definition, defaults) {
+  var opts = _.extend({}, defaults);
+
+  if (_.isString(definition)) {
+    _.extend(opts, { el: definition });
+
+    return buildRegionFromObject(opts);
+  }
+
+  if (_.isFunction(definition)) {
+    _.extend(opts, { regionClass: definition });
+
+    return buildRegionFromObject(opts);
+  }
+
+  if (_.isObject(definition)) {
+    if (definition.selector) {
+      deprecate('The selector option on a Region definition object is deprecated. Use el to pass a selector string');
+    }
+
+    _.extend(opts, { el: definition.selector }, definition);
+
+    return buildRegionFromObject(opts);
+  }
+
+  throw new MarionetteError({
+    message: 'Improper region configuration type.',
+    url: 'marionette.region.html#region-configuration-types'
+  });
+}
+
+function buildRegionFromObject(definition) {
+  var RegionClass = definition.regionClass;
+
+  var options = _.omit(definition, 'regionClass');
+
+  return new RegionClass(options);
+}
+
+// MixinOptions
+// - regions
+// - regionClass
+
+var RegionsMixin = {
+  regionClass: Region,
+
+  // Internal method to initialize the regions that have been defined in a
+  // `regions` attribute on this View.
+  _initRegions: function _initRegions() {
+
+    // init regions hash
+    this.regions = this.regions || {};
+    this._regions = {};
+
+    this.addRegions(_.result(this, 'regions'));
+  },
+
+
+  // Internal method to re-initialize all of the regions by updating
+  // the `el` that they point to
+  _reInitRegions: function _reInitRegions() {
+    _invoke(this._regions, 'reset');
+  },
+
+
+  // Add a single region, by name, to the View
+  addRegion: function addRegion(name, definition) {
+    var regions = {};
+    regions[name] = definition;
+    return this.addRegions(regions)[name];
+  },
+
+
+  // Add multiple regions as a {name: definition, name2: def2} object literal
+  addRegions: function addRegions(regions) {
+    // If there's nothing to add, stop here.
+    if (_.isEmpty(regions)) {
+      return;
+    }
+
+    // Normalize region selectors hash to allow
+    // a user to use the @ui. syntax.
+    regions = this.normalizeUIValues(regions, ['selector', 'el']);
+
+    // Add the regions definitions to the regions property
+    this.regions = _.extend({}, this.regions, regions);
+
+    return this._addRegions(regions);
+  },
+
+
+  // internal method to build and add regions
+  _addRegions: function _addRegions(regionDefinitions) {
+    var _this = this;
+
+    var defaults = {
+      regionClass: this.regionClass,
+      parentEl: _.partial(_.result, this, 'el')
+    };
+
+    return _.reduce(regionDefinitions, function (regions, definition, name) {
+      regions[name] = buildRegion(definition, defaults);
+      _this._addRegion(regions[name], name);
+      return regions;
+    }, {});
+  },
+  _addRegion: function _addRegion(region, name) {
+    this.triggerMethod('before:add:region', this, name, region);
+
+    region._parentView = this;
+    region._name = name;
+
+    this._regions[name] = region;
+
+    this.triggerMethod('add:region', this, name, region);
+  },
+
+
+  // Remove a single region from the View, by name
+  removeRegion: function removeRegion(name) {
+    var region = this._regions[name];
+
+    this._removeRegion(region, name);
+
+    return region;
+  },
+
+
+  // Remove all regions from the View
+  removeRegions: function removeRegions() {
+    var regions = this._getRegions();
+
+    _.each(this._regions, _.bind(this._removeRegion, this));
+
+    return regions;
+  },
+  _removeRegion: function _removeRegion(region, name) {
+    this.triggerMethod('before:remove:region', this, name, region);
+
+    region.destroy();
+
+    this.triggerMethod('remove:region', this, name, region);
+  },
+
+
+  // Called in a region's destroy
+  _removeReferences: function _removeReferences(name) {
+    delete this.regions[name];
+    delete this._regions[name];
+  },
+
+
+  // Empty all regions in the region manager, but
+  // leave them attached
+  emptyRegions: function emptyRegions() {
+    var regions = this.getRegions();
+    _invoke(regions, 'empty');
+    return regions;
+  },
+
+
+  // Checks to see if view contains region
+  // Accepts the region name
+  // hasRegion('main')
+  hasRegion: function hasRegion(name) {
+    return !!this.getRegion(name);
+  },
+
+
+  // Provides access to regions
+  // Accepts the region name
+  // getRegion('main')
+  getRegion: function getRegion(name) {
+    if (!this._isRendered) {
+      this.render();
+    }
+    return this._regions[name];
+  },
+
+
+  // Get all regions
+  _getRegions: function _getRegions() {
+    return _.clone(this._regions);
+  },
+  getRegions: function getRegions() {
+    if (!this._isRendered) {
+      this.render();
+    }
+    return this._getRegions();
+  },
+  showChildView: function showChildView(name, view) {
+    var region = this.getRegion(name);
+
+    for (var _len = arguments.length, args = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+      args[_key - 2] = arguments[_key];
+    }
+
+    return region.show.apply(region, [view].concat(args));
+  },
+  detachChildView: function detachChildView(name) {
+    return this.getRegion(name).detachView();
+  },
+  getChildView: function getChildView(name) {
+    return this.getRegion(name).currentView;
+  }
+};
+
+// Renderer
+// --------
+
+// Render a template with data by passing in the template
+// selector and the data to render.
+var Renderer = {
+
+  // Render a template with data. The `template` parameter is
+  // passed to the `TemplateCache` object to retrieve the
+  // template function. Override this method to provide your own
+  // custom rendering and template handling for all of Marionette.
+  render: function render(template, data) {
+    if (!template) {
+      throw new MarionetteError({
+        name: 'TemplateNotFoundError',
+        message: 'Cannot render the template since its false, null or undefined.'
+      });
+    }
+
+    var templateFunc = _.isFunction(template) ? template : TemplateCache.get(template);
+
+    return templateFunc(data);
+  }
+};
+
+// View
+// ---------
+
+var ClassOptions$1 = ['behaviors', 'childViewEventPrefix', 'childViewEvents', 'childViewTriggers', 'collectionEvents', 'events', 'modelEvents', 'regionClass', 'regions', 'template', 'templateContext', 'triggers', 'ui'];
+
+// The standard view. Includes view events, automatic rendering
+// of Underscore templates, nested views, and more.
+var View = Backbone.View.extend({
+  constructor: function constructor(options) {
+    this.render = _.bind(this.render, this);
+
+    this._setOptions(options);
+
+    this.mergeOptions(options, ClassOptions$1);
+
+    monitorViewEvents(this);
+
+    this._initBehaviors();
+    this._initRegions();
+
+    var args = Array.prototype.slice.call(arguments);
+    args[0] = this.options;
+    Backbone.View.prototype.constructor.apply(this, args);
+
+    this.delegateEntityEvents();
+
+    this._triggerEventOnBehaviors('initialize', this);
+  },
+
+
+  // Serialize the view's model *or* collection, if
+  // it exists, for the template
+  serializeData: function serializeData() {
+    if (!this.model && !this.collection) {
+      return {};
+    }
+
+    // If we have a model, we serialize that
+    if (this.model) {
+      return this.serializeModel();
+    }
+
+    // Otherwise, we serialize the collection,
+    // making it available under the `items` property
+    return {
+      items: this.serializeCollection()
+    };
+  },
+
+
+  // Prepares the special `model` property of a view
+  // for being displayed in the template. By default
+  // we simply clone the attributes. Override this if
+  // you need a custom transformation for your view's model
+  serializeModel: function serializeModel() {
+    if (!this.model) {
+      return {};
+    }
+    return _.clone(this.model.attributes);
+  },
+
+
+  // Serialize a collection by cloning each of
+  // its model's attributes
+  serializeCollection: function serializeCollection() {
+    if (!this.collection) {
+      return {};
+    }
+    return this.collection.map(function (model) {
+      return _.clone(model.attributes);
+    });
+  },
+
+
+  // Overriding Backbone.View's `setElement` to handle
+  // if an el was previously defined. If so, the view might be
+  // rendered or attached on setElement.
+  setElement: function setElement() {
+    Backbone.View.prototype.setElement.apply(this, arguments);
+
+    this._isRendered = this.Dom.hasContents(this.el);
+    this._isAttached = isNodeAttached(this.el);
+
+    if (this._isRendered) {
+      this.bindUIElements();
+    }
+
+    return this;
+  },
+
+
+  // Render the view, defaulting to underscore.js templates.
+  // You can override this in your view definition to provide
+  // a very specific rendering for your view. In general, though,
+  // you should override the `Marionette.Renderer` object to
+  // change how Marionette renders views.
+  // Subsequent renders after the first will re-render all nested
+  // views.
+  render: function render() {
+    if (this._isDestroyed) {
+      return this;
+    }
+
+    this.triggerMethod('before:render', this);
+
+    // If this is not the first render call, then we need to
+    // re-initialize the `el` for each region
+    if (this._isRendered) {
+      this._reInitRegions();
+    }
+
+    this._renderTemplate();
+    this.bindUIElements();
+
+    this._isRendered = true;
+    this.triggerMethod('render', this);
+
+    return this;
+  },
+
+
+  // Internal method to render the template with the serialized data
+  // and template context via the `Marionette.Renderer` object.
+  _renderTemplate: function _renderTemplate() {
+    var template = this.getTemplate();
+
+    // Allow template-less views
+    if (template === false) {
+      deprecate('template:false is deprecated.  Use _.noop.');
+      return;
+    }
+
+    // Add in entity data and template context
+    var data = this.mixinTemplateContext(this.serializeData());
+
+    // Render and add to el
+    var html = this._renderHtml(template, data);
+    this.attachElContent(html);
+  },
+
+
+  // Renders the data into the template
+  _renderHtml: function _renderHtml(template, data) {
+    return Renderer.render(template, data, this);
+  },
+
+
+  // Get the template for this view
+  // instance. You can set a `template` attribute in the view
+  // definition or pass a `template: "whatever"` parameter in
+  // to the constructor options.
+  getTemplate: function getTemplate() {
+    return this.template;
+  },
+
+
+  // Mix in template context methods. Looks for a
+  // `templateContext` attribute, which can either be an
+  // object literal, or a function that returns an object
+  // literal. All methods and attributes from this object
+  // are copies to the object passed in.
+  mixinTemplateContext: function mixinTemplateContext() {
+    var target = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+    var templateContext = _.result(this, 'templateContext');
+    return _.extend(target, templateContext);
+  },
+
+
+  // Attaches the content of a given view.
+  // This method can be overridden to optimize rendering,
+  // or to render in a non standard way.
+  //
+  // For example, using `innerHTML` instead of `$el.html`
+  //
+  // ```js
+  // attachElContent(html) {
+  //   this.el.innerHTML = html;
+  //   return this;
+  // }
+  // ```
+  attachElContent: function attachElContent(html) {
+    this.Dom.setContents(this.el, html, this.$el);
+
+    return this;
+  },
+
+
+  // called by ViewMixin destroy
+  _removeChildren: function _removeChildren() {
+    this.removeRegions();
+  },
+  _getImmediateChildren: function _getImmediateChildren() {
+    return _.chain(this._getRegions()).map('currentView').compact().value();
+  }
+}, {
+  // Sets the renderer for the Marionette.View class
+  setRenderer: function setRenderer(renderer) {
+    this.prototype._renderHtml = renderer;
+    return this;
+  },
+
+
+  setDomApi: setDomApi
+});
+
+_.extend(View.prototype, ViewMixin, RegionsMixin);
+
+// Mix in methods from Underscore, for iteration, and other
+// collection related features.
+// Borrowing this code from Backbone.Collection:
+// https://github.com/jashkenas/backbone/blob/1.1.2/backbone.js#L962
+
+var methods = ['forEach', 'each', 'map', 'find', 'detect', 'filter', 'select', 'reject', 'every', 'all', 'some', 'any', 'include', 'contains', 'invoke', 'toArray', 'first', 'initial', 'rest', 'last', 'without', 'isEmpty', 'pluck', 'reduce', 'partition'];
+
+var emulateCollection = function emulateCollection(object, listProperty) {
+  _.each(methods, function (method) {
+    object[method] = function () {
+      var list = _.result(this, listProperty);
+      var args = Array.prototype.slice.call(arguments);
+      return _[method].apply(_, [list].concat(args));
+    };
+  });
+};
+
+// Provide a container to store, retrieve and
+// shut down child views.
+var Container = function Container(views) {
+  this._views = {};
+  this._indexByModel = {};
+  this._indexByCustom = {};
+  this._updateLength();
+
+  _.each(views, _.bind(this.add, this));
+};
+
+emulateCollection(Container.prototype, '_getViews');
+
+// Container Methods
+// -----------------
+
+_.extend(Container.prototype, {
+  _getViews: function _getViews() {
+    return _.values(this._views);
+  },
+
+
+  // Add a view to this container. Stores the view
+  // by `cid` and makes it searchable by the model
+  // cid (and model itself). Optionally specify
+  // a custom key to store an retrieve the view.
+  add: function add(view, customIndex) {
+    return this._add(view, customIndex)._updateLength();
+  },
+
+
+  // To be used when avoiding call _updateLength
+  // When you are done adding all your new views
+  // call _updateLength
+  _add: function _add(view, customIndex) {
+    var viewCid = view.cid;
+
+    // store the view
+    this._views[viewCid] = view;
+
+    // index it by model
+    if (view.model) {
+      this._indexByModel[view.model.cid] = viewCid;
+    }
+
+    // index by custom
+    if (customIndex) {
+      this._indexByCustom[customIndex] = viewCid;
+    }
+
+    return this;
+  },
+
+
+  // Find a view by the model that was attached to
+  // it. Uses the model's `cid` to find it.
+  findByModel: function findByModel(model) {
+    return this.findByModelCid(model.cid);
+  },
+
+
+  // Find a view by the `cid` of the model that was attached to
+  // it. Uses the model's `cid` to find the view `cid` and
+  // retrieve the view using it.
+  findByModelCid: function findByModelCid(modelCid) {
+    var viewCid = this._indexByModel[modelCid];
+    return this.findByCid(viewCid);
+  },
+
+
+  // Find a view by a custom indexer.
+  findByCustom: function findByCustom(index) {
+    var viewCid = this._indexByCustom[index];
+    return this.findByCid(viewCid);
+  },
+
+
+  // Find by index. This is not guaranteed to be a
+  // stable index.
+  findByIndex: function findByIndex(index) {
+    return _.values(this._views)[index];
+  },
+
+
+  // retrieve a view by its `cid` directly
+  findByCid: function findByCid(cid) {
+    return this._views[cid];
+  },
+
+
+  // Remove a view
+  remove: function remove(view) {
+    return this._remove(view)._updateLength();
+  },
+
+
+  // To be used when avoiding call _updateLength
+  // When you are done adding all your new views
+  // call _updateLength
+  _remove: function _remove(view) {
+    var viewCid = view.cid;
+
+    // delete model index
+    if (view.model) {
+      delete this._indexByModel[view.model.cid];
+    }
+
+    // delete custom index
+    _.some(this._indexByCustom, _.bind(function (cid, key) {
+      if (cid === viewCid) {
+        delete this._indexByCustom[key];
+        return true;
+      }
+    }, this));
+
+    // remove the view from the container
+    delete this._views[viewCid];
+
+    return this;
+  },
+
+
+  // Update the `.length` attribute on this container
+  _updateLength: function _updateLength() {
+    this.length = _.size(this._views);
+
+    return this;
+  }
+});
+
+// Collection View
+// ---------------
+
+var ClassOptions$3 = ['behaviors', 'childView', 'childViewEventPrefix', 'childViewEvents', 'childViewOptions', 'childViewTriggers', 'collectionEvents', 'events', 'filter', 'emptyView', 'emptyViewOptions', 'modelEvents', 'reorderOnSort', 'sort', 'triggers', 'ui', 'viewComparator'];
+
+// A view that iterates over a Backbone.Collection
+// and renders an individual child view for each model.
+var CollectionView = Backbone.View.extend({
+
+  // flag for maintaining the sorted order of the collection
+  sort: true,
+
+  // constructor
+  // option to pass `{sort: false}` to prevent the `CollectionView` from
+  // maintaining the sorted order of the collection.
+  // This will fallback onto appending childView's to the end.
+  //
+  // option to pass `{viewComparator: compFunction()}` to allow the `CollectionView`
+  // to use a custom sort order for the collection.
+  constructor: function constructor(options) {
+    this.render = _.bind(this.render, this);
+
+    this._setOptions(options);
+
+    this.mergeOptions(options, ClassOptions$3);
+
+    monitorViewEvents(this);
+
+    this._initBehaviors();
+    this.once('render', this._initialEvents);
+    this._initChildViewStorage();
+    this._bufferedChildren = [];
+
+    var args = Array.prototype.slice.call(arguments);
+    args[0] = this.options;
+    Backbone.View.prototype.constructor.apply(this, args);
+
+    this.delegateEntityEvents();
+
+    this._triggerEventOnBehaviors('initialize', this);
+  },
+
+
+  // Instead of inserting elements one by one into the page, it's much more performant to insert
+  // elements into a document fragment and then insert that document fragment into the page
+  _startBuffering: function _startBuffering() {
+    this._isBuffering = true;
+  },
+  _endBuffering: function _endBuffering() {
+    var shouldTriggerAttach = this._isAttached && this.monitorViewEvents !== false;
+    var triggerOnChildren = shouldTriggerAttach ? this._getImmediateChildren() : [];
+
+    this._isBuffering = false;
+
+    _.each(triggerOnChildren, function (child) {
+      triggerMethodOn(child, 'before:attach', child);
+    });
+
+    this.attachBuffer(this, this._createBuffer());
+
+    _.each(triggerOnChildren, function (child) {
+      child._isAttached = true;
+      triggerMethodOn(child, 'attach', child);
+    });
+
+    this._bufferedChildren = [];
+  },
+  _getImmediateChildren: function _getImmediateChildren() {
+    return _.values(this.children._views);
+  },
+
+
+  // Configured the initial events that the collection view binds to.
+  _initialEvents: function _initialEvents() {
+    if (this.collection) {
+      this.listenTo(this.collection, 'add', this._onCollectionAdd);
+      this.listenTo(this.collection, 'update', this._onCollectionUpdate);
+      this.listenTo(this.collection, 'reset', this.render);
+
+      if (this.sort) {
+        this.listenTo(this.collection, 'sort', this._sortViews);
+      }
+    }
+  },
+
+
+  // Handle a child added to the collection
+  _onCollectionAdd: function _onCollectionAdd(child, collection, opts) {
+    // `index` is present when adding with `at` since BB 1.2; indexOf fallback for < 1.2
+    var index = opts.at !== undefined && (opts.index || collection.indexOf(child));
+
+    // When filtered or when there is no initial index, calculate index.
+    if (this.filter || index === false) {
+      index = _.indexOf(this._filteredSortedModels(index), child);
+    }
+
+    if (this._shouldAddChild(child, index)) {
+      this._destroyEmptyView();
+      this._addChild(child, index);
+    }
+  },
+
+
+  // Handle collection update model removals
+  _onCollectionUpdate: function _onCollectionUpdate(collection, options) {
+    var changes = options.changes;
+    this._removeChildModels(changes.removed);
+  },
+
+
+  // Remove the child views and destroy them.
+  // This function also updates the indices of later views
+  // in the collection in order to keep the children in sync with the collection.
+  // "models" is an array of models and the corresponding views
+  // will be removed and destroyed from the CollectionView
+  _removeChildModels: function _removeChildModels(models) {
+    // Used to determine where to update the remaining
+    // sibling view indices after these views are removed.
+    var removedViews = this._getRemovedViews(models);
+
+    if (!removedViews.length) {
+      return;
+    }
+
+    this.children._updateLength();
+
+    // decrement the index of views after this one
+    this._updateIndices(removedViews, false);
+
+    if (this.isEmpty()) {
+      this._showEmptyView();
+    }
+  },
+
+
+  // Returns the views that will be used for re-indexing
+  // through CollectionView#_updateIndices.
+  _getRemovedViews: function _getRemovedViews(models) {
+    var _this = this;
+
+    // Returning a view means something was removed.
+    return _.reduce(models, function (removingViews, model) {
+      var view = model && _this.children.findByModel(model);
+
+      if (!view || view._isDestroyed) {
+        return removingViews;
+      }
+
+      _this._removeChildView(view);
+
+      removingViews.push(view);
+
+      return removingViews;
+    }, []);
+  },
+  _removeChildView: function _removeChildView(view) {
+    this.triggerMethod('before:remove:child', this, view);
+
+    this.children._remove(view);
+    view._shouldDisableEvents = this.monitorViewEvents === false;
+    destroyView(view);
+
+    this.stopListening(view);
+    this.triggerMethod('remove:child', this, view);
+  },
+
+
+  // Overriding Backbone.View's `setElement` to handle
+  // if an el was previously defined. If so, the view might be
+  // attached on setElement.
+  setElement: function setElement() {
+    Backbone.View.prototype.setElement.apply(this, arguments);
+
+    this._isAttached = isNodeAttached(this.el);
+
+    return this;
+  },
+
+
+  // Render children views. Override this method to provide your own implementation of a
+  // render function for the collection view.
+  render: function render() {
+    if (this._isDestroyed) {
+      return this;
+    }
+    this.triggerMethod('before:render', this);
+    this._renderChildren();
+    this._isRendered = true;
+    this.triggerMethod('render', this);
+    return this;
+  },
+
+
+  // An efficient rendering used for filtering. Instead of modifying the whole DOM for the
+  // collection view, we are only adding or removing the related childrenViews.
+  setFilter: function setFilter(filter) {
+    var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+        preventRender = _ref.preventRender;
+
+    var canBeRendered = this._isRendered && !this._isDestroyed;
+    var filterChanged = this.filter !== filter;
+    var shouldRender = canBeRendered && filterChanged && !preventRender;
+
+    if (shouldRender) {
+      var previousModels = this._filteredSortedModels();
+      this.filter = filter;
+      var models = this._filteredSortedModels();
+      this._applyModelDeltas(models, previousModels);
+    } else {
+      this.filter = filter;
+    }
+
+    return this;
+  },
+
+
+  // `removeFilter` is actually an alias for removing filters.
+  removeFilter: function removeFilter(options) {
+    return this.setFilter(null, options);
+  },
+
+
+  // Calculate and apply difference by cid between `models` and `previousModels`.
+  _applyModelDeltas: function _applyModelDeltas(models, previousModels) {
+    var _this2 = this;
+
+    var currentIds = {};
+    _.each(models, function (model, index) {
+      var addedChildNotExists = !_this2.children.findByModel(model);
+      if (addedChildNotExists) {
+        _this2._onCollectionAdd(model, _this2.collection, { at: index });
+      }
+      currentIds[model.cid] = true;
+    });
+
+    var removeModels = _.filter(previousModels, function (prevModel) {
+      return !currentIds[prevModel.cid] && _this2.children.findByModel(prevModel);
+    });
+
+    this._removeChildModels(removeModels);
+  },
+
+
+  // Reorder DOM after sorting. When your element's rendering do not use their index,
+  // you can pass reorderOnSort: true to only reorder the DOM after a sort instead of
+  // rendering all the collectionView.
+  reorder: function reorder() {
+    var _this3 = this;
+
+    var children = this.children;
+    var models = this._filteredSortedModels();
+
+    if (!models.length && this._showingEmptyView) {
+      return this;
+    }
+
+    var anyModelsAdded = _.some(models, function (model) {
+      return !children.findByModel(model);
+    });
+
+    // If there are any new models added due to filtering we need to add child views,
+    // so render as normal.
+    if (anyModelsAdded) {
+      this.render();
+    } else {
+
+      var filteredOutModels = [];
+
+      // Get the DOM nodes in the same order as the models and
+      // find the model that were children before but aren't in this new order.
+      var elsToReorder = _.reduce(this.children._views, function (viewEls, view) {
+        var index = _.indexOf(models, view.model);
+
+        if (index === -1) {
+          filteredOutModels.push(view.model);
+          return viewEls;
+        }
+
+        view._index = index;
+
+        viewEls[index] = view.el;
+
+        return viewEls;
+      }, new Array(models.length));
+
+      this.triggerMethod('before:reorder', this);
+
+      var elBuffer = this.Dom.createBuffer();
+
+      _.each(elsToReorder, function (el) {
+        _this3.Dom.appendContents(elBuffer, el);
+      });
+
+      // Since append moves elements that are already in the DOM, appending the elements
+      // will effectively reorder them.
+      this._appendReorderedChildren(elBuffer);
+
+      // remove any views that have been filtered out
+      this._removeChildModels(filteredOutModels);
+
+      this.triggerMethod('reorder', this);
+    }
+    return this;
+  },
+
+
+  // Render view after sorting. Override this method to change how the view renders
+  // after a `sort` on the collection.
+  resortView: function resortView() {
+    if (this.reorderOnSort) {
+      this.reorder();
+    } else {
+      this._renderChildren();
+    }
+    return this;
+  },
+
+
+  // Internal method. This checks for any changes in the order of the collection.
+  // If the index of any view doesn't match, it will render.
+  _sortViews: function _sortViews() {
+    var _this4 = this;
+
+    var models = this._filteredSortedModels();
+
+    // check for any changes in sort order of views
+    var orderChanged = _.find(models, function (item, index) {
+      var view = _this4.children.findByModel(item);
+      return !view || view._index !== index;
+    });
+
+    if (orderChanged) {
+      this.resortView();
+    }
+  },
+
+
+  // Internal reference to what index a `emptyView` is.
+  _emptyViewIndex: -1,
+
+  // Internal method. Separated so that CompositeView can append to the childViewContainer
+  // if necessary
+  _appendReorderedChildren: function _appendReorderedChildren(children) {
+    this.Dom.appendContents(this.el, children, { _$el: this.$el });
+  },
+
+
+  // Internal method. Separated so that CompositeView can have more control over events
+  // being triggered, around the rendering process
+  _renderChildren: function _renderChildren() {
+    if (this._isRendered) {
+      this._destroyEmptyView();
+      this._destroyChildren();
+    }
+
+    var models = this._filteredSortedModels();
+    if (this.isEmpty({ processedModels: models })) {
+      this._showEmptyView();
+    } else {
+      this.triggerMethod('before:render:children', this);
+      this._startBuffering();
+      this._showCollection(models);
+      this._endBuffering();
+      this.triggerMethod('render:children', this);
+    }
+  },
+  _createView: function _createView(model, index) {
+    var ChildView = this._getChildView(model);
+    var childViewOptions = this._getChildViewOptions(model, index);
+    var view = this.buildChildView(model, ChildView, childViewOptions);
+    return view;
+  },
+  _setupChildView: function _setupChildView(view, index) {
+    monitorViewEvents(view);
+
+    // set up the child view event forwarding
+    this._proxyChildViewEvents(view);
+
+    if (this.sort) {
+      view._index = index;
+    }
+  },
+
+
+  // Internal method to loop through collection and show each child view.
+  _showCollection: function _showCollection(models) {
+    _.each(models, _.bind(this._addChild, this));
+    this.children._updateLength();
+  },
+
+
+  // Allow the collection to be sorted by a custom view comparator
+  _filteredSortedModels: function _filteredSortedModels(addedAt) {
+    if (!this.collection || !this.collection.length) {
+      return [];
+    }
+
+    var viewComparator = this.getViewComparator();
+    var models = this.collection.models;
+    addedAt = Math.min(Math.max(addedAt, 0), models.length - 1);
+
+    if (viewComparator) {
+      var addedModel = void 0;
+      // Preserve `at` location, even for a sorted view
+      if (addedAt) {
+        addedModel = models[addedAt];
+        models = models.slice(0, addedAt).concat(models.slice(addedAt + 1));
+      }
+      models = this._sortModelsBy(models, viewComparator);
+      if (addedModel) {
+        models.splice(addedAt, 0, addedModel);
+      }
+    }
+
+    // Filter after sorting in case the filter uses the index
+    models = this._filterModels(models);
+
+    return models;
+  },
+  getViewComparator: function getViewComparator() {
+    return this.viewComparator;
+  },
+
+
+  // Filter an array of models, if a filter exists
+  _filterModels: function _filterModels(models) {
+    var _this5 = this;
+
+    if (this.filter) {
+      models = _.filter(models, function (model, index) {
+        return _this5._shouldAddChild(model, index);
+      });
+    }
+    return models;
+  },
+  _sortModelsBy: function _sortModelsBy(models, comparator) {
+    if (typeof comparator === 'string') {
+      return _.sortBy(models, function (model) {
+        return model.get(comparator);
+      });
+    } else if (comparator.length === 1) {
+      return _.sortBy(models, _.bind(comparator, this));
+    } else {
+      return _.clone(models).sort(_.bind(comparator, this));
+    }
+  },
+
+
+  // Internal method to show an empty view in place of a collection of child views,
+  // when the collection is empty
+  _showEmptyView: function _showEmptyView() {
+    var EmptyView = this._getEmptyView();
+
+    if (EmptyView && !this._showingEmptyView) {
+      this._showingEmptyView = true;
+
+      var model = new Backbone.Model();
+      var emptyViewOptions = this.emptyViewOptions || this.childViewOptions;
+      if (_.isFunction(emptyViewOptions)) {
+        emptyViewOptions = emptyViewOptions.call(this, model, this._emptyViewIndex);
+      }
+
+      var view = this.buildChildView(model, EmptyView, emptyViewOptions);
+
+      this.triggerMethod('before:render:empty', this, view);
+      this.addChildView(view, 0);
+      this.triggerMethod('render:empty', this, view);
+    }
+  },
+
+
+  // Internal method to destroy an existing emptyView instance if one exists. Called when
+  // a collection view has been rendered empty, and then a child is added to the collection.
+  _destroyEmptyView: function _destroyEmptyView() {
+    if (this._showingEmptyView) {
+      this.triggerMethod('before:remove:empty', this);
+
+      this._destroyChildren();
+      delete this._showingEmptyView;
+
+      this.triggerMethod('remove:empty', this);
+    }
+  },
+
+
+  // Retrieve the empty view class
+  _getEmptyView: function _getEmptyView() {
+    var emptyView = this.emptyView;
+
+    if (!emptyView) {
+      return;
+    }
+
+    return this._getView(emptyView);
+  },
+
+
+  // Retrieve the `childView` class
+  // The `childView` property can be either a view class or a function that
+  // returns a view class. If it is a function, it will receive the model that
+  // will be passed to the view instance (created from the returned view class)
+  _getChildView: function _getChildView(child) {
+    var childView = this.childView;
+
+    if (!childView) {
+      throw new MarionetteError({
+        name: 'NoChildViewError',
+        message: 'A "childView" must be specified'
+      });
+    }
+
+    childView = this._getView(childView, child);
+
+    if (!childView) {
+      throw new MarionetteError({
+        name: 'InvalidChildViewError',
+        message: '"childView" must be a view class or a function that returns a view class'
+      });
+    }
+
+    return childView;
+  },
+
+
+  // First check if the `view` is a view class (the common case)
+  // Then check if it's a function (which we assume that returns a view class)
+  _getView: function _getView(view, child) {
+    if (view.prototype instanceof Backbone.View || view === Backbone.View) {
+      return view;
+    } else if (_.isFunction(view)) {
+      return view.call(this, child);
+    }
+  },
+
+
+  // Internal method for building and adding a child view
+  _addChild: function _addChild(child, index) {
+    var view = this._createView(child, index);
+    this.addChildView(view, index);
+
+    return view;
+  },
+  _getChildViewOptions: function _getChildViewOptions(child, index) {
+    if (_.isFunction(this.childViewOptions)) {
+      return this.childViewOptions(child, index);
+    }
+
+    return this.childViewOptions;
+  },
+
+
+  // Render the child's view and add it to the HTML for the collection view at a given index.
+  // This will also update the indices of later views in the collection in order to keep the
+  // children in sync with the collection.
+  addChildView: function addChildView(view, index) {
+    this.triggerMethod('before:add:child', this, view);
+    this._setupChildView(view, index);
+
+    // Store the child view itself so we can properly remove and/or destroy it later
+    if (this._isBuffering) {
+      // Add to children, but don't update children's length.
+      this.children._add(view);
+    } else {
+      // increment indices of views after this one
+      this._updateIndices(view, true);
+      this.children.add(view);
+    }
+
+    renderView(view);
+
+    this._attachView(view, index);
+
+    this.triggerMethod('add:child', this, view);
+
+    return view;
+  },
+
+
+  // Internal method. This decrements or increments the indices of views after the added/removed
+  // view to keep in sync with the collection.
+  _updateIndices: function _updateIndices(views, increment) {
+    if (!this.sort) {
+      return;
+    }
+
+    if (!increment) {
+      _.each(_.sortBy(this.children._views, '_index'), function (view, index) {
+        view._index = index;
+      });
+
+      return;
+    }
+
+    var view = _.isArray(views) ? _.max(views, '_index') : views;
+
+    if (_.isObject(view)) {
+      // update the indexes of views after this one
+      _.each(this.children._views, function (laterView) {
+        if (laterView._index >= view._index) {
+          laterView._index += 1;
+        }
+      });
+    }
+  },
+  _attachView: function _attachView(view, index) {
+    // Only trigger attach if already attached and not buffering,
+    // otherwise _endBuffering() or Region#show() handles this.
+    var shouldTriggerAttach = !view._isAttached && !this._isBuffering && this._isAttached && this.monitorViewEvents !== false;
+
+    if (shouldTriggerAttach) {
+      triggerMethodOn(view, 'before:attach', view);
+    }
+
+    this.attachHtml(this, view, index);
+
+    if (shouldTriggerAttach) {
+      view._isAttached = true;
+      triggerMethodOn(view, 'attach', view);
+    }
+  },
+
+
+  // Build a `childView` for a model in the collection.
+  buildChildView: function buildChildView(child, ChildViewClass, childViewOptions) {
+    var options = _.extend({ model: child }, childViewOptions);
+    return new ChildViewClass(options);
+  },
+
+
+  // Remove the child view and destroy it. This function also updates the indices of later views
+  // in the collection in order to keep the children in sync with the collection.
+  removeChildView: function removeChildView(view) {
+    if (!view || view._isDestroyed) {
+      return view;
+    }
+
+    this._removeChildView(view);
+    this.children._updateLength();
+    // decrement the index of views after this one
+    this._updateIndices(view, false);
+    return view;
+  },
+
+
+  // check if the collection is empty or optionally whether an array of pre-processed models is empty
+  isEmpty: function isEmpty(options) {
+    var models = void 0;
+    if (_.result(options, 'processedModels')) {
+      models = options.processedModels;
+    } else {
+      models = this.collection ? this.collection.models : [];
+      models = this._filterModels(models);
+    }
+    return models.length === 0;
+  },
+
+
+  // You might need to override this if you've overridden attachHtml
+  attachBuffer: function attachBuffer(collectionView, buffer) {
+    this.Dom.appendContents(collectionView.el, buffer, { _$el: collectionView.$el });
+  },
+
+
+  // Create a fragment buffer from the currently buffered children
+  _createBuffer: function _createBuffer() {
+    var _this6 = this;
+
+    var elBuffer = this.Dom.createBuffer();
+    _.each(this._bufferedChildren, function (b) {
+      _this6.Dom.appendContents(elBuffer, b.el, { _$contents: b.$el });
+    });
+    return elBuffer;
+  },
+
+
+  // Append the HTML to the collection's `el`. Override this method to do something other
+  // than `.append`.
+  attachHtml: function attachHtml(collectionView, childView, index) {
+    if (collectionView._isBuffering) {
+      // buffering happens on reset events and initial renders
+      // in order to reduce the number of inserts into the
+      // document, which are expensive.
+      collectionView._bufferedChildren.splice(index, 0, childView);
+    } else {
+      // If we've already rendered the main collection, append
+      // the new child into the correct order if we need to. Otherwise
+      // append to the end.
+      if (!collectionView._insertBefore(childView, index)) {
+        collectionView._insertAfter(childView);
+      }
+    }
+  },
+
+
+  // Internal method. Check whether we need to insert the view into the correct position.
+  _insertBefore: function _insertBefore(childView, index) {
+    var currentView = void 0;
+    var findPosition = this.sort && index < this.children.length - 1;
+    if (findPosition) {
+      // Find the view after this one
+      currentView = _.find(this.children._views, function (view) {
+        return view._index === index + 1;
+      });
+    }
+
+    if (currentView) {
+      this.beforeEl(currentView.el, childView.el);
+      return true;
+    }
+
+    return false;
+  },
+
+
+  // Override to handle DOM inserting differently
+  beforeEl: function beforeEl(el, siblings) {
+    this.$(el).before(siblings);
+  },
+
+
+  // Internal method. Append a view to the end of the $el
+  _insertAfter: function _insertAfter(childView) {
+    this.Dom.appendContents(this.el, childView.el, { _$el: this.$el, _$contents: childView.$el });
+  },
+
+
+  // Internal method to set up the `children` object for storing all of the child views
+  _initChildViewStorage: function _initChildViewStorage() {
+    this.children = new Container();
+  },
+
+
+  // called by ViewMixin destroy
+  _removeChildren: function _removeChildren() {
+    this._destroyChildren();
+  },
+
+
+  // Destroy the child views that this collection view is holding on to, if any
+  _destroyChildren: function _destroyChildren(options) {
+    if (!this.children.length) {
+      return;
+    }
+
+    this.triggerMethod('before:destroy:children', this);
+    _.each(this.children._views, _.bind(this._removeChildView, this));
+    this.children._updateLength();
+    this.triggerMethod('destroy:children', this);
+  },
+
+
+  // Return true if the given child should be shown. Return false otherwise.
+  // The filter will be passed (child, index, collection), where
+  //  'child' is the given model
+  //  'index' is the index of that model in the collection
+  //  'collection' is the collection referenced by this CollectionView
+  _shouldAddChild: function _shouldAddChild(child, index) {
+    var filter = this.filter;
+    return !_.isFunction(filter) || filter.call(this, child, index, this.collection);
+  }
+}, {
+  setDomApi: setDomApi
+});
+
+_.extend(CollectionView.prototype, ViewMixin);
+
+// Provide a container to store, retrieve and
+// shut down child views.
+var Container$1 = function Container() {
+  this._init();
+};
+
+emulateCollection(Container$1.prototype, '_views');
+
+function stringComparator(comparator, view) {
+  return view.model && view.model.get(comparator);
+}
+
+// Container Methods
+// -----------------
+
+_.extend(Container$1.prototype, {
+
+  // Initializes an empty container
+  _init: function _init() {
+    this._views = [];
+    this._viewsByCid = {};
+    this._indexByModel = {};
+    this._updateLength();
+  },
+
+
+  // Add a view to this container. Stores the view
+  // by `cid` and makes it searchable by the model
+  // cid (and model itself). Additionally it stores
+  // the view by index in the _views array
+  _add: function _add(view) {
+    var index = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this._views.length;
+
+    var viewCid = view.cid;
+
+    // store the view
+    this._viewsByCid[viewCid] = view;
+
+    // index it by model
+    if (view.model) {
+      this._indexByModel[view.model.cid] = viewCid;
+    }
+
+    // add to end by default
+    this._views.splice(index, 0, view);
+
+    this._updateLength();
+  },
+
+
+  // Sort (mutate) and return the array of the child views.
+  _sort: function _sort(comparator, context) {
+    if (typeof comparator === 'string') {
+      comparator = _.partial(stringComparator, comparator);
+      return this._sortBy(comparator);
+    }
+
+    if (comparator.length === 1) {
+      return this._sortBy(_.bind(comparator, context));
+    }
+
+    return this._views.sort(_.bind(comparator, context));
+  },
+
+
+  // Makes `_.sortBy` mutate the array to match `this._views.sort`
+  _sortBy: function _sortBy(comparator) {
+    var sortedViews = _.sortBy(this._views, comparator);
+
+    this._set(sortedViews);
+
+    return sortedViews;
+  },
+
+
+  // Replace array contents without overwriting the reference.
+  _set: function _set(views) {
+    this._views.length = 0;
+
+    this._views.push.apply(this._views, views.slice(0));
+
+    this._updateLength();
+  },
+
+
+  // Swap views by index
+  _swap: function _swap(view1, view2) {
+    var view1Index = this.findIndexByView(view1);
+    var view2Index = this.findIndexByView(view2);
+
+    if (view1Index === -1 || view2Index === -1) {
+      return;
+    }
+
+    var swapView = this._views[view1Index];
+    this._views[view1Index] = this._views[view2Index];
+    this._views[view2Index] = swapView;
+  },
+
+
+  // Find a view by the model that was attached to it.
+  // Uses the model's `cid` to find it.
+  findByModel: function findByModel(model) {
+    return this.findByModelCid(model.cid);
+  },
+
+
+  // Find a view by the `cid` of the model that was attached to it.
+  // Uses the model's `cid` to find the view `cid` and
+  // retrieve the view using it.
+  findByModelCid: function findByModelCid(modelCid) {
+    var viewCid = this._indexByModel[modelCid];
+    return this.findByCid(viewCid);
+  },
+
+
+  // Find a view by index.
+  findByIndex: function findByIndex(index) {
+    return this._views[index];
+  },
+
+
+  // Find the index of a view instance
+  findIndexByView: function findIndexByView(view) {
+    return this._views.indexOf(view);
+  },
+
+
+  // Retrieve a view by its `cid` directly
+  findByCid: function findByCid(cid) {
+    return this._viewsByCid[cid];
+  },
+  hasView: function hasView(view) {
+    return !!this.findByCid(view.cid);
+  },
+
+
+  // Remove a view and clean up index references.
+  _remove: function _remove(view) {
+    if (!this._viewsByCid[view.cid]) {
+      return;
+    }
+
+    // delete model index
+    if (view.model) {
+      delete this._indexByModel[view.model.cid];
+    }
+
+    // remove the view from the container
+    delete this._viewsByCid[view.cid];
+
+    var index = this.findIndexByView(view);
+    this._views.splice(index, 1);
+
+    this._updateLength();
+  },
+
+
+  // Update the `.length` attribute on this container
+  _updateLength: function _updateLength() {
+    this.length = this._views.length;
+  }
+});
+
+// Next Collection View
+// ---------------
+
+var ClassOptions$4 = ['behaviors', 'childView', 'childViewEventPrefix', 'childViewEvents', 'childViewOptions', 'childViewTriggers', 'collectionEvents', 'emptyView', 'emptyViewOptions', 'events', 'modelEvents', 'sortWithCollection', 'triggers', 'ui', 'viewComparator', 'viewFilter'];
+
+// A view that iterates over a Backbone.Collection
+// and renders an individual child view for each model.
+var CollectionView$2 = Backbone.View.extend({
+  // flag for maintaining the sorted order of the collection
+  sortWithCollection: true,
+
+  // constructor
+  constructor: function constructor(options) {
+    this._setOptions(options);
+
+    this.mergeOptions(options, ClassOptions$4);
+
+    monitorViewEvents(this);
+
+    this.once('render', this._initialEvents);
+
+    // This children container isn't really used by a render, but it provides
+    // the ability to check `this.children.length` prior to rendering
+    // It also allows for cases where only addChildView is used
+    this._initChildViewStorage();
+    this._initBehaviors();
+
+    var args = Array.prototype.slice.call(arguments);
+    args[0] = this.options;
+    Backbone.View.prototype.constructor.apply(this, args);
+
+    // Init empty region
+    this.getEmptyRegion();
+
+    this.delegateEntityEvents();
+
+    this._triggerEventOnBehaviors('initialize', this);
+  },
+
+
+  // Internal method to set up the `children` object for storing all of the child views
+  _initChildViewStorage: function _initChildViewStorage() {
+    this.children = new Container$1();
+  },
+
+
+  // Create an region to show the emptyView
+  getEmptyRegion: function getEmptyRegion() {
+    if (this._emptyRegion && !this._emptyRegion.isDestroyed()) {
+      return this._emptyRegion;
+    }
+
+    this._emptyRegion = new Region({ el: this.el, replaceElement: false });
+
+    this._emptyRegion._parentView = this;
+
+    return this._emptyRegion;
+  },
+
+
+  // Configured the initial events that the collection view binds to.
+  _initialEvents: function _initialEvents() {
+    this.listenTo(this.collection, {
+      'sort': this._onCollectionSort,
+      'reset': this._onCollectionReset,
+      'update': this._onCollectionUpdate
+    });
+  },
+
+
+  // Internal method. This checks for any changes in the order of the collection.
+  // If the index of any view doesn't match, it will re-sort.
+  _onCollectionSort: function _onCollectionSort(collection, _ref) {
+    var add = _ref.add,
+        merge = _ref.merge,
+        remove = _ref.remove;
+
+    if (!this.sortWithCollection || this.viewComparator === false) {
+      return;
+    }
+
+    // If the data is changing we will handle the sort later in `_onCollectionUpdate`
+    if (add || remove || merge) {
+      return;
+    }
+
+    // If the only thing happening here is sorting, sort.
+    this.sort();
+  },
+  _onCollectionReset: function _onCollectionReset() {
+    this.render();
+  },
+
+
+  // Handle collection update model additions and  removals
+  _onCollectionUpdate: function _onCollectionUpdate(collection, options) {
+    var changes = options.changes;
+
+    // Remove first since it'll be a shorter array lookup.
+    var removedViews = changes.removed.length && this._removeChildModels(changes.removed);
+
+    this._addedViews = changes.added.length && this._addChildModels(changes.added);
+
+    this._detachChildren(removedViews);
+
+    this._showChildren();
+
+    // Destroy removed child views after all of the render is complete
+    this._removeChildViews(removedViews);
+  },
+  _removeChildModels: function _removeChildModels(models) {
+    var _this = this;
+
+    return _.reduce(models, function (views, model) {
+      var removeView = _this._removeChildModel(model);
+
+      if (removeView) {
+        views.push(removeView);
+      }
+
+      return views;
+    }, []);
+  },
+  _removeChildModel: function _removeChildModel(model) {
+    var view = this.children.findByModel(model);
+
+    if (view) {
+      this._removeChild(view);
+    }
+
+    return view;
+  },
+  _removeChild: function _removeChild(view) {
+    this.triggerMethod('before:remove:child', this, view);
+
+    this.children._remove(view);
+
+    this.triggerMethod('remove:child', this, view);
+  },
+
+
+  // Added views are returned for consistency with _removeChildModels
+  _addChildModels: function _addChildModels(models) {
+    return _.map(models, _.bind(this._addChildModel, this));
+  },
+  _addChildModel: function _addChildModel(model) {
+    var view = this._createChildView(model);
+
+    this._addChild(view);
+
+    return view;
+  },
+  _createChildView: function _createChildView(model) {
+    var ChildView = this._getChildView(model);
+    var childViewOptions = this._getChildViewOptions(model);
+    var view = this.buildChildView(model, ChildView, childViewOptions);
+
+    return view;
+  },
+  _addChild: function _addChild(view, index) {
+    this.triggerMethod('before:add:child', this, view);
+
+    this._setupChildView(view);
+    this.children._add(view, index);
+
+    this.triggerMethod('add:child', this, view);
+  },
+
+
+  // Retrieve the `childView` class
+  // The `childView` property can be either a view class or a function that
+  // returns a view class. If it is a function, it will receive the model that
+  // will be passed to the view instance (created from the returned view class)
+  _getChildView: function _getChildView(child) {
+    var childView = this.childView;
+
+    if (!childView) {
+      throw new MarionetteError({
+        name: 'NoChildViewError',
+        message: 'A "childView" must be specified'
+      });
+    }
+
+    childView = this._getView(childView, child);
+
+    if (!childView) {
+      throw new MarionetteError({
+        name: 'InvalidChildViewError',
+        message: '"childView" must be a view class or a function that returns a view class'
+      });
+    }
+
+    return childView;
+  },
+
+
+  // First check if the `view` is a view class (the common case)
+  // Then check if it's a function (which we assume that returns a view class)
+  _getView: function _getView(view, child) {
+    if (view.prototype instanceof Backbone.View || view === Backbone.View) {
+      return view;
+    } else if (_.isFunction(view)) {
+      return view.call(this, child);
+    }
+  },
+  _getChildViewOptions: function _getChildViewOptions(child) {
+    if (_.isFunction(this.childViewOptions)) {
+      return this.childViewOptions(child);
+    }
+
+    return this.childViewOptions;
+  },
+
+
+  // Build a `childView` for a model in the collection.
+  // Override to customize the build
+  buildChildView: function buildChildView(child, ChildViewClass, childViewOptions) {
+    var options = _.extend({ model: child }, childViewOptions);
+    return new ChildViewClass(options);
+  },
+  _setupChildView: function _setupChildView(view) {
+    monitorViewEvents(view);
+
+    // We need to listen for if a view is destroyed in a way other
+    // than through the CollectionView.
+    // If this happens we need to remove the reference to the view
+    // since once a view has been destroyed we can not reuse it.
+    view.on('destroy', this.removeChildView, this);
+
+    // set up the child view event forwarding
+    this._proxyChildViewEvents(view);
+  },
+
+
+  // used by ViewMixin's `_childViewEventHandler`
+  _getImmediateChildren: function _getImmediateChildren() {
+    return this.children._views;
+  },
+
+
+  // Overriding Backbone.View's `setElement` to handle
+  // if an el was previously defined. If so, the view might be
+  // attached on setElement.
+  setElement: function setElement() {
+    Backbone.View.prototype.setElement.apply(this, arguments);
+
+    this._isAttached = isNodeAttached(this.el);
+
+    return this;
+  },
+
+
+  // Render children views.
+  render: function render() {
+    if (this._isDestroyed) {
+      return this;
+    }
+    this.triggerMethod('before:render', this);
+
+    this._destroyChildren();
+
+    // After all children have been destroyed re-init the container
+    this.children._init();
+
+    if (this.collection) {
+      this._addChildModels(this.collection.models);
+    }
+
+    this._showChildren();
+
+    this._isRendered = true;
+
+    this.triggerMethod('render', this);
+    return this;
+  },
+
+
+  // Sorts the children then filters and renders the results.
+  sort: function sort() {
+    if (this._isDestroyed) {
+      return this;
+    }
+
+    if (!this.children.length) {
+      return this;
+    }
+
+    this._showChildren();
+
+    return this;
+  },
+  _showChildren: function _showChildren() {
+    if (this.isEmpty()) {
+      this._showEmptyView();
+      return;
+    }
+
+    this._sortChildren();
+
+    this.filter();
+  },
+
+
+  // Returns true if the collectionView is considered empty.
+  // This is called twice during a render. Once to check the data,
+  // and again when views are filtered. Override this function to
+  // customize what empty means.
+  isEmpty: function isEmpty(allViewsFiltered) {
+    return allViewsFiltered || !this.children.length;
+  },
+  _showEmptyView: function _showEmptyView() {
+    var EmptyView = this._getEmptyView();
+
+    if (!EmptyView) {
+      return;
+    }
+
+    var options = this._getEmptyViewOptions();
+
+    var emptyRegion = this.getEmptyRegion();
+
+    emptyRegion.show(new EmptyView(options));
+  },
+
+
+  // Retrieve the empty view class
+  _getEmptyView: function _getEmptyView() {
+    var emptyView = this.emptyView;
+
+    if (!emptyView) {
+      return;
+    }
+
+    return this._getView(emptyView);
+  },
+
+
+  // Remove the emptyView
+  _destroyEmptyView: function _destroyEmptyView() {
+    var emptyRegion = this.getEmptyRegion();
+    // Only empty if a view is show so the region
+    // doesn't detach any other unrelated HTML
+    if (emptyRegion.hasView()) {
+      emptyRegion.empty();
+    }
+  },
+
+
+  //
+  _getEmptyViewOptions: function _getEmptyViewOptions() {
+    var emptyViewOptions = this.emptyViewOptions || this.childViewOptions;
+
+    if (_.isFunction(emptyViewOptions)) {
+      return emptyViewOptions.call(this);
+    }
+
+    return emptyViewOptions;
+  },
+
+
+  // Sorts views by viewComparator and sets the children to the new order
+  _sortChildren: function _sortChildren() {
+    var viewComparator = this.getComparator();
+
+    if (!viewComparator) {
+      return;
+    }
+
+    // If children are sorted prevent added to end perf
+    delete this._addedViews;
+
+    this.triggerMethod('before:sort', this);
+
+    this.children._sort(viewComparator, this);
+
+    this.triggerMethod('sort', this);
+  },
+
+
+  // Sets the view's `viewComparator` and applies the sort if the view is ready.
+  // To prevent the render pass `{ preventRender: true }` as the 2nd argument.
+  setComparator: function setComparator(comparator) {
+    var _ref2 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+        preventRender = _ref2.preventRender;
+
+    var comparatorChanged = this.viewComparator !== comparator;
+    var shouldSort = comparatorChanged && !preventRender;
+
+    this.viewComparator = comparator;
+
+    if (shouldSort) {
+      this.sort();
+    }
+
+    return this;
+  },
+
+
+  // Clears the `viewComparator` and follows the same rules for rendering as `setComparator`.
+  removeComparator: function removeComparator(options) {
+    return this.setComparator(null, options);
+  },
+
+
+  // If viewComparator is overriden it will be returned here.
+  // Additionally override this function to provide custom
+  // viewComparator logic
+  getComparator: function getComparator() {
+    if (this.viewComparator) {
+      return this.viewComparator;
+    }
+
+    if (!this.sortWithCollection || this.viewComparator === false || !this.collection) {
+      return false;
+    }
+
+    return this._viewComparator;
+  },
+
+
+  // Default internal view comparator that order the views by
+  // the order of the collection
+  _viewComparator: function _viewComparator(view) {
+    return this.collection.indexOf(view.model);
+  },
+
+
+  // This method re-filters the children views and re-renders the results
+  filter: function filter() {
+    if (this._isDestroyed) {
+      return this;
+    }
+
+    if (!this.children.length) {
+      return this;
+    }
+
+    var filteredViews = this._filterChildren();
+
+    this._renderChildren(filteredViews);
+
+    return this;
+  },
+  _filterChildren: function _filterChildren() {
+    var _this2 = this;
+
+    var viewFilter = this._getFilter();
+    var addedViews = this._addedViews;
+
+    delete this._addedViews;
+
+    if (!viewFilter) {
+      if (addedViews) {
+        return addedViews;
+      }
+
+      return this.children._views;
+    }
+
+    this.triggerMethod('before:filter', this);
+
+    var attachViews = [];
+    var detachViews = [];
+
+    _.each(this.children._views, function (view, key, children) {
+      (viewFilter.call(_this2, view, key, children) ? attachViews : detachViews).push(view);
+    });
+
+    this._detachChildren(detachViews);
+
+    this.triggerMethod('filter', this, attachViews, detachViews);
+
+    return attachViews;
+  },
+
+
+  // This method returns a function for the viewFilter
+  _getFilter: function _getFilter() {
+    var viewFilter = this.getFilter();
+
+    if (!viewFilter) {
+      return false;
+    }
+
+    if (_.isFunction(viewFilter)) {
+      return viewFilter;
+    }
+
+    // Support filter predicates `{ fooFlag: true }`
+    if (_.isObject(viewFilter)) {
+      var matcher = _.matches(viewFilter);
+      return function (view) {
+        return matcher(view.model && view.model.attributes);
+      };
+    }
+
+    // Filter by model attribute
+    if (_.isString(viewFilter)) {
+      return function (view) {
+        return view.model && view.model.get(viewFilter);
+      };
+    }
+
+    throw new MarionetteError({
+      name: 'InvalidViewFilterError',
+      message: '"viewFilter" must be a function, predicate object literal, a string indicating a model attribute, or falsy'
+    });
+  },
+
+
+  // Override this function to provide custom
+  // viewFilter logic
+  getFilter: function getFilter() {
+    return this.viewFilter;
+  },
+
+
+  // Sets the view's `viewFilter` and applies the filter if the view is ready.
+  // To prevent the render pass `{ preventRender: true }` as the 2nd argument.
+  setFilter: function setFilter(filter) {
+    var _ref3 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+        preventRender = _ref3.preventRender;
+
+    var filterChanged = this.viewFilter !== filter;
+    var shouldRender = filterChanged && !preventRender;
+
+    this.viewFilter = filter;
+
+    if (shouldRender) {
+      this.filter();
+    }
+
+    return this;
+  },
+
+
+  // Clears the `viewFilter` and follows the same rules for rendering as `setFilter`.
+  removeFilter: function removeFilter(options) {
+    return this.setFilter(null, options);
+  },
+  _detachChildren: function _detachChildren(detachingViews) {
+    _.each(detachingViews, _.bind(this._detachChildView, this));
+  },
+  _detachChildView: function _detachChildView(view) {
+    var shouldTriggerDetach = view._isAttached && this.monitorViewEvents !== false;
+    if (shouldTriggerDetach) {
+      triggerMethodOn(view, 'before:detach', view);
+    }
+
+    this.detachHtml(view);
+
+    if (shouldTriggerDetach) {
+      view._isAttached = false;
+      triggerMethodOn(view, 'detach', view);
+    }
+  },
+
+
+  // Override this method to change how the collectionView detaches a child view
+  detachHtml: function detachHtml(view) {
+    this.Dom.detachEl(view.el, view.$el);
+  },
+  _renderChildren: function _renderChildren(views) {
+    if (this.isEmpty(!views.length)) {
+      this._showEmptyView();
+      return;
+    }
+
+    this._destroyEmptyView();
+
+    this.triggerMethod('before:render:children', this, views);
+
+    var els = this._getBuffer(views);
+
+    this._attachChildren(els, views);
+
+    this.triggerMethod('render:children', this, views);
+  },
+  _attachChildren: function _attachChildren(els, views) {
+    var shouldTriggerAttach = this._isAttached && this.monitorViewEvents !== false;
+
+    views = shouldTriggerAttach ? views : [];
+
+    _.each(views, function (view) {
+      if (view._isAttached) {
+        return;
+      }
+      triggerMethodOn(view, 'before:attach', view);
+    });
+
+    this.attachHtml(els);
+
+    _.each(views, function (view) {
+      if (view._isAttached) {
+        return;
+      }
+      view._isAttached = true;
+      triggerMethodOn(view, 'attach', view);
+    });
+  },
+
+
+  // Renders each view in children and creates a fragment buffer from them
+  _getBuffer: function _getBuffer(views) {
+    var _this3 = this;
+
+    var elBuffer = this.Dom.createBuffer();
+
+    _.each(views, function (view) {
+      renderView(view);
+      _this3.Dom.appendContents(elBuffer, view.el, { _$contents: view.$el });
+    });
+
+    return elBuffer;
+  },
+
+
+  // Override this method to do something other than `.append`.
+  // You can attach any HTML at this point including the els.
+  attachHtml: function attachHtml(els) {
+    this.Dom.appendContents(this.el, els, { _$el: this.$el });
+  },
+  swapChildViews: function swapChildViews(view1, view2) {
+    if (!this.children.hasView(view1) || !this.children.hasView(view2)) {
+      throw new MarionetteError({
+        name: 'ChildSwapError',
+        message: 'Both views must be children of the collection view'
+      });
+    }
+
+    this.children._swap(view1, view2);
+    this.Dom.swapEl(view1.el, view2.el);
+
+    // If the views are not filtered the same, refilter
+    if (this.Dom.hasEl(this.el, view1.el) !== this.Dom.hasEl(this.el, view2.el)) {
+      this.filter();
+    }
+
+    return this;
+  },
+
+
+  // Render the child's view and add it to the HTML for the collection view at a given index, based on the current sort
+  addChildView: function addChildView(view, index) {
+    if (!view || view._isDestroyed) {
+      return view;
+    }
+
+    // Only cache views if added to the end
+    if (!index || index >= this.children.length) {
+      this._addedViews = [view];
+    }
+    this._addChild(view, index);
+    this._showChildren();
+
+    return view;
+  },
+
+
+  // Detach a view from the children.  Best used when adding a
+  // childView from `addChildView`
+  detachChildView: function detachChildView(view) {
+    this.removeChildView(view, { shouldDetach: true });
+
+    return view;
+  },
+
+
+  // Remove the child view and destroy it.  Best used when adding a
+  // childView from `addChildView`
+  // The options argument is for internal use only
+  removeChildView: function removeChildView(view, options) {
+    if (!view) {
+      return view;
+    }
+
+    this._removeChildView(view, options);
+
+    this._removeChild(view);
+
+    if (this.isEmpty()) {
+      this._showEmptyView();
+    }
+
+    return view;
+  },
+  _removeChildViews: function _removeChildViews(views) {
+    _.each(views, _.bind(this._removeChildView, this));
+  },
+  _removeChildView: function _removeChildView(view) {
+    var _ref4 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+        shouldDetach = _ref4.shouldDetach;
+
+    view.off('destroy', this.removeChildView, this);
+
+    if (shouldDetach) {
+      this._detachChildView(view);
+    } else {
+      this._destroyChildView(view);
+    }
+
+    this.stopListening(view);
+  },
+  _destroyChildView: function _destroyChildView(view) {
+    if (view._isDestroyed) {
+      return;
+    }
+
+    view._shouldDisableEvents = this.monitorViewEvents === false;
+    destroyView(view);
+  },
+
+
+  // called by ViewMixin destroy
+  _removeChildren: function _removeChildren() {
+    this._destroyChildren();
+    var emptyRegion = this.getEmptyRegion();
+    emptyRegion.destroy();
+    delete this._addedViews;
+  },
+
+
+  // Destroy the child views that this collection view is holding on to, if any
+  _destroyChildren: function _destroyChildren() {
+    if (!this.children || !this.children.length) {
+      return;
+    }
+
+    this.triggerMethod('before:destroy:children', this);
+    if (this.monitorViewEvents === false) {
+      this.Dom.detachContents(this.el, this.$el);
+    }
+    _.each(this.children._views, _.bind(this._removeChildView, this));
+    this.triggerMethod('destroy:children', this);
+  }
+}, {
+  setDomApi: setDomApi
+});
+
+_.extend(CollectionView$2.prototype, ViewMixin);
+
+// Composite View
+// --------------
+
+var ClassOptions$5 = ['childViewContainer', 'template', 'templateContext'];
+
+// Used for rendering a branch-leaf, hierarchical structure.
+// Extends directly from CollectionView
+// @deprecated
+var CompositeView = CollectionView.extend({
+
+  // Setting up the inheritance chain which allows changes to
+  // Marionette.CollectionView.prototype.constructor which allows overriding
+  // option to pass '{sort: false}' to prevent the CompositeView from
+  // maintaining the sorted order of the collection.
+  // This will fallback onto appending childView's to the end.
+  constructor: function constructor(options) {
+    deprecate('CompositeView is deprecated. Convert to View at your earliest convenience');
+
+    this.mergeOptions(options, ClassOptions$5);
+
+    CollectionView.prototype.constructor.apply(this, arguments);
+  },
+
+
+  // Configured the initial events that the composite view
+  // binds to. Override this method to prevent the initial
+  // events, or to add your own initial events.
+  _initialEvents: function _initialEvents() {
+
+    // Bind only after composite view is rendered to avoid adding child views
+    // to nonexistent childViewContainer
+
+    if (this.collection) {
+      this.listenTo(this.collection, 'add', this._onCollectionAdd);
+      this.listenTo(this.collection, 'update', this._onCollectionUpdate);
+      this.listenTo(this.collection, 'reset', this.renderChildren);
+
+      if (this.sort) {
+        this.listenTo(this.collection, 'sort', this._sortViews);
+      }
+    }
+  },
+
+
+  // Retrieve the `childView` to be used when rendering each of
+  // the items in the collection. The default is to return
+  // `this.childView` or Marionette.CompositeView if no `childView`
+  // has been defined. As happens in CollectionView, `childView` can
+  // be a function (which should return a view class).
+  _getChildView: function _getChildView(child) {
+    var childView = this.childView;
+
+    // for CompositeView, if `childView` is not specified, we'll get the same
+    // composite view class rendered for each child in the collection
+    // then check if the `childView` is a view class (the common case)
+    // finally check if it's a function (which we assume that returns a view class)
+    if (!childView) {
+      return this.constructor;
+    }
+
+    childView = this._getView(childView, child);
+
+    if (!childView) {
+      throw new MarionetteError({
+        name: 'InvalidChildViewError',
+        message: '"childView" must be a view class or a function that returns a view class'
+      });
+    }
+
+    return childView;
+  },
+
+
+  // Return the serialized model
+  serializeData: function serializeData() {
+    return this.serializeModel();
+  },
+
+
+  // Renders the model and the collection.
+  render: function render() {
+    if (this._isDestroyed) {
+      return this;
+    }
+    this._isRendering = true;
+    this.resetChildViewContainer();
+
+    this.triggerMethod('before:render', this);
+
+    this._renderTemplate();
+    this.bindUIElements();
+    this.renderChildren();
+
+    this._isRendering = false;
+    this._isRendered = true;
+    this.triggerMethod('render', this);
+    return this;
+  },
+  renderChildren: function renderChildren() {
+    if (this._isRendered || this._isRendering) {
+      CollectionView.prototype._renderChildren.call(this);
+    }
+  },
+
+
+  // You might need to override this if you've overridden attachHtml
+  attachBuffer: function attachBuffer(compositeView, buffer) {
+    var $container = this.getChildViewContainer(compositeView);
+    this.Dom.appendContents($container[0], buffer, { _$el: $container });
+  },
+
+
+  // Internal method. Append a view to the end of the $el.
+  // Overidden from CollectionView to ensure view is appended to
+  // childViewContainer
+  _insertAfter: function _insertAfter(childView) {
+    var $container = this.getChildViewContainer(this, childView);
+    this.Dom.appendContents($container[0], childView.el, { _$el: $container, _$contents: childView.$el });
+  },
+
+
+  // Internal method. Append reordered childView'.
+  // Overidden from CollectionView to ensure reordered views
+  // are appended to childViewContainer
+  _appendReorderedChildren: function _appendReorderedChildren(children) {
+    var $container = this.getChildViewContainer(this);
+    this.Dom.appendContents($container[0], children, { _$el: $container });
+  },
+
+
+  // Internal method to ensure an `$childViewContainer` exists, for the
+  // `attachHtml` method to use.
+  getChildViewContainer: function getChildViewContainer(containerView, childView) {
+    if (!!containerView.$childViewContainer) {
+      return containerView.$childViewContainer;
+    }
+
+    var container = void 0;
+    var childViewContainer = containerView.childViewContainer;
+    if (childViewContainer) {
+
+      var selector = _.result(containerView, 'childViewContainer');
+
+      if (selector.charAt(0) === '@' && containerView.ui) {
+        container = containerView.ui[selector.substr(4)];
+      } else {
+        container = this.$(selector);
+      }
+
+      if (container.length <= 0) {
+        throw new MarionetteError({
+          name: 'ChildViewContainerMissingError',
+          message: 'The specified "childViewContainer" was not found: ' + containerView.childViewContainer
+        });
+      }
+    } else {
+      container = containerView.$el;
+    }
+
+    containerView.$childViewContainer = container;
+    return container;
+  },
+
+
+  // Internal method to reset the `$childViewContainer` on render
+  resetChildViewContainer: function resetChildViewContainer() {
+    if (this.$childViewContainer) {
+      this.$childViewContainer = undefined;
+    }
+  }
+});
+
+// To prevent duplication but allow the best View organization
+// Certain View methods are mixed directly into the deprecated CompositeView
+var MixinFromView = _.pick(View.prototype, 'serializeModel', 'getTemplate', '_renderTemplate', '_renderHtml', 'mixinTemplateContext', 'attachElContent');
+_.extend(CompositeView.prototype, MixinFromView);
+
+// Behavior
+// --------
+
+// A Behavior is an isolated set of DOM /
+// user interactions that can be mixed into any View.
+// Behaviors allow you to blackbox View specific interactions
+// into portable logical chunks, keeping your views simple and your code DRY.
+
+var ClassOptions$6 = ['collectionEvents', 'events', 'modelEvents', 'triggers', 'ui'];
+
+var Behavior = MarionetteObject.extend({
+  cidPrefix: 'mnb',
+
+  constructor: function constructor(options, view) {
+    // Setup reference to the view.
+    // this comes in handle when a behavior
+    // wants to directly talk up the chain
+    // to the view.
+    this.view = view;
+
+    if (this.defaults) {
+      deprecate('Behavior defaults are deprecated. For similar functionality set options on the Behavior class.');
+    }
+
+    this.defaults = _.clone(_.result(this, 'defaults', {}));
+
+    this._setOptions(_.extend({}, this.defaults, options));
+    this.mergeOptions(this.options, ClassOptions$6);
+
+    // Construct an internal UI hash using
+    // the behaviors UI hash and then the view UI hash.
+    // This allows the user to use UI hash elements
+    // defined in the parent view as well as those
+    // defined in the given behavior.
+    // This order will help the reuse and share of a behavior
+    // between multiple views, while letting a view override a
+    // selector under an UI key.
+    this.ui = _.extend({}, _.result(this, 'ui'), _.result(view, 'ui'));
+
+    MarionetteObject.apply(this, arguments);
+  },
+
+
+  // proxy behavior $ method to the view
+  // this is useful for doing jquery DOM lookups
+  // scoped to behaviors view.
+  $: function $() {
+    return this.view.$.apply(this.view, arguments);
+  },
+
+
+  // Stops the behavior from listening to events.
+  // Overrides Object#destroy to prevent additional events from being triggered.
+  destroy: function destroy() {
+    this.stopListening();
+
+    this.view._removeBehavior(this);
+
+    return this;
+  },
+  proxyViewProperties: function proxyViewProperties() {
+    this.$el = this.view.$el;
+    this.el = this.view.el;
+
+    return this;
+  },
+  bindUIElements: function bindUIElements() {
+    this._bindUIElements();
+
+    return this;
+  },
+  unbindUIElements: function unbindUIElements() {
+    this._unbindUIElements();
+
+    return this;
+  },
+  getUI: function getUI(name) {
+    return this._getUI(name);
+  },
+
+
+  // Handle `modelEvents`, and `collectionEvents` configuration
+  delegateEntityEvents: function delegateEntityEvents() {
+    this._delegateEntityEvents(this.view.model, this.view.collection);
+
+    return this;
+  },
+  undelegateEntityEvents: function undelegateEntityEvents() {
+    this._undelegateEntityEvents(this.view.model, this.view.collection);
+
+    return this;
+  },
+  getEvents: function getEvents() {
+    var _this = this;
+
+    // Normalize behavior events hash to allow
+    // a user to use the @ui. syntax.
+    var behaviorEvents = this.normalizeUIKeys(_.result(this, 'events'));
+
+    // binds the handler to the behavior and builds a unique eventName
+    return _.reduce(behaviorEvents, function (events, behaviorHandler, key) {
+      if (!_.isFunction(behaviorHandler)) {
+        behaviorHandler = _this[behaviorHandler];
+      }
+      if (!behaviorHandler) {
+        return events;
+      }
+      key = getNamespacedEventName(key, _this.cid);
+      events[key] = _.bind(behaviorHandler, _this);
+      return events;
+    }, {});
+  },
+
+
+  // Internal method to build all trigger handlers for a given behavior
+  getTriggers: function getTriggers() {
+    if (!this.triggers) {
+      return;
+    }
+
+    // Normalize behavior triggers hash to allow
+    // a user to use the @ui. syntax.
+    var behaviorTriggers = this.normalizeUIKeys(_.result(this, 'triggers'));
+
+    return this._getViewTriggers(this.view, behaviorTriggers);
+  }
+});
+
+_.extend(Behavior.prototype, DelegateEntityEventsMixin, TriggersMixin, UIMixin);
+
+// Application
+// -----------
+var ClassOptions$7 = ['region', 'regionClass'];
+
+// A container for a Marionette application.
+var Application = MarionetteObject.extend({
+  cidPrefix: 'mna',
+
+  constructor: function constructor(options) {
+    this._setOptions(options);
+
+    this.mergeOptions(options, ClassOptions$7);
+
+    this._initRegion();
+
+    MarionetteObject.prototype.constructor.apply(this, arguments);
+  },
+
+
+  regionClass: Region,
+
+  _initRegion: function _initRegion() {
+    var region = this.region;
+
+    if (!region) {
+      return;
+    }
+
+    var defaults = {
+      regionClass: this.regionClass
+    };
+
+    this._region = buildRegion(region, defaults);
+  },
+  getRegion: function getRegion() {
+    return this._region;
+  },
+  showView: function showView(view) {
+    var region = this.getRegion();
+
+    for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      args[_key - 1] = arguments[_key];
+    }
+
+    return region.show.apply(region, [view].concat(args));
+  },
+  getView: function getView() {
+    return this.getRegion().currentView;
+  },
+
+
+  // kick off all of the application's processes.
+  start: function start(options) {
+    this.triggerMethod('before:start', this, options);
+    this.triggerMethod('start', this, options);
+    return this;
+  }
+});
+
+// App Router
+// ----------
+
+// Reduce the boilerplate code of handling route events
+// and then calling a single method on another object,
+// called a controller.
+// Have your routers configured to call the method on
+// your controller, directly.
+//
+// Configure an AppRouter with `appRoutes`.
+//
+// App routers can only take one `controller` object.
+// It is recommended that you divide your controller
+// objects in to smaller pieces of related functionality
+// and have multiple routers / controllers, instead of
+// just one giant router and controller.
+//
+// You can also add standard routes to an AppRouter.
+
+var ClassOptions$8 = ['appRoutes', 'controller'];
+
+var AppRouter = Backbone.Router.extend({
+  constructor: function constructor(options) {
+    this._setOptions(options);
+
+    this.mergeOptions(options, ClassOptions$8);
+
+    Backbone.Router.apply(this, arguments);
+
+    var appRoutes = this.appRoutes;
+    var controller = this._getController();
+    this.processAppRoutes(controller, appRoutes);
+    this.on('route', this._processOnRoute, this);
+  },
+
+
+  // Similar to route method on a Backbone Router but
+  // method is called on the controller
+  appRoute: function appRoute(route, methodName) {
+    var controller = this._getController();
+    this._addAppRoute(controller, route, methodName);
+    return this;
+  },
+
+
+  // process the route event and trigger the onRoute
+  // method call, if it exists
+  _processOnRoute: function _processOnRoute(routeName, routeArgs) {
+    // make sure an onRoute before trying to call it
+    if (_.isFunction(this.onRoute)) {
+      // find the path that matches the current route
+      var routePath = _.invert(this.appRoutes)[routeName];
+      this.onRoute(routeName, routePath, routeArgs);
+    }
+  },
+
+
+  // Internal method to process the `appRoutes` for the
+  // router, and turn them in to routes that trigger the
+  // specified method on the specified `controller`.
+  processAppRoutes: function processAppRoutes(controller, appRoutes) {
+    var _this = this;
+
+    if (!appRoutes) {
+      return this;
+    }
+
+    var routeNames = _.keys(appRoutes).reverse(); // Backbone requires reverted order of routes
+
+    _.each(routeNames, function (route) {
+      _this._addAppRoute(controller, route, appRoutes[route]);
+    });
+
+    return this;
+  },
+  _getController: function _getController() {
+    return this.controller;
+  },
+  _addAppRoute: function _addAppRoute(controller, route, methodName) {
+    var method = controller[methodName];
+
+    if (!method) {
+      throw new MarionetteError('Method "' + methodName + '" was not found on the controller');
+    }
+
+    this.route(route, methodName, _.bind(method, controller));
+  },
+
+
+  triggerMethod: triggerMethod
+});
+
+_.extend(AppRouter.prototype, CommonMixin);
+
+// Placeholder method to be extended by the user.
+// The method should define the object that stores the behaviors.
+// i.e.
+//
+// ```js
+// Marionette.Behaviors.behaviorsLookup: function() {
+//   return App.Behaviors
+// }
+// ```
+function behaviorsLookup() {
+  throw new MarionetteError({
+    message: 'You must define where your behaviors are stored.',
+    url: 'marionette.behaviors.md#behaviorslookup'
+  });
+}
+
+var previousMarionette = Backbone.Marionette;
+var Marionette = Backbone.Marionette = {};
+
+// This allows you to run multiple instances of Marionette on the same
+// webapp. After loading the new version, call `noConflict()` to
+// get a reference to it. At the same time the old version will be
+// returned to Backbone.Marionette.
+Marionette.noConflict = function () {
+  Backbone.Marionette = previousMarionette;
+  return this;
+};
+
+// Utilities
+Marionette.bindEvents = proxy(bindEvents);
+Marionette.unbindEvents = proxy(unbindEvents);
+Marionette.bindRequests = proxy(bindRequests);
+Marionette.unbindRequests = proxy(unbindRequests);
+Marionette.mergeOptions = proxy(mergeOptions);
+Marionette.getOption = proxy(getOption);
+Marionette.normalizeMethods = proxy(normalizeMethods);
+Marionette.extend = extend;
+Marionette.isNodeAttached = isNodeAttached;
+Marionette.deprecate = deprecate;
+Marionette.triggerMethod = proxy(triggerMethod);
+Marionette.triggerMethodOn = triggerMethodOn;
+Marionette.isEnabled = isEnabled;
+Marionette.setEnabled = setEnabled;
+Marionette.monitorViewEvents = monitorViewEvents;
+
+Marionette.Behaviors = {};
+Marionette.Behaviors.behaviorsLookup = behaviorsLookup;
+
+// Classes
+Marionette.Application = Application;
+Marionette.AppRouter = AppRouter;
+Marionette.Renderer = Renderer;
+Marionette.TemplateCache = TemplateCache;
+Marionette.View = View;
+Marionette.CollectionView = CollectionView;
+Marionette.NextCollectionView = CollectionView$2;
+Marionette.CompositeView = CompositeView;
+Marionette.Behavior = Behavior;
+Marionette.Region = Region;
+Marionette.Error = MarionetteError;
+Marionette.Object = MarionetteObject;
+
+// Configuration
+Marionette.DEV_MODE = false;
+Marionette.FEATURES = FEATURES;
+Marionette.VERSION = version;
+Marionette.DomApi = DomApi;
+Marionette.setDomApi = function (mixin) {
+  CollectionView.setDomApi(mixin);
+  CompositeView.setDomApi(mixin);
+  CollectionView$2.setDomApi(mixin);
+  Region.setDomApi(mixin);
+  View.setDomApi(mixin);
+};
+
+return Marionette;
+
+})));
+this && this.Marionette && (this.Mn = this.Marionette);
+
+
+},{"backbone":14,"backbone.radio":13,"underscore":38}],13:[function(require,module,exports){
+// Backbone.Radio v2.0.0
+
+(function (global, factory) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('underscore'), require('backbone')) :
+  typeof define === 'function' && define.amd ? define(['underscore', 'backbone'], factory) :
+  (global.Backbone = global.Backbone || {}, global.Backbone.Radio = factory(global._,global.Backbone));
+}(this, function (_,Backbone) { 'use strict';
+
+  _ = 'default' in _ ? _['default'] : _;
+  Backbone = 'default' in Backbone ? Backbone['default'] : Backbone;
+
+  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+    return typeof obj;
+  } : function (obj) {
+    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+  };
+
+  var previousRadio = Backbone.Radio;
+
+  var Radio = Backbone.Radio = {};
+
+  Radio.VERSION = '2.0.0';
+
+  // This allows you to run multiple instances of Radio on the same
+  // webapp. After loading the new version, call `noConflict()` to
+  // get a reference to it. At the same time the old version will be
+  // returned to Backbone.Radio.
+  Radio.noConflict = function () {
+    Backbone.Radio = previousRadio;
+    return this;
+  };
+
+  // Whether or not we're in DEBUG mode or not. DEBUG mode helps you
+  // get around the issues of lack of warnings when events are mis-typed.
+  Radio.DEBUG = false;
+
+  // Format debug text.
+  Radio._debugText = function (warning, eventName, channelName) {
+    return warning + (channelName ? ' on the ' + channelName + ' channel' : '') + ': "' + eventName + '"';
+  };
+
+  // This is the method that's called when an unregistered event was called.
+  // By default, it logs warning to the console. By overriding this you could
+  // make it throw an Error, for instance. This would make firing a nonexistent event
+  // have the same consequence as firing a nonexistent method on an Object.
+  Radio.debugLog = function (warning, eventName, channelName) {
+    if (Radio.DEBUG && console && console.warn) {
+      console.warn(Radio._debugText(warning, eventName, channelName));
+    }
+  };
+
+  var eventSplitter = /\s+/;
+
+  // An internal method used to handle Radio's method overloading for Requests.
+  // It's borrowed from Backbone.Events. It differs from Backbone's overload
+  // API (which is used in Backbone.Events) in that it doesn't support space-separated
+  // event names.
+  Radio._eventsApi = function (obj, action, name, rest) {
+    if (!name) {
+      return false;
+    }
+
+    var results = {};
+
+    // Handle event maps.
+    if ((typeof name === 'undefined' ? 'undefined' : _typeof(name)) === 'object') {
+      for (var key in name) {
+        var result = obj[action].apply(obj, [key, name[key]].concat(rest));
+        eventSplitter.test(key) ? _.extend(results, result) : results[key] = result;
+      }
+      return results;
+    }
+
+    // Handle space separated event names.
+    if (eventSplitter.test(name)) {
+      var names = name.split(eventSplitter);
+      for (var i = 0, l = names.length; i < l; i++) {
+        results[names[i]] = obj[action].apply(obj, [names[i]].concat(rest));
+      }
+      return results;
+    }
+
+    return false;
+  };
+
+  // An optimized way to execute callbacks.
+  Radio._callHandler = function (callback, context, args) {
+    var a1 = args[0],
+        a2 = args[1],
+        a3 = args[2];
+    switch (args.length) {
+      case 0:
+        return callback.call(context);
+      case 1:
+        return callback.call(context, a1);
+      case 2:
+        return callback.call(context, a1, a2);
+      case 3:
+        return callback.call(context, a1, a2, a3);
+      default:
+        return callback.apply(context, args);
+    }
+  };
+
+  // A helper used by `off` methods to the handler from the store
+  function removeHandler(store, name, callback, context) {
+    var event = store[name];
+    if ((!callback || callback === event.callback || callback === event.callback._callback) && (!context || context === event.context)) {
+      delete store[name];
+      return true;
+    }
+  }
+
+  function removeHandlers(store, name, callback, context) {
+    store || (store = {});
+    var names = name ? [name] : _.keys(store);
+    var matched = false;
+
+    for (var i = 0, length = names.length; i < length; i++) {
+      name = names[i];
+
+      // If there's no event by this name, log it and continue
+      // with the loop
+      if (!store[name]) {
+        continue;
+      }
+
+      if (removeHandler(store, name, callback, context)) {
+        matched = true;
+      }
+    }
+
+    return matched;
+  }
+
+  /*
+   * tune-in
+   * -------
+   * Get console logs of a channel's activity
+   *
+   */
+
+  var _logs = {};
+
+  // This is to produce an identical function in both tuneIn and tuneOut,
+  // so that Backbone.Events unregisters it.
+  function _partial(channelName) {
+    return _logs[channelName] || (_logs[channelName] = _.bind(Radio.log, Radio, channelName));
+  }
+
+  _.extend(Radio, {
+
+    // Log information about the channel and event
+    log: function log(channelName, eventName) {
+      if (typeof console === 'undefined') {
+        return;
+      }
+      var args = _.toArray(arguments).slice(2);
+      console.log('[' + channelName + '] "' + eventName + '"', args);
+    },
+
+    // Logs all events on this channel to the console. It sets an
+    // internal value on the channel telling it we're listening,
+    // then sets a listener on the Backbone.Events
+    tuneIn: function tuneIn(channelName) {
+      var channel = Radio.channel(channelName);
+      channel._tunedIn = true;
+      channel.on('all', _partial(channelName));
+      return this;
+    },
+
+    // Stop logging all of the activities on this channel to the console
+    tuneOut: function tuneOut(channelName) {
+      var channel = Radio.channel(channelName);
+      channel._tunedIn = false;
+      channel.off('all', _partial(channelName));
+      delete _logs[channelName];
+      return this;
+    }
+  });
+
+  /*
+   * Backbone.Radio.Requests
+   * -----------------------
+   * A messaging system for requesting data.
+   *
+   */
+
+  function makeCallback(callback) {
+    return _.isFunction(callback) ? callback : function () {
+      return callback;
+    };
+  }
+
+  Radio.Requests = {
+
+    // Make a request
+    request: function request(name) {
+      var args = _.toArray(arguments).slice(1);
+      var results = Radio._eventsApi(this, 'request', name, args);
+      if (results) {
+        return results;
+      }
+      var channelName = this.channelName;
+      var requests = this._requests;
+
+      // Check if we should log the request, and if so, do it
+      if (channelName && this._tunedIn) {
+        Radio.log.apply(this, [channelName, name].concat(args));
+      }
+
+      // If the request isn't handled, log it in DEBUG mode and exit
+      if (requests && (requests[name] || requests['default'])) {
+        var handler = requests[name] || requests['default'];
+        args = requests[name] ? args : arguments;
+        return Radio._callHandler(handler.callback, handler.context, args);
+      } else {
+        Radio.debugLog('An unhandled request was fired', name, channelName);
+      }
+    },
+
+    // Set up a handler for a request
+    reply: function reply(name, callback, context) {
+      if (Radio._eventsApi(this, 'reply', name, [callback, context])) {
+        return this;
+      }
+
+      this._requests || (this._requests = {});
+
+      if (this._requests[name]) {
+        Radio.debugLog('A request was overwritten', name, this.channelName);
+      }
+
+      this._requests[name] = {
+        callback: makeCallback(callback),
+        context: context || this
+      };
+
+      return this;
+    },
+
+    // Set up a handler that can only be requested once
+    replyOnce: function replyOnce(name, callback, context) {
+      if (Radio._eventsApi(this, 'replyOnce', name, [callback, context])) {
+        return this;
+      }
+
+      var self = this;
+
+      var once = _.once(function () {
+        self.stopReplying(name);
+        return makeCallback(callback).apply(this, arguments);
+      });
+
+      return this.reply(name, once, context);
+    },
+
+    // Remove handler(s)
+    stopReplying: function stopReplying(name, callback, context) {
+      if (Radio._eventsApi(this, 'stopReplying', name)) {
+        return this;
+      }
+
+      // Remove everything if there are no arguments passed
+      if (!name && !callback && !context) {
+        delete this._requests;
+      } else if (!removeHandlers(this._requests, name, callback, context)) {
+        Radio.debugLog('Attempted to remove the unregistered request', name, this.channelName);
+      }
+
+      return this;
+    }
+  };
+
+  /*
+   * Backbone.Radio.channel
+   * ----------------------
+   * Get a reference to a channel by name.
+   *
+   */
+
+  Radio._channels = {};
+
+  Radio.channel = function (channelName) {
+    if (!channelName) {
+      throw new Error('You must provide a name for the channel.');
+    }
+
+    if (Radio._channels[channelName]) {
+      return Radio._channels[channelName];
+    } else {
+      return Radio._channels[channelName] = new Radio.Channel(channelName);
+    }
+  };
+
+  /*
+   * Backbone.Radio.Channel
+   * ----------------------
+   * A Channel is an object that extends from Backbone.Events,
+   * and Radio.Requests.
+   *
+   */
+
+  Radio.Channel = function (channelName) {
+    this.channelName = channelName;
+  };
+
+  _.extend(Radio.Channel.prototype, Backbone.Events, Radio.Requests, {
+
+    // Remove all handlers from the messaging systems of this channel
+    reset: function reset() {
+      this.off();
+      this.stopListening();
+      this.stopReplying();
+      return this;
+    }
+  });
+
+  /*
+   * Top-level API
+   * -------------
+   * Supplies the 'top-level API' for working with Channels directly
+   * from Backbone.Radio.
+   *
+   */
+
+  var channel;
+  var args;
+  var systems = [Backbone.Events, Radio.Requests];
+  _.each(systems, function (system) {
+    _.each(system, function (method, methodName) {
+      Radio[methodName] = function (channelName) {
+        args = _.toArray(arguments).slice(1);
+        channel = this.channel(channelName);
+        return channel[methodName].apply(channel, args);
+      };
+    });
+  });
+
+  Radio.reset = function (channelName) {
+    var channels = !channelName ? this._channels : [this._channels[channelName]];
+    _.each(channels, function (channel) {
+      channel.reset();
+    });
+  };
+
+  return Radio;
+
+}));
+
+},{"backbone":14,"underscore":38}],14:[function(require,module,exports){
+(function (global){
+//     Backbone.js 1.3.3
+
+//     (c) 2010-2016 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+//     Backbone may be freely distributed under the MIT license.
+//     For all details and documentation:
+//     http://backbonejs.org
+
+(function(factory) {
+
+  // Establish the root object, `window` (`self`) in the browser, or `global` on the server.
+  // We use `self` instead of `window` for `WebWorker` support.
+  var root = (typeof self == 'object' && self.self === self && self) ||
+            (typeof global == 'object' && global.global === global && global);
+
+  // Set up Backbone appropriately for the environment. Start with AMD.
+  if (typeof define === 'function' && define.amd) {
+    define(['underscore', 'jquery', 'exports'], function(_, $, exports) {
+      // Export global even in AMD case in case this script is loaded with
+      // others that may still expect a global Backbone.
+      root.Backbone = factory(root, exports, _, $);
+    });
+
+  // Next for Node.js or CommonJS. jQuery may not be needed as a module.
+  } else if (typeof exports !== 'undefined') {
+    var _ = require('underscore'), $;
+    try { $ = require('jquery'); } catch (e) {}
+    factory(root, exports, _, $);
+
+  // Finally, as a browser global.
+  } else {
+    root.Backbone = factory(root, {}, root._, (root.jQuery || root.Zepto || root.ender || root.$));
+  }
+
+})(function(root, Backbone, _, $) {
+
+  // Initial Setup
+  // -------------
+
+  // Save the previous value of the `Backbone` variable, so that it can be
+  // restored later on, if `noConflict` is used.
+  var previousBackbone = root.Backbone;
+
+  // Create a local reference to a common array method we'll want to use later.
+  var slice = Array.prototype.slice;
+
+  // Current version of the library. Keep in sync with `package.json`.
+  Backbone.VERSION = '1.3.3';
+
+  // For Backbone's purposes, jQuery, Zepto, Ender, or My Library (kidding) owns
+  // the `$` variable.
+  Backbone.$ = $;
+
+  // Runs Backbone.js in *noConflict* mode, returning the `Backbone` variable
+  // to its previous owner. Returns a reference to this Backbone object.
+  Backbone.noConflict = function() {
+    root.Backbone = previousBackbone;
+    return this;
+  };
+
+  // Turn on `emulateHTTP` to support legacy HTTP servers. Setting this option
+  // will fake `"PATCH"`, `"PUT"` and `"DELETE"` requests via the `_method` parameter and
+  // set a `X-Http-Method-Override` header.
+  Backbone.emulateHTTP = false;
+
+  // Turn on `emulateJSON` to support legacy servers that can't deal with direct
+  // `application/json` requests ... this will encode the body as
+  // `application/x-www-form-urlencoded` instead and will send the model in a
+  // form param named `model`.
+  Backbone.emulateJSON = false;
+
+  // Proxy Backbone class methods to Underscore functions, wrapping the model's
+  // `attributes` object or collection's `models` array behind the scenes.
+  //
+  // collection.filter(function(model) { return model.get('age') > 10 });
+  // collection.each(this.addView);
+  //
+  // `Function#apply` can be slow so we use the method's arg count, if we know it.
+  var addMethod = function(length, method, attribute) {
+    switch (length) {
+      case 1: return function() {
+        return _[method](this[attribute]);
+      };
+      case 2: return function(value) {
+        return _[method](this[attribute], value);
+      };
+      case 3: return function(iteratee, context) {
+        return _[method](this[attribute], cb(iteratee, this), context);
+      };
+      case 4: return function(iteratee, defaultVal, context) {
+        return _[method](this[attribute], cb(iteratee, this), defaultVal, context);
+      };
+      default: return function() {
+        var args = slice.call(arguments);
+        args.unshift(this[attribute]);
+        return _[method].apply(_, args);
+      };
+    }
+  };
+  var addUnderscoreMethods = function(Class, methods, attribute) {
+    _.each(methods, function(length, method) {
+      if (_[method]) Class.prototype[method] = addMethod(length, method, attribute);
+    });
+  };
+
+  // Support `collection.sortBy('attr')` and `collection.findWhere({id: 1})`.
+  var cb = function(iteratee, instance) {
+    if (_.isFunction(iteratee)) return iteratee;
+    if (_.isObject(iteratee) && !instance._isModel(iteratee)) return modelMatcher(iteratee);
+    if (_.isString(iteratee)) return function(model) { return model.get(iteratee); };
+    return iteratee;
+  };
+  var modelMatcher = function(attrs) {
+    var matcher = _.matches(attrs);
+    return function(model) {
+      return matcher(model.attributes);
+    };
+  };
+
+  // Backbone.Events
+  // ---------------
+
+  // A module that can be mixed in to *any object* in order to provide it with
+  // a custom event channel. You may bind a callback to an event with `on` or
+  // remove with `off`; `trigger`-ing an event fires all callbacks in
+  // succession.
+  //
+  //     var object = {};
+  //     _.extend(object, Backbone.Events);
+  //     object.on('expand', function(){ alert('expanded'); });
+  //     object.trigger('expand');
+  //
+  var Events = Backbone.Events = {};
+
+  // Regular expression used to split event strings.
+  var eventSplitter = /\s+/;
+
+  // Iterates over the standard `event, callback` (as well as the fancy multiple
+  // space-separated events `"change blur", callback` and jQuery-style event
+  // maps `{event: callback}`).
+  var eventsApi = function(iteratee, events, name, callback, opts) {
+    var i = 0, names;
+    if (name && typeof name === 'object') {
+      // Handle event maps.
+      if (callback !== void 0 && 'context' in opts && opts.context === void 0) opts.context = callback;
+      for (names = _.keys(name); i < names.length ; i++) {
+        events = eventsApi(iteratee, events, names[i], name[names[i]], opts);
+      }
+    } else if (name && eventSplitter.test(name)) {
+      // Handle space-separated event names by delegating them individually.
+      for (names = name.split(eventSplitter); i < names.length; i++) {
+        events = iteratee(events, names[i], callback, opts);
+      }
+    } else {
+      // Finally, standard events.
+      events = iteratee(events, name, callback, opts);
+    }
+    return events;
+  };
+
+  // Bind an event to a `callback` function. Passing `"all"` will bind
+  // the callback to all events fired.
+  Events.on = function(name, callback, context) {
+    return internalOn(this, name, callback, context);
+  };
+
+  // Guard the `listening` argument from the public API.
+  var internalOn = function(obj, name, callback, context, listening) {
+    obj._events = eventsApi(onApi, obj._events || {}, name, callback, {
+      context: context,
+      ctx: obj,
+      listening: listening
+    });
+
+    if (listening) {
+      var listeners = obj._listeners || (obj._listeners = {});
+      listeners[listening.id] = listening;
+    }
+
+    return obj;
+  };
+
+  // Inversion-of-control versions of `on`. Tell *this* object to listen to
+  // an event in another object... keeping track of what it's listening to
+  // for easier unbinding later.
+  Events.listenTo = function(obj, name, callback) {
+    if (!obj) return this;
+    var id = obj._listenId || (obj._listenId = _.uniqueId('l'));
+    var listeningTo = this._listeningTo || (this._listeningTo = {});
+    var listening = listeningTo[id];
+
+    // This object is not listening to any other events on `obj` yet.
+    // Setup the necessary references to track the listening callbacks.
+    if (!listening) {
+      var thisId = this._listenId || (this._listenId = _.uniqueId('l'));
+      listening = listeningTo[id] = {obj: obj, objId: id, id: thisId, listeningTo: listeningTo, count: 0};
+    }
+
+    // Bind callbacks on obj, and keep track of them on listening.
+    internalOn(obj, name, callback, this, listening);
+    return this;
+  };
+
+  // The reducing API that adds a callback to the `events` object.
+  var onApi = function(events, name, callback, options) {
+    if (callback) {
+      var handlers = events[name] || (events[name] = []);
+      var context = options.context, ctx = options.ctx, listening = options.listening;
+      if (listening) listening.count++;
+
+      handlers.push({callback: callback, context: context, ctx: context || ctx, listening: listening});
+    }
+    return events;
+  };
+
+  // Remove one or many callbacks. If `context` is null, removes all
+  // callbacks with that function. If `callback` is null, removes all
+  // callbacks for the event. If `name` is null, removes all bound
+  // callbacks for all events.
+  Events.off = function(name, callback, context) {
+    if (!this._events) return this;
+    this._events = eventsApi(offApi, this._events, name, callback, {
+      context: context,
+      listeners: this._listeners
+    });
+    return this;
+  };
+
+  // Tell this object to stop listening to either specific events ... or
+  // to every object it's currently listening to.
+  Events.stopListening = function(obj, name, callback) {
+    var listeningTo = this._listeningTo;
+    if (!listeningTo) return this;
+
+    var ids = obj ? [obj._listenId] : _.keys(listeningTo);
+
+    for (var i = 0; i < ids.length; i++) {
+      var listening = listeningTo[ids[i]];
+
+      // If listening doesn't exist, this object is not currently
+      // listening to obj. Break out early.
+      if (!listening) break;
+
+      listening.obj.off(name, callback, this);
+    }
+
+    return this;
+  };
+
+  // The reducing API that removes a callback from the `events` object.
+  var offApi = function(events, name, callback, options) {
+    if (!events) return;
+
+    var i = 0, listening;
+    var context = options.context, listeners = options.listeners;
+
+    // Delete all events listeners and "drop" events.
+    if (!name && !callback && !context) {
+      var ids = _.keys(listeners);
+      for (; i < ids.length; i++) {
+        listening = listeners[ids[i]];
+        delete listeners[listening.id];
+        delete listening.listeningTo[listening.objId];
+      }
+      return;
+    }
+
+    var names = name ? [name] : _.keys(events);
+    for (; i < names.length; i++) {
+      name = names[i];
+      var handlers = events[name];
+
+      // Bail out if there are no events stored.
+      if (!handlers) break;
+
+      // Replace events if there are any remaining.  Otherwise, clean up.
+      var remaining = [];
+      for (var j = 0; j < handlers.length; j++) {
+        var handler = handlers[j];
+        if (
+          callback && callback !== handler.callback &&
+            callback !== handler.callback._callback ||
+              context && context !== handler.context
+        ) {
+          remaining.push(handler);
+        } else {
+          listening = handler.listening;
+          if (listening && --listening.count === 0) {
+            delete listeners[listening.id];
+            delete listening.listeningTo[listening.objId];
+          }
+        }
+      }
+
+      // Update tail event if the list has any events.  Otherwise, clean up.
+      if (remaining.length) {
+        events[name] = remaining;
+      } else {
+        delete events[name];
+      }
+    }
+    return events;
+  };
+
+  // Bind an event to only be triggered a single time. After the first time
+  // the callback is invoked, its listener will be removed. If multiple events
+  // are passed in using the space-separated syntax, the handler will fire
+  // once for each event, not once for a combination of all events.
+  Events.once = function(name, callback, context) {
+    // Map the event into a `{event: once}` object.
+    var events = eventsApi(onceMap, {}, name, callback, _.bind(this.off, this));
+    if (typeof name === 'string' && context == null) callback = void 0;
+    return this.on(events, callback, context);
+  };
+
+  // Inversion-of-control versions of `once`.
+  Events.listenToOnce = function(obj, name, callback) {
+    // Map the event into a `{event: once}` object.
+    var events = eventsApi(onceMap, {}, name, callback, _.bind(this.stopListening, this, obj));
+    return this.listenTo(obj, events);
+  };
+
+  // Reduces the event callbacks into a map of `{event: onceWrapper}`.
+  // `offer` unbinds the `onceWrapper` after it has been called.
+  var onceMap = function(map, name, callback, offer) {
+    if (callback) {
+      var once = map[name] = _.once(function() {
+        offer(name, once);
+        callback.apply(this, arguments);
+      });
+      once._callback = callback;
+    }
+    return map;
+  };
+
+  // Trigger one or many events, firing all bound callbacks. Callbacks are
+  // passed the same arguments as `trigger` is, apart from the event name
+  // (unless you're listening on `"all"`, which will cause your callback to
+  // receive the true name of the event as the first argument).
+  Events.trigger = function(name) {
+    if (!this._events) return this;
+
+    var length = Math.max(0, arguments.length - 1);
+    var args = Array(length);
+    for (var i = 0; i < length; i++) args[i] = arguments[i + 1];
+
+    eventsApi(triggerApi, this._events, name, void 0, args);
+    return this;
+  };
+
+  // Handles triggering the appropriate event callbacks.
+  var triggerApi = function(objEvents, name, callback, args) {
+    if (objEvents) {
+      var events = objEvents[name];
+      var allEvents = objEvents.all;
+      if (events && allEvents) allEvents = allEvents.slice();
+      if (events) triggerEvents(events, args);
+      if (allEvents) triggerEvents(allEvents, [name].concat(args));
+    }
+    return objEvents;
+  };
+
+  // A difficult-to-believe, but optimized internal dispatch function for
+  // triggering events. Tries to keep the usual cases speedy (most internal
+  // Backbone events have 3 arguments).
+  var triggerEvents = function(events, args) {
+    var ev, i = -1, l = events.length, a1 = args[0], a2 = args[1], a3 = args[2];
+    switch (args.length) {
+      case 0: while (++i < l) (ev = events[i]).callback.call(ev.ctx); return;
+      case 1: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1); return;
+      case 2: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1, a2); return;
+      case 3: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1, a2, a3); return;
+      default: while (++i < l) (ev = events[i]).callback.apply(ev.ctx, args); return;
+    }
+  };
+
+  // Aliases for backwards compatibility.
+  Events.bind   = Events.on;
+  Events.unbind = Events.off;
+
+  // Allow the `Backbone` object to serve as a global event bus, for folks who
+  // want global "pubsub" in a convenient place.
+  _.extend(Backbone, Events);
+
+  // Backbone.Model
+  // --------------
+
+  // Backbone **Models** are the basic data object in the framework --
+  // frequently representing a row in a table in a database on your server.
+  // A discrete chunk of data and a bunch of useful, related methods for
+  // performing computations and transformations on that data.
+
+  // Create a new model with the specified attributes. A client id (`cid`)
+  // is automatically generated and assigned for you.
+  var Model = Backbone.Model = function(attributes, options) {
+    var attrs = attributes || {};
+    options || (options = {});
+    this.cid = _.uniqueId(this.cidPrefix);
+    this.attributes = {};
+    if (options.collection) this.collection = options.collection;
+    if (options.parse) attrs = this.parse(attrs, options) || {};
+    var defaults = _.result(this, 'defaults');
+    attrs = _.defaults(_.extend({}, defaults, attrs), defaults);
+    this.set(attrs, options);
+    this.changed = {};
+    this.initialize.apply(this, arguments);
+  };
+
+  // Attach all inheritable methods to the Model prototype.
+  _.extend(Model.prototype, Events, {
+
+    // A hash of attributes whose current and previous value differ.
+    changed: null,
+
+    // The value returned during the last failed validation.
+    validationError: null,
+
+    // The default name for the JSON `id` attribute is `"id"`. MongoDB and
+    // CouchDB users may want to set this to `"_id"`.
+    idAttribute: 'id',
+
+    // The prefix is used to create the client id which is used to identify models locally.
+    // You may want to override this if you're experiencing name clashes with model ids.
+    cidPrefix: 'c',
+
+    // Initialize is an empty function by default. Override it with your own
+    // initialization logic.
+    initialize: function(){},
+
+    // Return a copy of the model's `attributes` object.
+    toJSON: function(options) {
+      return _.clone(this.attributes);
+    },
+
+    // Proxy `Backbone.sync` by default -- but override this if you need
+    // custom syncing semantics for *this* particular model.
+    sync: function() {
+      return Backbone.sync.apply(this, arguments);
+    },
+
+    // Get the value of an attribute.
+    get: function(attr) {
+      return this.attributes[attr];
+    },
+
+    // Get the HTML-escaped value of an attribute.
+    escape: function(attr) {
+      return _.escape(this.get(attr));
+    },
+
+    // Returns `true` if the attribute contains a value that is not null
+    // or undefined.
+    has: function(attr) {
+      return this.get(attr) != null;
+    },
+
+    // Special-cased proxy to underscore's `_.matches` method.
+    matches: function(attrs) {
+      return !!_.iteratee(attrs, this)(this.attributes);
+    },
+
+    // Set a hash of model attributes on the object, firing `"change"`. This is
+    // the core primitive operation of a model, updating the data and notifying
+    // anyone who needs to know about the change in state. The heart of the beast.
+    set: function(key, val, options) {
+      if (key == null) return this;
+
+      // Handle both `"key", value` and `{key: value}` -style arguments.
+      var attrs;
+      if (typeof key === 'object') {
+        attrs = key;
+        options = val;
+      } else {
+        (attrs = {})[key] = val;
+      }
+
+      options || (options = {});
+
+      // Run validation.
+      if (!this._validate(attrs, options)) return false;
+
+      // Extract attributes and options.
+      var unset      = options.unset;
+      var silent     = options.silent;
+      var changes    = [];
+      var changing   = this._changing;
+      this._changing = true;
+
+      if (!changing) {
+        this._previousAttributes = _.clone(this.attributes);
+        this.changed = {};
+      }
+
+      var current = this.attributes;
+      var changed = this.changed;
+      var prev    = this._previousAttributes;
+
+      // For each `set` attribute, update or delete the current value.
+      for (var attr in attrs) {
+        val = attrs[attr];
+        if (!_.isEqual(current[attr], val)) changes.push(attr);
+        if (!_.isEqual(prev[attr], val)) {
+          changed[attr] = val;
+        } else {
+          delete changed[attr];
+        }
+        unset ? delete current[attr] : current[attr] = val;
+      }
+
+      // Update the `id`.
+      if (this.idAttribute in attrs) this.id = this.get(this.idAttribute);
+
+      // Trigger all relevant attribute changes.
+      if (!silent) {
+        if (changes.length) this._pending = options;
+        for (var i = 0; i < changes.length; i++) {
+          this.trigger('change:' + changes[i], this, current[changes[i]], options);
+        }
+      }
+
+      // You might be wondering why there's a `while` loop here. Changes can
+      // be recursively nested within `"change"` events.
+      if (changing) return this;
+      if (!silent) {
+        while (this._pending) {
+          options = this._pending;
+          this._pending = false;
+          this.trigger('change', this, options);
+        }
+      }
+      this._pending = false;
+      this._changing = false;
+      return this;
+    },
+
+    // Remove an attribute from the model, firing `"change"`. `unset` is a noop
+    // if the attribute doesn't exist.
+    unset: function(attr, options) {
+      return this.set(attr, void 0, _.extend({}, options, {unset: true}));
+    },
+
+    // Clear all attributes on the model, firing `"change"`.
+    clear: function(options) {
+      var attrs = {};
+      for (var key in this.attributes) attrs[key] = void 0;
+      return this.set(attrs, _.extend({}, options, {unset: true}));
+    },
+
+    // Determine if the model has changed since the last `"change"` event.
+    // If you specify an attribute name, determine if that attribute has changed.
+    hasChanged: function(attr) {
+      if (attr == null) return !_.isEmpty(this.changed);
+      return _.has(this.changed, attr);
+    },
+
+    // Return an object containing all the attributes that have changed, or
+    // false if there are no changed attributes. Useful for determining what
+    // parts of a view need to be updated and/or what attributes need to be
+    // persisted to the server. Unset attributes will be set to undefined.
+    // You can also pass an attributes object to diff against the model,
+    // determining if there *would be* a change.
+    changedAttributes: function(diff) {
+      if (!diff) return this.hasChanged() ? _.clone(this.changed) : false;
+      var old = this._changing ? this._previousAttributes : this.attributes;
+      var changed = {};
+      for (var attr in diff) {
+        var val = diff[attr];
+        if (_.isEqual(old[attr], val)) continue;
+        changed[attr] = val;
+      }
+      return _.size(changed) ? changed : false;
+    },
+
+    // Get the previous value of an attribute, recorded at the time the last
+    // `"change"` event was fired.
+    previous: function(attr) {
+      if (attr == null || !this._previousAttributes) return null;
+      return this._previousAttributes[attr];
+    },
+
+    // Get all of the attributes of the model at the time of the previous
+    // `"change"` event.
+    previousAttributes: function() {
+      return _.clone(this._previousAttributes);
+    },
+
+    // Fetch the model from the server, merging the response with the model's
+    // local attributes. Any changed attributes will trigger a "change" event.
+    fetch: function(options) {
+      options = _.extend({parse: true}, options);
+      var model = this;
+      var success = options.success;
+      options.success = function(resp) {
+        var serverAttrs = options.parse ? model.parse(resp, options) : resp;
+        if (!model.set(serverAttrs, options)) return false;
+        if (success) success.call(options.context, model, resp, options);
+        model.trigger('sync', model, resp, options);
+      };
+      wrapError(this, options);
+      return this.sync('read', this, options);
+    },
+
+    // Set a hash of model attributes, and sync the model to the server.
+    // If the server returns an attributes hash that differs, the model's
+    // state will be `set` again.
+    save: function(key, val, options) {
+      // Handle both `"key", value` and `{key: value}` -style arguments.
+      var attrs;
+      if (key == null || typeof key === 'object') {
+        attrs = key;
+        options = val;
+      } else {
+        (attrs = {})[key] = val;
+      }
+
+      options = _.extend({validate: true, parse: true}, options);
+      var wait = options.wait;
+
+      // If we're not waiting and attributes exist, save acts as
+      // `set(attr).save(null, opts)` with validation. Otherwise, check if
+      // the model will be valid when the attributes, if any, are set.
+      if (attrs && !wait) {
+        if (!this.set(attrs, options)) return false;
+      } else if (!this._validate(attrs, options)) {
+        return false;
+      }
+
+      // After a successful server-side save, the client is (optionally)
+      // updated with the server-side state.
+      var model = this;
+      var success = options.success;
+      var attributes = this.attributes;
+      options.success = function(resp) {
+        // Ensure attributes are restored during synchronous saves.
+        model.attributes = attributes;
+        var serverAttrs = options.parse ? model.parse(resp, options) : resp;
+        if (wait) serverAttrs = _.extend({}, attrs, serverAttrs);
+        if (serverAttrs && !model.set(serverAttrs, options)) return false;
+        if (success) success.call(options.context, model, resp, options);
+        model.trigger('sync', model, resp, options);
+      };
+      wrapError(this, options);
+
+      // Set temporary attributes if `{wait: true}` to properly find new ids.
+      if (attrs && wait) this.attributes = _.extend({}, attributes, attrs);
+
+      var method = this.isNew() ? 'create' : (options.patch ? 'patch' : 'update');
+      if (method === 'patch' && !options.attrs) options.attrs = attrs;
+      var xhr = this.sync(method, this, options);
+
+      // Restore attributes.
+      this.attributes = attributes;
+
+      return xhr;
+    },
+
+    // Destroy this model on the server if it was already persisted.
+    // Optimistically removes the model from its collection, if it has one.
+    // If `wait: true` is passed, waits for the server to respond before removal.
+    destroy: function(options) {
+      options = options ? _.clone(options) : {};
+      var model = this;
+      var success = options.success;
+      var wait = options.wait;
+
+      var destroy = function() {
+        model.stopListening();
+        model.trigger('destroy', model, model.collection, options);
+      };
+
+      options.success = function(resp) {
+        if (wait) destroy();
+        if (success) success.call(options.context, model, resp, options);
+        if (!model.isNew()) model.trigger('sync', model, resp, options);
+      };
+
+      var xhr = false;
+      if (this.isNew()) {
+        _.defer(options.success);
+      } else {
+        wrapError(this, options);
+        xhr = this.sync('delete', this, options);
+      }
+      if (!wait) destroy();
+      return xhr;
+    },
+
+    // Default URL for the model's representation on the server -- if you're
+    // using Backbone's restful methods, override this to change the endpoint
+    // that will be called.
+    url: function() {
+      var base =
+        _.result(this, 'urlRoot') ||
+        _.result(this.collection, 'url') ||
+        urlError();
+      if (this.isNew()) return base;
+      var id = this.get(this.idAttribute);
+      return base.replace(/[^\/]$/, '$&/') + encodeURIComponent(id);
+    },
+
+    // **parse** converts a response into the hash of attributes to be `set` on
+    // the model. The default implementation is just to pass the response along.
+    parse: function(resp, options) {
+      return resp;
+    },
+
+    // Create a new model with identical attributes to this one.
+    clone: function() {
+      return new this.constructor(this.attributes);
+    },
+
+    // A model is new if it has never been saved to the server, and lacks an id.
+    isNew: function() {
+      return !this.has(this.idAttribute);
+    },
+
+    // Check if the model is currently in a valid state.
+    isValid: function(options) {
+      return this._validate({}, _.extend({}, options, {validate: true}));
+    },
+
+    // Run validation against the next complete set of model attributes,
+    // returning `true` if all is well. Otherwise, fire an `"invalid"` event.
+    _validate: function(attrs, options) {
+      if (!options.validate || !this.validate) return true;
+      attrs = _.extend({}, this.attributes, attrs);
+      var error = this.validationError = this.validate(attrs, options) || null;
+      if (!error) return true;
+      this.trigger('invalid', this, error, _.extend(options, {validationError: error}));
+      return false;
+    }
+
+  });
+
+  // Underscore methods that we want to implement on the Model, mapped to the
+  // number of arguments they take.
+  var modelMethods = {keys: 1, values: 1, pairs: 1, invert: 1, pick: 0,
+      omit: 0, chain: 1, isEmpty: 1};
+
+  // Mix in each Underscore method as a proxy to `Model#attributes`.
+  addUnderscoreMethods(Model, modelMethods, 'attributes');
+
+  // Backbone.Collection
+  // -------------------
+
+  // If models tend to represent a single row of data, a Backbone Collection is
+  // more analogous to a table full of data ... or a small slice or page of that
+  // table, or a collection of rows that belong together for a particular reason
+  // -- all of the messages in this particular folder, all of the documents
+  // belonging to this particular author, and so on. Collections maintain
+  // indexes of their models, both in order, and for lookup by `id`.
+
+  // Create a new **Collection**, perhaps to contain a specific type of `model`.
+  // If a `comparator` is specified, the Collection will maintain
+  // its models in sort order, as they're added and removed.
+  var Collection = Backbone.Collection = function(models, options) {
+    options || (options = {});
+    if (options.model) this.model = options.model;
+    if (options.comparator !== void 0) this.comparator = options.comparator;
+    this._reset();
+    this.initialize.apply(this, arguments);
+    if (models) this.reset(models, _.extend({silent: true}, options));
+  };
+
+  // Default options for `Collection#set`.
+  var setOptions = {add: true, remove: true, merge: true};
+  var addOptions = {add: true, remove: false};
+
+  // Splices `insert` into `array` at index `at`.
+  var splice = function(array, insert, at) {
+    at = Math.min(Math.max(at, 0), array.length);
+    var tail = Array(array.length - at);
+    var length = insert.length;
+    var i;
+    for (i = 0; i < tail.length; i++) tail[i] = array[i + at];
+    for (i = 0; i < length; i++) array[i + at] = insert[i];
+    for (i = 0; i < tail.length; i++) array[i + length + at] = tail[i];
+  };
+
+  // Define the Collection's inheritable methods.
+  _.extend(Collection.prototype, Events, {
+
+    // The default model for a collection is just a **Backbone.Model**.
+    // This should be overridden in most cases.
+    model: Model,
+
+    // Initialize is an empty function by default. Override it with your own
+    // initialization logic.
+    initialize: function(){},
+
+    // The JSON representation of a Collection is an array of the
+    // models' attributes.
+    toJSON: function(options) {
+      return this.map(function(model) { return model.toJSON(options); });
+    },
+
+    // Proxy `Backbone.sync` by default.
+    sync: function() {
+      return Backbone.sync.apply(this, arguments);
+    },
+
+    // Add a model, or list of models to the set. `models` may be Backbone
+    // Models or raw JavaScript objects to be converted to Models, or any
+    // combination of the two.
+    add: function(models, options) {
+      return this.set(models, _.extend({merge: false}, options, addOptions));
+    },
+
+    // Remove a model, or a list of models from the set.
+    remove: function(models, options) {
+      options = _.extend({}, options);
+      var singular = !_.isArray(models);
+      models = singular ? [models] : models.slice();
+      var removed = this._removeModels(models, options);
+      if (!options.silent && removed.length) {
+        options.changes = {added: [], merged: [], removed: removed};
+        this.trigger('update', this, options);
+      }
+      return singular ? removed[0] : removed;
+    },
+
+    // Update a collection by `set`-ing a new list of models, adding new ones,
+    // removing models that are no longer present, and merging models that
+    // already exist in the collection, as necessary. Similar to **Model#set**,
+    // the core operation for updating the data contained by the collection.
+    set: function(models, options) {
+      if (models == null) return;
+
+      options = _.extend({}, setOptions, options);
+      if (options.parse && !this._isModel(models)) {
+        models = this.parse(models, options) || [];
+      }
+
+      var singular = !_.isArray(models);
+      models = singular ? [models] : models.slice();
+
+      var at = options.at;
+      if (at != null) at = +at;
+      if (at > this.length) at = this.length;
+      if (at < 0) at += this.length + 1;
+
+      var set = [];
+      var toAdd = [];
+      var toMerge = [];
+      var toRemove = [];
+      var modelMap = {};
+
+      var add = options.add;
+      var merge = options.merge;
+      var remove = options.remove;
+
+      var sort = false;
+      var sortable = this.comparator && at == null && options.sort !== false;
+      var sortAttr = _.isString(this.comparator) ? this.comparator : null;
+
+      // Turn bare objects into model references, and prevent invalid models
+      // from being added.
+      var model, i;
+      for (i = 0; i < models.length; i++) {
+        model = models[i];
+
+        // If a duplicate is found, prevent it from being added and
+        // optionally merge it into the existing model.
+        var existing = this.get(model);
+        if (existing) {
+          if (merge && model !== existing) {
+            var attrs = this._isModel(model) ? model.attributes : model;
+            if (options.parse) attrs = existing.parse(attrs, options);
+            existing.set(attrs, options);
+            toMerge.push(existing);
+            if (sortable && !sort) sort = existing.hasChanged(sortAttr);
+          }
+          if (!modelMap[existing.cid]) {
+            modelMap[existing.cid] = true;
+            set.push(existing);
+          }
+          models[i] = existing;
+
+        // If this is a new, valid model, push it to the `toAdd` list.
+        } else if (add) {
+          model = models[i] = this._prepareModel(model, options);
+          if (model) {
+            toAdd.push(model);
+            this._addReference(model, options);
+            modelMap[model.cid] = true;
+            set.push(model);
+          }
+        }
+      }
+
+      // Remove stale models.
+      if (remove) {
+        for (i = 0; i < this.length; i++) {
+          model = this.models[i];
+          if (!modelMap[model.cid]) toRemove.push(model);
+        }
+        if (toRemove.length) this._removeModels(toRemove, options);
+      }
+
+      // See if sorting is needed, update `length` and splice in new models.
+      var orderChanged = false;
+      var replace = !sortable && add && remove;
+      if (set.length && replace) {
+        orderChanged = this.length !== set.length || _.some(this.models, function(m, index) {
+          return m !== set[index];
+        });
+        this.models.length = 0;
+        splice(this.models, set, 0);
+        this.length = this.models.length;
+      } else if (toAdd.length) {
+        if (sortable) sort = true;
+        splice(this.models, toAdd, at == null ? this.length : at);
+        this.length = this.models.length;
+      }
+
+      // Silently sort the collection if appropriate.
+      if (sort) this.sort({silent: true});
+
+      // Unless silenced, it's time to fire all appropriate add/sort/update events.
+      if (!options.silent) {
+        for (i = 0; i < toAdd.length; i++) {
+          if (at != null) options.index = at + i;
+          model = toAdd[i];
+          model.trigger('add', model, this, options);
+        }
+        if (sort || orderChanged) this.trigger('sort', this, options);
+        if (toAdd.length || toRemove.length || toMerge.length) {
+          options.changes = {
+            added: toAdd,
+            removed: toRemove,
+            merged: toMerge
+          };
+          this.trigger('update', this, options);
+        }
+      }
+
+      // Return the added (or merged) model (or models).
+      return singular ? models[0] : models;
+    },
+
+    // When you have more items than you want to add or remove individually,
+    // you can reset the entire set with a new list of models, without firing
+    // any granular `add` or `remove` events. Fires `reset` when finished.
+    // Useful for bulk operations and optimizations.
+    reset: function(models, options) {
+      options = options ? _.clone(options) : {};
+      for (var i = 0; i < this.models.length; i++) {
+        this._removeReference(this.models[i], options);
+      }
+      options.previousModels = this.models;
+      this._reset();
+      models = this.add(models, _.extend({silent: true}, options));
+      if (!options.silent) this.trigger('reset', this, options);
+      return models;
+    },
+
+    // Add a model to the end of the collection.
+    push: function(model, options) {
+      return this.add(model, _.extend({at: this.length}, options));
+    },
+
+    // Remove a model from the end of the collection.
+    pop: function(options) {
+      var model = this.at(this.length - 1);
+      return this.remove(model, options);
+    },
+
+    // Add a model to the beginning of the collection.
+    unshift: function(model, options) {
+      return this.add(model, _.extend({at: 0}, options));
+    },
+
+    // Remove a model from the beginning of the collection.
+    shift: function(options) {
+      var model = this.at(0);
+      return this.remove(model, options);
+    },
+
+    // Slice out a sub-array of models from the collection.
+    slice: function() {
+      return slice.apply(this.models, arguments);
+    },
+
+    // Get a model from the set by id, cid, model object with id or cid
+    // properties, or an attributes object that is transformed through modelId.
+    get: function(obj) {
+      if (obj == null) return void 0;
+      return this._byId[obj] ||
+        this._byId[this.modelId(obj.attributes || obj)] ||
+        obj.cid && this._byId[obj.cid];
+    },
+
+    // Returns `true` if the model is in the collection.
+    has: function(obj) {
+      return this.get(obj) != null;
+    },
+
+    // Get the model at the given index.
+    at: function(index) {
+      if (index < 0) index += this.length;
+      return this.models[index];
+    },
+
+    // Return models with matching attributes. Useful for simple cases of
+    // `filter`.
+    where: function(attrs, first) {
+      return this[first ? 'find' : 'filter'](attrs);
+    },
+
+    // Return the first model with matching attributes. Useful for simple cases
+    // of `find`.
+    findWhere: function(attrs) {
+      return this.where(attrs, true);
+    },
+
+    // Force the collection to re-sort itself. You don't need to call this under
+    // normal circumstances, as the set will maintain sort order as each item
+    // is added.
+    sort: function(options) {
+      var comparator = this.comparator;
+      if (!comparator) throw new Error('Cannot sort a set without a comparator');
+      options || (options = {});
+
+      var length = comparator.length;
+      if (_.isFunction(comparator)) comparator = _.bind(comparator, this);
+
+      // Run sort based on type of `comparator`.
+      if (length === 1 || _.isString(comparator)) {
+        this.models = this.sortBy(comparator);
+      } else {
+        this.models.sort(comparator);
+      }
+      if (!options.silent) this.trigger('sort', this, options);
+      return this;
+    },
+
+    // Pluck an attribute from each model in the collection.
+    pluck: function(attr) {
+      return this.map(attr + '');
+    },
+
+    // Fetch the default set of models for this collection, resetting the
+    // collection when they arrive. If `reset: true` is passed, the response
+    // data will be passed through the `reset` method instead of `set`.
+    fetch: function(options) {
+      options = _.extend({parse: true}, options);
+      var success = options.success;
+      var collection = this;
+      options.success = function(resp) {
+        var method = options.reset ? 'reset' : 'set';
+        collection[method](resp, options);
+        if (success) success.call(options.context, collection, resp, options);
+        collection.trigger('sync', collection, resp, options);
+      };
+      wrapError(this, options);
+      return this.sync('read', this, options);
+    },
+
+    // Create a new instance of a model in this collection. Add the model to the
+    // collection immediately, unless `wait: true` is passed, in which case we
+    // wait for the server to agree.
+    create: function(model, options) {
+      options = options ? _.clone(options) : {};
+      var wait = options.wait;
+      model = this._prepareModel(model, options);
+      if (!model) return false;
+      if (!wait) this.add(model, options);
+      var collection = this;
+      var success = options.success;
+      options.success = function(m, resp, callbackOpts) {
+        if (wait) collection.add(m, callbackOpts);
+        if (success) success.call(callbackOpts.context, m, resp, callbackOpts);
+      };
+      model.save(null, options);
+      return model;
+    },
+
+    // **parse** converts a response into a list of models to be added to the
+    // collection. The default implementation is just to pass it through.
+    parse: function(resp, options) {
+      return resp;
+    },
+
+    // Create a new collection with an identical list of models as this one.
+    clone: function() {
+      return new this.constructor(this.models, {
+        model: this.model,
+        comparator: this.comparator
+      });
+    },
+
+    // Define how to uniquely identify models in the collection.
+    modelId: function(attrs) {
+      return attrs[this.model.prototype.idAttribute || 'id'];
+    },
+
+    // Private method to reset all internal state. Called when the collection
+    // is first initialized or reset.
+    _reset: function() {
+      this.length = 0;
+      this.models = [];
+      this._byId  = {};
+    },
+
+    // Prepare a hash of attributes (or other model) to be added to this
+    // collection.
+    _prepareModel: function(attrs, options) {
+      if (this._isModel(attrs)) {
+        if (!attrs.collection) attrs.collection = this;
+        return attrs;
+      }
+      options = options ? _.clone(options) : {};
+      options.collection = this;
+      var model = new this.model(attrs, options);
+      if (!model.validationError) return model;
+      this.trigger('invalid', this, model.validationError, options);
+      return false;
+    },
+
+    // Internal method called by both remove and set.
+    _removeModels: function(models, options) {
+      var removed = [];
+      for (var i = 0; i < models.length; i++) {
+        var model = this.get(models[i]);
+        if (!model) continue;
+
+        var index = this.indexOf(model);
+        this.models.splice(index, 1);
+        this.length--;
+
+        // Remove references before triggering 'remove' event to prevent an
+        // infinite loop. #3693
+        delete this._byId[model.cid];
+        var id = this.modelId(model.attributes);
+        if (id != null) delete this._byId[id];
+
+        if (!options.silent) {
+          options.index = index;
+          model.trigger('remove', model, this, options);
+        }
+
+        removed.push(model);
+        this._removeReference(model, options);
+      }
+      return removed;
+    },
+
+    // Method for checking whether an object should be considered a model for
+    // the purposes of adding to the collection.
+    _isModel: function(model) {
+      return model instanceof Model;
+    },
+
+    // Internal method to create a model's ties to a collection.
+    _addReference: function(model, options) {
+      this._byId[model.cid] = model;
+      var id = this.modelId(model.attributes);
+      if (id != null) this._byId[id] = model;
+      model.on('all', this._onModelEvent, this);
+    },
+
+    // Internal method to sever a model's ties to a collection.
+    _removeReference: function(model, options) {
+      delete this._byId[model.cid];
+      var id = this.modelId(model.attributes);
+      if (id != null) delete this._byId[id];
+      if (this === model.collection) delete model.collection;
+      model.off('all', this._onModelEvent, this);
+    },
+
+    // Internal method called every time a model in the set fires an event.
+    // Sets need to update their indexes when models change ids. All other
+    // events simply proxy through. "add" and "remove" events that originate
+    // in other collections are ignored.
+    _onModelEvent: function(event, model, collection, options) {
+      if (model) {
+        if ((event === 'add' || event === 'remove') && collection !== this) return;
+        if (event === 'destroy') this.remove(model, options);
+        if (event === 'change') {
+          var prevId = this.modelId(model.previousAttributes());
+          var id = this.modelId(model.attributes);
+          if (prevId !== id) {
+            if (prevId != null) delete this._byId[prevId];
+            if (id != null) this._byId[id] = model;
+          }
+        }
+      }
+      this.trigger.apply(this, arguments);
+    }
+
+  });
+
+  // Underscore methods that we want to implement on the Collection.
+  // 90% of the core usefulness of Backbone Collections is actually implemented
+  // right here:
+  var collectionMethods = {forEach: 3, each: 3, map: 3, collect: 3, reduce: 0,
+      foldl: 0, inject: 0, reduceRight: 0, foldr: 0, find: 3, detect: 3, filter: 3,
+      select: 3, reject: 3, every: 3, all: 3, some: 3, any: 3, include: 3, includes: 3,
+      contains: 3, invoke: 0, max: 3, min: 3, toArray: 1, size: 1, first: 3,
+      head: 3, take: 3, initial: 3, rest: 3, tail: 3, drop: 3, last: 3,
+      without: 0, difference: 0, indexOf: 3, shuffle: 1, lastIndexOf: 3,
+      isEmpty: 1, chain: 1, sample: 3, partition: 3, groupBy: 3, countBy: 3,
+      sortBy: 3, indexBy: 3, findIndex: 3, findLastIndex: 3};
+
+  // Mix in each Underscore method as a proxy to `Collection#models`.
+  addUnderscoreMethods(Collection, collectionMethods, 'models');
+
+  // Backbone.View
+  // -------------
+
+  // Backbone Views are almost more convention than they are actual code. A View
+  // is simply a JavaScript object that represents a logical chunk of UI in the
+  // DOM. This might be a single item, an entire list, a sidebar or panel, or
+  // even the surrounding frame which wraps your whole app. Defining a chunk of
+  // UI as a **View** allows you to define your DOM events declaratively, without
+  // having to worry about render order ... and makes it easy for the view to
+  // react to specific changes in the state of your models.
+
+  // Creating a Backbone.View creates its initial element outside of the DOM,
+  // if an existing element is not provided...
+  var View = Backbone.View = function(options) {
+    this.cid = _.uniqueId('view');
+    _.extend(this, _.pick(options, viewOptions));
+    this._ensureElement();
+    this.initialize.apply(this, arguments);
+  };
+
+  // Cached regex to split keys for `delegate`.
+  var delegateEventSplitter = /^(\S+)\s*(.*)$/;
+
+  // List of view options to be set as properties.
+  var viewOptions = ['model', 'collection', 'el', 'id', 'attributes', 'className', 'tagName', 'events'];
+
+  // Set up all inheritable **Backbone.View** properties and methods.
+  _.extend(View.prototype, Events, {
+
+    // The default `tagName` of a View's element is `"div"`.
+    tagName: 'div',
+
+    // jQuery delegate for element lookup, scoped to DOM elements within the
+    // current view. This should be preferred to global lookups where possible.
+    $: function(selector) {
+      return this.$el.find(selector);
+    },
+
+    // Initialize is an empty function by default. Override it with your own
+    // initialization logic.
+    initialize: function(){},
+
+    // **render** is the core function that your view should override, in order
+    // to populate its element (`this.el`), with the appropriate HTML. The
+    // convention is for **render** to always return `this`.
+    render: function() {
+      return this;
+    },
+
+    // Remove this view by taking the element out of the DOM, and removing any
+    // applicable Backbone.Events listeners.
+    remove: function() {
+      this._removeElement();
+      this.stopListening();
+      return this;
+    },
+
+    // Remove this view's element from the document and all event listeners
+    // attached to it. Exposed for subclasses using an alternative DOM
+    // manipulation API.
+    _removeElement: function() {
+      this.$el.remove();
+    },
+
+    // Change the view's element (`this.el` property) and re-delegate the
+    // view's events on the new element.
+    setElement: function(element) {
+      this.undelegateEvents();
+      this._setElement(element);
+      this.delegateEvents();
+      return this;
+    },
+
+    // Creates the `this.el` and `this.$el` references for this view using the
+    // given `el`. `el` can be a CSS selector or an HTML string, a jQuery
+    // context or an element. Subclasses can override this to utilize an
+    // alternative DOM manipulation API and are only required to set the
+    // `this.el` property.
+    _setElement: function(el) {
+      this.$el = el instanceof Backbone.$ ? el : Backbone.$(el);
+      this.el = this.$el[0];
+    },
+
+    // Set callbacks, where `this.events` is a hash of
+    //
+    // *{"event selector": "callback"}*
+    //
+    //     {
+    //       'mousedown .title':  'edit',
+    //       'click .button':     'save',
+    //       'click .open':       function(e) { ... }
+    //     }
+    //
+    // pairs. Callbacks will be bound to the view, with `this` set properly.
+    // Uses event delegation for efficiency.
+    // Omitting the selector binds the event to `this.el`.
+    delegateEvents: function(events) {
+      events || (events = _.result(this, 'events'));
+      if (!events) return this;
+      this.undelegateEvents();
+      for (var key in events) {
+        var method = events[key];
+        if (!_.isFunction(method)) method = this[method];
+        if (!method) continue;
+        var match = key.match(delegateEventSplitter);
+        this.delegate(match[1], match[2], _.bind(method, this));
+      }
+      return this;
+    },
+
+    // Add a single event listener to the view's element (or a child element
+    // using `selector`). This only works for delegate-able events: not `focus`,
+    // `blur`, and not `change`, `submit`, and `reset` in Internet Explorer.
+    delegate: function(eventName, selector, listener) {
+      this.$el.on(eventName + '.delegateEvents' + this.cid, selector, listener);
+      return this;
+    },
+
+    // Clears all callbacks previously bound to the view by `delegateEvents`.
+    // You usually don't need to use this, but may wish to if you have multiple
+    // Backbone views attached to the same DOM element.
+    undelegateEvents: function() {
+      if (this.$el) this.$el.off('.delegateEvents' + this.cid);
+      return this;
+    },
+
+    // A finer-grained `undelegateEvents` for removing a single delegated event.
+    // `selector` and `listener` are both optional.
+    undelegate: function(eventName, selector, listener) {
+      this.$el.off(eventName + '.delegateEvents' + this.cid, selector, listener);
+      return this;
+    },
+
+    // Produces a DOM element to be assigned to your view. Exposed for
+    // subclasses using an alternative DOM manipulation API.
+    _createElement: function(tagName) {
+      return document.createElement(tagName);
+    },
+
+    // Ensure that the View has a DOM element to render into.
+    // If `this.el` is a string, pass it through `$()`, take the first
+    // matching element, and re-assign it to `el`. Otherwise, create
+    // an element from the `id`, `className` and `tagName` properties.
+    _ensureElement: function() {
+      if (!this.el) {
+        var attrs = _.extend({}, _.result(this, 'attributes'));
+        if (this.id) attrs.id = _.result(this, 'id');
+        if (this.className) attrs['class'] = _.result(this, 'className');
+        this.setElement(this._createElement(_.result(this, 'tagName')));
+        this._setAttributes(attrs);
+      } else {
+        this.setElement(_.result(this, 'el'));
+      }
+    },
+
+    // Set attributes from a hash on this view's element.  Exposed for
+    // subclasses using an alternative DOM manipulation API.
+    _setAttributes: function(attributes) {
+      this.$el.attr(attributes);
+    }
+
+  });
+
+  // Backbone.sync
+  // -------------
+
+  // Override this function to change the manner in which Backbone persists
+  // models to the server. You will be passed the type of request, and the
+  // model in question. By default, makes a RESTful Ajax request
+  // to the model's `url()`. Some possible customizations could be:
+  //
+  // * Use `setTimeout` to batch rapid-fire updates into a single request.
+  // * Send up the models as XML instead of JSON.
+  // * Persist models via WebSockets instead of Ajax.
+  //
+  // Turn on `Backbone.emulateHTTP` in order to send `PUT` and `DELETE` requests
+  // as `POST`, with a `_method` parameter containing the true HTTP method,
+  // as well as all requests with the body as `application/x-www-form-urlencoded`
+  // instead of `application/json` with the model in a param named `model`.
+  // Useful when interfacing with server-side languages like **PHP** that make
+  // it difficult to read the body of `PUT` requests.
+  Backbone.sync = function(method, model, options) {
+    var type = methodMap[method];
+
+    // Default options, unless specified.
+    _.defaults(options || (options = {}), {
+      emulateHTTP: Backbone.emulateHTTP,
+      emulateJSON: Backbone.emulateJSON
+    });
+
+    // Default JSON-request options.
+    var params = {type: type, dataType: 'json'};
+
+    // Ensure that we have a URL.
+    if (!options.url) {
+      params.url = _.result(model, 'url') || urlError();
+    }
+
+    // Ensure that we have the appropriate request data.
+    if (options.data == null && model && (method === 'create' || method === 'update' || method === 'patch')) {
+      params.contentType = 'application/json';
+      params.data = JSON.stringify(options.attrs || model.toJSON(options));
+    }
+
+    // For older servers, emulate JSON by encoding the request into an HTML-form.
+    if (options.emulateJSON) {
+      params.contentType = 'application/x-www-form-urlencoded';
+      params.data = params.data ? {model: params.data} : {};
+    }
+
+    // For older servers, emulate HTTP by mimicking the HTTP method with `_method`
+    // And an `X-HTTP-Method-Override` header.
+    if (options.emulateHTTP && (type === 'PUT' || type === 'DELETE' || type === 'PATCH')) {
+      params.type = 'POST';
+      if (options.emulateJSON) params.data._method = type;
+      var beforeSend = options.beforeSend;
+      options.beforeSend = function(xhr) {
+        xhr.setRequestHeader('X-HTTP-Method-Override', type);
+        if (beforeSend) return beforeSend.apply(this, arguments);
+      };
+    }
+
+    // Don't process data on a non-GET request.
+    if (params.type !== 'GET' && !options.emulateJSON) {
+      params.processData = false;
+    }
+
+    // Pass along `textStatus` and `errorThrown` from jQuery.
+    var error = options.error;
+    options.error = function(xhr, textStatus, errorThrown) {
+      options.textStatus = textStatus;
+      options.errorThrown = errorThrown;
+      if (error) error.call(options.context, xhr, textStatus, errorThrown);
+    };
+
+    // Make the request, allowing the user to override any Ajax options.
+    var xhr = options.xhr = Backbone.ajax(_.extend(params, options));
+    model.trigger('request', model, xhr, options);
+    return xhr;
+  };
+
+  // Map from CRUD to HTTP for our default `Backbone.sync` implementation.
+  var methodMap = {
+    'create': 'POST',
+    'update': 'PUT',
+    'patch': 'PATCH',
+    'delete': 'DELETE',
+    'read': 'GET'
+  };
+
+  // Set the default implementation of `Backbone.ajax` to proxy through to `$`.
+  // Override this if you'd like to use a different library.
+  Backbone.ajax = function() {
+    return Backbone.$.ajax.apply(Backbone.$, arguments);
+  };
+
+  // Backbone.Router
+  // ---------------
+
+  // Routers map faux-URLs to actions, and fire events when routes are
+  // matched. Creating a new one sets its `routes` hash, if not set statically.
+  var Router = Backbone.Router = function(options) {
+    options || (options = {});
+    if (options.routes) this.routes = options.routes;
+    this._bindRoutes();
+    this.initialize.apply(this, arguments);
+  };
+
+  // Cached regular expressions for matching named param parts and splatted
+  // parts of route strings.
+  var optionalParam = /\((.*?)\)/g;
+  var namedParam    = /(\(\?)?:\w+/g;
+  var splatParam    = /\*\w+/g;
+  var escapeRegExp  = /[\-{}\[\]+?.,\\\^$|#\s]/g;
+
+  // Set up all inheritable **Backbone.Router** properties and methods.
+  _.extend(Router.prototype, Events, {
+
+    // Initialize is an empty function by default. Override it with your own
+    // initialization logic.
+    initialize: function(){},
+
+    // Manually bind a single named route to a callback. For example:
+    //
+    //     this.route('search/:query/p:num', 'search', function(query, num) {
+    //       ...
+    //     });
+    //
+    route: function(route, name, callback) {
+      if (!_.isRegExp(route)) route = this._routeToRegExp(route);
+      if (_.isFunction(name)) {
+        callback = name;
+        name = '';
+      }
+      if (!callback) callback = this[name];
+      var router = this;
+      Backbone.history.route(route, function(fragment) {
+        var args = router._extractParameters(route, fragment);
+        if (router.execute(callback, args, name) !== false) {
+          router.trigger.apply(router, ['route:' + name].concat(args));
+          router.trigger('route', name, args);
+          Backbone.history.trigger('route', router, name, args);
+        }
+      });
+      return this;
+    },
+
+    // Execute a route handler with the provided parameters.  This is an
+    // excellent place to do pre-route setup or post-route cleanup.
+    execute: function(callback, args, name) {
+      if (callback) callback.apply(this, args);
+    },
+
+    // Simple proxy to `Backbone.history` to save a fragment into the history.
+    navigate: function(fragment, options) {
+      Backbone.history.navigate(fragment, options);
+      return this;
+    },
+
+    // Bind all defined routes to `Backbone.history`. We have to reverse the
+    // order of the routes here to support behavior where the most general
+    // routes can be defined at the bottom of the route map.
+    _bindRoutes: function() {
+      if (!this.routes) return;
+      this.routes = _.result(this, 'routes');
+      var route, routes = _.keys(this.routes);
+      while ((route = routes.pop()) != null) {
+        this.route(route, this.routes[route]);
+      }
+    },
+
+    // Convert a route string into a regular expression, suitable for matching
+    // against the current location hash.
+    _routeToRegExp: function(route) {
+      route = route.replace(escapeRegExp, '\\$&')
+                   .replace(optionalParam, '(?:$1)?')
+                   .replace(namedParam, function(match, optional) {
+                     return optional ? match : '([^/?]+)';
+                   })
+                   .replace(splatParam, '([^?]*?)');
+      return new RegExp('^' + route + '(?:\\?([\\s\\S]*))?$');
+    },
+
+    // Given a route, and a URL fragment that it matches, return the array of
+    // extracted decoded parameters. Empty or unmatched parameters will be
+    // treated as `null` to normalize cross-browser behavior.
+    _extractParameters: function(route, fragment) {
+      var params = route.exec(fragment).slice(1);
+      return _.map(params, function(param, i) {
+        // Don't decode the search params.
+        if (i === params.length - 1) return param || null;
+        return param ? decodeURIComponent(param) : null;
+      });
+    }
+
+  });
+
+  // Backbone.History
+  // ----------------
+
+  // Handles cross-browser history management, based on either
+  // [pushState](http://diveintohtml5.info/history.html) and real URLs, or
+  // [onhashchange](https://developer.mozilla.org/en-US/docs/DOM/window.onhashchange)
+  // and URL fragments. If the browser supports neither (old IE, natch),
+  // falls back to polling.
+  var History = Backbone.History = function() {
+    this.handlers = [];
+    this.checkUrl = _.bind(this.checkUrl, this);
+
+    // Ensure that `History` can be used outside of the browser.
+    if (typeof window !== 'undefined') {
+      this.location = window.location;
+      this.history = window.history;
+    }
+  };
+
+  // Cached regex for stripping a leading hash/slash and trailing space.
+  var routeStripper = /^[#\/]|\s+$/g;
+
+  // Cached regex for stripping leading and trailing slashes.
+  var rootStripper = /^\/+|\/+$/g;
+
+  // Cached regex for stripping urls of hash.
+  var pathStripper = /#.*$/;
+
+  // Has the history handling already been started?
+  History.started = false;
+
+  // Set up all inheritable **Backbone.History** properties and methods.
+  _.extend(History.prototype, Events, {
+
+    // The default interval to poll for hash changes, if necessary, is
+    // twenty times a second.
+    interval: 50,
+
+    // Are we at the app root?
+    atRoot: function() {
+      var path = this.location.pathname.replace(/[^\/]$/, '$&/');
+      return path === this.root && !this.getSearch();
+    },
+
+    // Does the pathname match the root?
+    matchRoot: function() {
+      var path = this.decodeFragment(this.location.pathname);
+      var rootPath = path.slice(0, this.root.length - 1) + '/';
+      return rootPath === this.root;
+    },
+
+    // Unicode characters in `location.pathname` are percent encoded so they're
+    // decoded for comparison. `%25` should not be decoded since it may be part
+    // of an encoded parameter.
+    decodeFragment: function(fragment) {
+      return decodeURI(fragment.replace(/%25/g, '%2525'));
+    },
+
+    // In IE6, the hash fragment and search params are incorrect if the
+    // fragment contains `?`.
+    getSearch: function() {
+      var match = this.location.href.replace(/#.*/, '').match(/\?.+/);
+      return match ? match[0] : '';
+    },
+
+    // Gets the true hash value. Cannot use location.hash directly due to bug
+    // in Firefox where location.hash will always be decoded.
+    getHash: function(window) {
+      var match = (window || this).location.href.match(/#(.*)$/);
+      return match ? match[1] : '';
+    },
+
+    // Get the pathname and search params, without the root.
+    getPath: function() {
+      var path = this.decodeFragment(
+        this.location.pathname + this.getSearch()
+      ).slice(this.root.length - 1);
+      return path.charAt(0) === '/' ? path.slice(1) : path;
+    },
+
+    // Get the cross-browser normalized URL fragment from the path or hash.
+    getFragment: function(fragment) {
+      if (fragment == null) {
+        if (this._usePushState || !this._wantsHashChange) {
+          fragment = this.getPath();
+        } else {
+          fragment = this.getHash();
+        }
+      }
+      return fragment.replace(routeStripper, '');
+    },
+
+    // Start the hash change handling, returning `true` if the current URL matches
+    // an existing route, and `false` otherwise.
+    start: function(options) {
+      if (History.started) throw new Error('Backbone.history has already been started');
+      History.started = true;
+
+      // Figure out the initial configuration. Do we need an iframe?
+      // Is pushState desired ... is it available?
+      this.options          = _.extend({root: '/'}, this.options, options);
+      this.root             = this.options.root;
+      this._wantsHashChange = this.options.hashChange !== false;
+      this._hasHashChange   = 'onhashchange' in window && (document.documentMode === void 0 || document.documentMode > 7);
+      this._useHashChange   = this._wantsHashChange && this._hasHashChange;
+      this._wantsPushState  = !!this.options.pushState;
+      this._hasPushState    = !!(this.history && this.history.pushState);
+      this._usePushState    = this._wantsPushState && this._hasPushState;
+      this.fragment         = this.getFragment();
+
+      // Normalize root to always include a leading and trailing slash.
+      this.root = ('/' + this.root + '/').replace(rootStripper, '/');
+
+      // Transition from hashChange to pushState or vice versa if both are
+      // requested.
+      if (this._wantsHashChange && this._wantsPushState) {
+
+        // If we've started off with a route from a `pushState`-enabled
+        // browser, but we're currently in a browser that doesn't support it...
+        if (!this._hasPushState && !this.atRoot()) {
+          var rootPath = this.root.slice(0, -1) || '/';
+          this.location.replace(rootPath + '#' + this.getPath());
+          // Return immediately as browser will do redirect to new url
+          return true;
+
+        // Or if we've started out with a hash-based route, but we're currently
+        // in a browser where it could be `pushState`-based instead...
+        } else if (this._hasPushState && this.atRoot()) {
+          this.navigate(this.getHash(), {replace: true});
+        }
+
+      }
+
+      // Proxy an iframe to handle location events if the browser doesn't
+      // support the `hashchange` event, HTML5 history, or the user wants
+      // `hashChange` but not `pushState`.
+      if (!this._hasHashChange && this._wantsHashChange && !this._usePushState) {
+        this.iframe = document.createElement('iframe');
+        this.iframe.src = 'javascript:0';
+        this.iframe.style.display = 'none';
+        this.iframe.tabIndex = -1;
+        var body = document.body;
+        // Using `appendChild` will throw on IE < 9 if the document is not ready.
+        var iWindow = body.insertBefore(this.iframe, body.firstChild).contentWindow;
+        iWindow.document.open();
+        iWindow.document.close();
+        iWindow.location.hash = '#' + this.fragment;
+      }
+
+      // Add a cross-platform `addEventListener` shim for older browsers.
+      var addEventListener = window.addEventListener || function(eventName, listener) {
+        return attachEvent('on' + eventName, listener);
+      };
+
+      // Depending on whether we're using pushState or hashes, and whether
+      // 'onhashchange' is supported, determine how we check the URL state.
+      if (this._usePushState) {
+        addEventListener('popstate', this.checkUrl, false);
+      } else if (this._useHashChange && !this.iframe) {
+        addEventListener('hashchange', this.checkUrl, false);
+      } else if (this._wantsHashChange) {
+        this._checkUrlInterval = setInterval(this.checkUrl, this.interval);
+      }
+
+      if (!this.options.silent) return this.loadUrl();
+    },
+
+    // Disable Backbone.history, perhaps temporarily. Not useful in a real app,
+    // but possibly useful for unit testing Routers.
+    stop: function() {
+      // Add a cross-platform `removeEventListener` shim for older browsers.
+      var removeEventListener = window.removeEventListener || function(eventName, listener) {
+        return detachEvent('on' + eventName, listener);
+      };
+
+      // Remove window listeners.
+      if (this._usePushState) {
+        removeEventListener('popstate', this.checkUrl, false);
+      } else if (this._useHashChange && !this.iframe) {
+        removeEventListener('hashchange', this.checkUrl, false);
+      }
+
+      // Clean up the iframe if necessary.
+      if (this.iframe) {
+        document.body.removeChild(this.iframe);
+        this.iframe = null;
+      }
+
+      // Some environments will throw when clearing an undefined interval.
+      if (this._checkUrlInterval) clearInterval(this._checkUrlInterval);
+      History.started = false;
+    },
+
+    // Add a route to be tested when the fragment changes. Routes added later
+    // may override previous routes.
+    route: function(route, callback) {
+      this.handlers.unshift({route: route, callback: callback});
+    },
+
+    // Checks the current URL to see if it has changed, and if it has,
+    // calls `loadUrl`, normalizing across the hidden iframe.
+    checkUrl: function(e) {
+      var current = this.getFragment();
+
+      // If the user pressed the back button, the iframe's hash will have
+      // changed and we should use that for comparison.
+      if (current === this.fragment && this.iframe) {
+        current = this.getHash(this.iframe.contentWindow);
+      }
+
+      if (current === this.fragment) return false;
+      if (this.iframe) this.navigate(current);
+      this.loadUrl();
+    },
+
+    // Attempt to load the current URL fragment. If a route succeeds with a
+    // match, returns `true`. If no defined routes matches the fragment,
+    // returns `false`.
+    loadUrl: function(fragment) {
+      // If the root doesn't match, no routes can match either.
+      if (!this.matchRoot()) return false;
+      fragment = this.fragment = this.getFragment(fragment);
+      return _.some(this.handlers, function(handler) {
+        if (handler.route.test(fragment)) {
+          handler.callback(fragment);
+          return true;
+        }
+      });
+    },
+
+    // Save a fragment into the hash history, or replace the URL state if the
+    // 'replace' option is passed. You are responsible for properly URL-encoding
+    // the fragment in advance.
+    //
+    // The options object can contain `trigger: true` if you wish to have the
+    // route callback be fired (not usually desirable), or `replace: true`, if
+    // you wish to modify the current URL without adding an entry to the history.
+    navigate: function(fragment, options) {
+      if (!History.started) return false;
+      if (!options || options === true) options = {trigger: !!options};
+
+      // Normalize the fragment.
+      fragment = this.getFragment(fragment || '');
+
+      // Don't include a trailing slash on the root.
+      var rootPath = this.root;
+      if (fragment === '' || fragment.charAt(0) === '?') {
+        rootPath = rootPath.slice(0, -1) || '/';
+      }
+      var url = rootPath + fragment;
+
+      // Strip the hash and decode for matching.
+      fragment = this.decodeFragment(fragment.replace(pathStripper, ''));
+
+      if (this.fragment === fragment) return;
+      this.fragment = fragment;
+
+      // If pushState is available, we use it to set the fragment as a real URL.
+      if (this._usePushState) {
+        this.history[options.replace ? 'replaceState' : 'pushState']({}, document.title, url);
+
+      // If hash changes haven't been explicitly disabled, update the hash
+      // fragment to store history.
+      } else if (this._wantsHashChange) {
+        this._updateHash(this.location, fragment, options.replace);
+        if (this.iframe && fragment !== this.getHash(this.iframe.contentWindow)) {
+          var iWindow = this.iframe.contentWindow;
+
+          // Opening and closing the iframe tricks IE7 and earlier to push a
+          // history entry on hash-tag change.  When replace is true, we don't
+          // want this.
+          if (!options.replace) {
+            iWindow.document.open();
+            iWindow.document.close();
+          }
+
+          this._updateHash(iWindow.location, fragment, options.replace);
+        }
+
+      // If you've told us that you explicitly don't want fallback hashchange-
+      // based history, then `navigate` becomes a page refresh.
+      } else {
+        return this.location.assign(url);
+      }
+      if (options.trigger) return this.loadUrl(fragment);
+    },
+
+    // Update the hash location, either replacing the current entry, or adding
+    // a new one to the browser history.
+    _updateHash: function(location, fragment, replace) {
+      if (replace) {
+        var href = location.href.replace(/(javascript:|#).*$/, '');
+        location.replace(href + '#' + fragment);
+      } else {
+        // Some browsers require that `hash` contains a leading #.
+        location.hash = '#' + fragment;
+      }
+    }
+
+  });
+
+  // Create the default Backbone.history.
+  Backbone.history = new History;
+
+  // Helpers
+  // -------
+
+  // Helper function to correctly set up the prototype chain for subclasses.
+  // Similar to `goog.inherits`, but uses a hash of prototype properties and
+  // class properties to be extended.
+  var extend = function(protoProps, staticProps) {
+    var parent = this;
+    var child;
+
+    // The constructor function for the new subclass is either defined by you
+    // (the "constructor" property in your `extend` definition), or defaulted
+    // by us to simply call the parent constructor.
+    if (protoProps && _.has(protoProps, 'constructor')) {
+      child = protoProps.constructor;
+    } else {
+      child = function(){ return parent.apply(this, arguments); };
+    }
+
+    // Add static properties to the constructor function, if supplied.
+    _.extend(child, parent, staticProps);
+
+    // Set the prototype chain to inherit from `parent`, without calling
+    // `parent`'s constructor function and add the prototype properties.
+    child.prototype = _.create(parent.prototype, protoProps);
+    child.prototype.constructor = child;
+
+    // Set a convenience property in case the parent's prototype is needed
+    // later.
+    child.__super__ = parent.prototype;
+
+    return child;
+  };
+
+  // Set up inheritance for the model, collection, router, view and history.
+  Model.extend = Collection.extend = Router.extend = View.extend = History.extend = extend;
+
+  // Throw an error when a URL is needed, and none is supplied.
+  var urlError = function() {
+    throw new Error('A "url" property or function must be specified');
+  };
+
+  // Wrap an optional error callback with a fallback error event.
+  var wrapError = function(model, options) {
+    var error = options.error;
+    options.error = function(resp) {
+      if (error) error.call(options.context, model, resp, options);
+      model.trigger('error', model, resp, options);
+    };
+  };
+
+  return Backbone;
+});
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"jquery":35,"underscore":38}],15:[function(require,module,exports){
 /*!
   * Bootstrap v4.0.0 (https://getbootstrap.com)
   * Copyright 2011-2018 The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)
@@ -3905,7 +11044,1136 @@ Object.defineProperty(exports, '__esModule', { value: true });
 })));
 
 
-},{"jquery":3,"popper.js":4}],3:[function(require,module,exports){
+},{"jquery":35,"popper.js":37}],16:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+// istanbul ignore next
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+// istanbul ignore next
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+
+var _handlebarsBase = require('./handlebars/base');
+
+var base = _interopRequireWildcard(_handlebarsBase);
+
+// Each of these augment the Handlebars object. No need to setup here.
+// (This is done to easily share code between commonjs and browse envs)
+
+var _handlebarsSafeString = require('./handlebars/safe-string');
+
+var _handlebarsSafeString2 = _interopRequireDefault(_handlebarsSafeString);
+
+var _handlebarsException = require('./handlebars/exception');
+
+var _handlebarsException2 = _interopRequireDefault(_handlebarsException);
+
+var _handlebarsUtils = require('./handlebars/utils');
+
+var Utils = _interopRequireWildcard(_handlebarsUtils);
+
+var _handlebarsRuntime = require('./handlebars/runtime');
+
+var runtime = _interopRequireWildcard(_handlebarsRuntime);
+
+var _handlebarsNoConflict = require('./handlebars/no-conflict');
+
+var _handlebarsNoConflict2 = _interopRequireDefault(_handlebarsNoConflict);
+
+// For compatibility and usage outside of module systems, make the Handlebars object a namespace
+function create() {
+  var hb = new base.HandlebarsEnvironment();
+
+  Utils.extend(hb, base);
+  hb.SafeString = _handlebarsSafeString2['default'];
+  hb.Exception = _handlebarsException2['default'];
+  hb.Utils = Utils;
+  hb.escapeExpression = Utils.escapeExpression;
+
+  hb.VM = runtime;
+  hb.template = function (spec) {
+    return runtime.template(spec, hb);
+  };
+
+  return hb;
+}
+
+var inst = create();
+inst.create = create;
+
+_handlebarsNoConflict2['default'](inst);
+
+inst['default'] = inst;
+
+exports['default'] = inst;
+module.exports = exports['default'];
+
+
+},{"./handlebars/base":17,"./handlebars/exception":20,"./handlebars/no-conflict":30,"./handlebars/runtime":31,"./handlebars/safe-string":32,"./handlebars/utils":33}],17:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+exports.HandlebarsEnvironment = HandlebarsEnvironment;
+// istanbul ignore next
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _utils = require('./utils');
+
+var _exception = require('./exception');
+
+var _exception2 = _interopRequireDefault(_exception);
+
+var _helpers = require('./helpers');
+
+var _decorators = require('./decorators');
+
+var _logger = require('./logger');
+
+var _logger2 = _interopRequireDefault(_logger);
+
+var VERSION = '4.0.11';
+exports.VERSION = VERSION;
+var COMPILER_REVISION = 7;
+
+exports.COMPILER_REVISION = COMPILER_REVISION;
+var REVISION_CHANGES = {
+  1: '<= 1.0.rc.2', // 1.0.rc.2 is actually rev2 but doesn't report it
+  2: '== 1.0.0-rc.3',
+  3: '== 1.0.0-rc.4',
+  4: '== 1.x.x',
+  5: '== 2.0.0-alpha.x',
+  6: '>= 2.0.0-beta.1',
+  7: '>= 4.0.0'
+};
+
+exports.REVISION_CHANGES = REVISION_CHANGES;
+var objectType = '[object Object]';
+
+function HandlebarsEnvironment(helpers, partials, decorators) {
+  this.helpers = helpers || {};
+  this.partials = partials || {};
+  this.decorators = decorators || {};
+
+  _helpers.registerDefaultHelpers(this);
+  _decorators.registerDefaultDecorators(this);
+}
+
+HandlebarsEnvironment.prototype = {
+  constructor: HandlebarsEnvironment,
+
+  logger: _logger2['default'],
+  log: _logger2['default'].log,
+
+  registerHelper: function registerHelper(name, fn) {
+    if (_utils.toString.call(name) === objectType) {
+      if (fn) {
+        throw new _exception2['default']('Arg not supported with multiple helpers');
+      }
+      _utils.extend(this.helpers, name);
+    } else {
+      this.helpers[name] = fn;
+    }
+  },
+  unregisterHelper: function unregisterHelper(name) {
+    delete this.helpers[name];
+  },
+
+  registerPartial: function registerPartial(name, partial) {
+    if (_utils.toString.call(name) === objectType) {
+      _utils.extend(this.partials, name);
+    } else {
+      if (typeof partial === 'undefined') {
+        throw new _exception2['default']('Attempting to register a partial called "' + name + '" as undefined');
+      }
+      this.partials[name] = partial;
+    }
+  },
+  unregisterPartial: function unregisterPartial(name) {
+    delete this.partials[name];
+  },
+
+  registerDecorator: function registerDecorator(name, fn) {
+    if (_utils.toString.call(name) === objectType) {
+      if (fn) {
+        throw new _exception2['default']('Arg not supported with multiple decorators');
+      }
+      _utils.extend(this.decorators, name);
+    } else {
+      this.decorators[name] = fn;
+    }
+  },
+  unregisterDecorator: function unregisterDecorator(name) {
+    delete this.decorators[name];
+  }
+};
+
+var log = _logger2['default'].log;
+
+exports.log = log;
+exports.createFrame = _utils.createFrame;
+exports.logger = _logger2['default'];
+
+
+},{"./decorators":18,"./exception":20,"./helpers":21,"./logger":29,"./utils":33}],18:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+exports.registerDefaultDecorators = registerDefaultDecorators;
+// istanbul ignore next
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _decoratorsInline = require('./decorators/inline');
+
+var _decoratorsInline2 = _interopRequireDefault(_decoratorsInline);
+
+function registerDefaultDecorators(instance) {
+  _decoratorsInline2['default'](instance);
+}
+
+
+},{"./decorators/inline":19}],19:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+
+var _utils = require('../utils');
+
+exports['default'] = function (instance) {
+  instance.registerDecorator('inline', function (fn, props, container, options) {
+    var ret = fn;
+    if (!props.partials) {
+      props.partials = {};
+      ret = function (context, options) {
+        // Create a new partials stack frame prior to exec.
+        var original = container.partials;
+        container.partials = _utils.extend({}, original, props.partials);
+        var ret = fn(context, options);
+        container.partials = original;
+        return ret;
+      };
+    }
+
+    props.partials[options.args[0]] = options.fn;
+
+    return ret;
+  });
+};
+
+module.exports = exports['default'];
+
+
+},{"../utils":33}],20:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+
+var errorProps = ['description', 'fileName', 'lineNumber', 'message', 'name', 'number', 'stack'];
+
+function Exception(message, node) {
+  var loc = node && node.loc,
+      line = undefined,
+      column = undefined;
+  if (loc) {
+    line = loc.start.line;
+    column = loc.start.column;
+
+    message += ' - ' + line + ':' + column;
+  }
+
+  var tmp = Error.prototype.constructor.call(this, message);
+
+  // Unfortunately errors are not enumerable in Chrome (at least), so `for prop in tmp` doesn't work.
+  for (var idx = 0; idx < errorProps.length; idx++) {
+    this[errorProps[idx]] = tmp[errorProps[idx]];
+  }
+
+  /* istanbul ignore else */
+  if (Error.captureStackTrace) {
+    Error.captureStackTrace(this, Exception);
+  }
+
+  try {
+    if (loc) {
+      this.lineNumber = line;
+
+      // Work around issue under safari where we can't directly set the column value
+      /* istanbul ignore next */
+      if (Object.defineProperty) {
+        Object.defineProperty(this, 'column', {
+          value: column,
+          enumerable: true
+        });
+      } else {
+        this.column = column;
+      }
+    }
+  } catch (nop) {
+    /* Ignore if the browser is very particular */
+  }
+}
+
+Exception.prototype = new Error();
+
+exports['default'] = Exception;
+module.exports = exports['default'];
+
+
+},{}],21:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+exports.registerDefaultHelpers = registerDefaultHelpers;
+// istanbul ignore next
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _helpersBlockHelperMissing = require('./helpers/block-helper-missing');
+
+var _helpersBlockHelperMissing2 = _interopRequireDefault(_helpersBlockHelperMissing);
+
+var _helpersEach = require('./helpers/each');
+
+var _helpersEach2 = _interopRequireDefault(_helpersEach);
+
+var _helpersHelperMissing = require('./helpers/helper-missing');
+
+var _helpersHelperMissing2 = _interopRequireDefault(_helpersHelperMissing);
+
+var _helpersIf = require('./helpers/if');
+
+var _helpersIf2 = _interopRequireDefault(_helpersIf);
+
+var _helpersLog = require('./helpers/log');
+
+var _helpersLog2 = _interopRequireDefault(_helpersLog);
+
+var _helpersLookup = require('./helpers/lookup');
+
+var _helpersLookup2 = _interopRequireDefault(_helpersLookup);
+
+var _helpersWith = require('./helpers/with');
+
+var _helpersWith2 = _interopRequireDefault(_helpersWith);
+
+function registerDefaultHelpers(instance) {
+  _helpersBlockHelperMissing2['default'](instance);
+  _helpersEach2['default'](instance);
+  _helpersHelperMissing2['default'](instance);
+  _helpersIf2['default'](instance);
+  _helpersLog2['default'](instance);
+  _helpersLookup2['default'](instance);
+  _helpersWith2['default'](instance);
+}
+
+
+},{"./helpers/block-helper-missing":22,"./helpers/each":23,"./helpers/helper-missing":24,"./helpers/if":25,"./helpers/log":26,"./helpers/lookup":27,"./helpers/with":28}],22:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+
+var _utils = require('../utils');
+
+exports['default'] = function (instance) {
+  instance.registerHelper('blockHelperMissing', function (context, options) {
+    var inverse = options.inverse,
+        fn = options.fn;
+
+    if (context === true) {
+      return fn(this);
+    } else if (context === false || context == null) {
+      return inverse(this);
+    } else if (_utils.isArray(context)) {
+      if (context.length > 0) {
+        if (options.ids) {
+          options.ids = [options.name];
+        }
+
+        return instance.helpers.each(context, options);
+      } else {
+        return inverse(this);
+      }
+    } else {
+      if (options.data && options.ids) {
+        var data = _utils.createFrame(options.data);
+        data.contextPath = _utils.appendContextPath(options.data.contextPath, options.name);
+        options = { data: data };
+      }
+
+      return fn(context, options);
+    }
+  });
+};
+
+module.exports = exports['default'];
+
+
+},{"../utils":33}],23:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+// istanbul ignore next
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _utils = require('../utils');
+
+var _exception = require('../exception');
+
+var _exception2 = _interopRequireDefault(_exception);
+
+exports['default'] = function (instance) {
+  instance.registerHelper('each', function (context, options) {
+    if (!options) {
+      throw new _exception2['default']('Must pass iterator to #each');
+    }
+
+    var fn = options.fn,
+        inverse = options.inverse,
+        i = 0,
+        ret = '',
+        data = undefined,
+        contextPath = undefined;
+
+    if (options.data && options.ids) {
+      contextPath = _utils.appendContextPath(options.data.contextPath, options.ids[0]) + '.';
+    }
+
+    if (_utils.isFunction(context)) {
+      context = context.call(this);
+    }
+
+    if (options.data) {
+      data = _utils.createFrame(options.data);
+    }
+
+    function execIteration(field, index, last) {
+      if (data) {
+        data.key = field;
+        data.index = index;
+        data.first = index === 0;
+        data.last = !!last;
+
+        if (contextPath) {
+          data.contextPath = contextPath + field;
+        }
+      }
+
+      ret = ret + fn(context[field], {
+        data: data,
+        blockParams: _utils.blockParams([context[field], field], [contextPath + field, null])
+      });
+    }
+
+    if (context && typeof context === 'object') {
+      if (_utils.isArray(context)) {
+        for (var j = context.length; i < j; i++) {
+          if (i in context) {
+            execIteration(i, i, i === context.length - 1);
+          }
+        }
+      } else {
+        var priorKey = undefined;
+
+        for (var key in context) {
+          if (context.hasOwnProperty(key)) {
+            // We're running the iterations one step out of sync so we can detect
+            // the last iteration without have to scan the object twice and create
+            // an itermediate keys array.
+            if (priorKey !== undefined) {
+              execIteration(priorKey, i - 1);
+            }
+            priorKey = key;
+            i++;
+          }
+        }
+        if (priorKey !== undefined) {
+          execIteration(priorKey, i - 1, true);
+        }
+      }
+    }
+
+    if (i === 0) {
+      ret = inverse(this);
+    }
+
+    return ret;
+  });
+};
+
+module.exports = exports['default'];
+
+
+},{"../exception":20,"../utils":33}],24:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+// istanbul ignore next
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _exception = require('../exception');
+
+var _exception2 = _interopRequireDefault(_exception);
+
+exports['default'] = function (instance) {
+  instance.registerHelper('helperMissing', function () /* [args, ]options */{
+    if (arguments.length === 1) {
+      // A missing field in a {{foo}} construct.
+      return undefined;
+    } else {
+      // Someone is actually trying to call something, blow up.
+      throw new _exception2['default']('Missing helper: "' + arguments[arguments.length - 1].name + '"');
+    }
+  });
+};
+
+module.exports = exports['default'];
+
+
+},{"../exception":20}],25:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+
+var _utils = require('../utils');
+
+exports['default'] = function (instance) {
+  instance.registerHelper('if', function (conditional, options) {
+    if (_utils.isFunction(conditional)) {
+      conditional = conditional.call(this);
+    }
+
+    // Default behavior is to render the positive path if the value is truthy and not empty.
+    // The `includeZero` option may be set to treat the condtional as purely not empty based on the
+    // behavior of isEmpty. Effectively this determines if 0 is handled by the positive path or negative.
+    if (!options.hash.includeZero && !conditional || _utils.isEmpty(conditional)) {
+      return options.inverse(this);
+    } else {
+      return options.fn(this);
+    }
+  });
+
+  instance.registerHelper('unless', function (conditional, options) {
+    return instance.helpers['if'].call(this, conditional, { fn: options.inverse, inverse: options.fn, hash: options.hash });
+  });
+};
+
+module.exports = exports['default'];
+
+
+},{"../utils":33}],26:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+
+exports['default'] = function (instance) {
+  instance.registerHelper('log', function () /* message, options */{
+    var args = [undefined],
+        options = arguments[arguments.length - 1];
+    for (var i = 0; i < arguments.length - 1; i++) {
+      args.push(arguments[i]);
+    }
+
+    var level = 1;
+    if (options.hash.level != null) {
+      level = options.hash.level;
+    } else if (options.data && options.data.level != null) {
+      level = options.data.level;
+    }
+    args[0] = level;
+
+    instance.log.apply(instance, args);
+  });
+};
+
+module.exports = exports['default'];
+
+
+},{}],27:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+
+exports['default'] = function (instance) {
+  instance.registerHelper('lookup', function (obj, field) {
+    return obj && obj[field];
+  });
+};
+
+module.exports = exports['default'];
+
+
+},{}],28:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+
+var _utils = require('../utils');
+
+exports['default'] = function (instance) {
+  instance.registerHelper('with', function (context, options) {
+    if (_utils.isFunction(context)) {
+      context = context.call(this);
+    }
+
+    var fn = options.fn;
+
+    if (!_utils.isEmpty(context)) {
+      var data = options.data;
+      if (options.data && options.ids) {
+        data = _utils.createFrame(options.data);
+        data.contextPath = _utils.appendContextPath(options.data.contextPath, options.ids[0]);
+      }
+
+      return fn(context, {
+        data: data,
+        blockParams: _utils.blockParams([context], [data && data.contextPath])
+      });
+    } else {
+      return options.inverse(this);
+    }
+  });
+};
+
+module.exports = exports['default'];
+
+
+},{"../utils":33}],29:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+
+var _utils = require('./utils');
+
+var logger = {
+  methodMap: ['debug', 'info', 'warn', 'error'],
+  level: 'info',
+
+  // Maps a given level value to the `methodMap` indexes above.
+  lookupLevel: function lookupLevel(level) {
+    if (typeof level === 'string') {
+      var levelMap = _utils.indexOf(logger.methodMap, level.toLowerCase());
+      if (levelMap >= 0) {
+        level = levelMap;
+      } else {
+        level = parseInt(level, 10);
+      }
+    }
+
+    return level;
+  },
+
+  // Can be overridden in the host environment
+  log: function log(level) {
+    level = logger.lookupLevel(level);
+
+    if (typeof console !== 'undefined' && logger.lookupLevel(logger.level) <= level) {
+      var method = logger.methodMap[level];
+      if (!console[method]) {
+        // eslint-disable-line no-console
+        method = 'log';
+      }
+
+      for (var _len = arguments.length, message = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+        message[_key - 1] = arguments[_key];
+      }
+
+      console[method].apply(console, message); // eslint-disable-line no-console
+    }
+  }
+};
+
+exports['default'] = logger;
+module.exports = exports['default'];
+
+
+},{"./utils":33}],30:[function(require,module,exports){
+(function (global){
+/* global window */
+'use strict';
+
+exports.__esModule = true;
+
+exports['default'] = function (Handlebars) {
+  /* istanbul ignore next */
+  var root = typeof global !== 'undefined' ? global : window,
+      $Handlebars = root.Handlebars;
+  /* istanbul ignore next */
+  Handlebars.noConflict = function () {
+    if (root.Handlebars === Handlebars) {
+      root.Handlebars = $Handlebars;
+    }
+    return Handlebars;
+  };
+};
+
+module.exports = exports['default'];
+
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],31:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+exports.checkRevision = checkRevision;
+exports.template = template;
+exports.wrapProgram = wrapProgram;
+exports.resolvePartial = resolvePartial;
+exports.invokePartial = invokePartial;
+exports.noop = noop;
+// istanbul ignore next
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+// istanbul ignore next
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+
+var _utils = require('./utils');
+
+var Utils = _interopRequireWildcard(_utils);
+
+var _exception = require('./exception');
+
+var _exception2 = _interopRequireDefault(_exception);
+
+var _base = require('./base');
+
+function checkRevision(compilerInfo) {
+  var compilerRevision = compilerInfo && compilerInfo[0] || 1,
+      currentRevision = _base.COMPILER_REVISION;
+
+  if (compilerRevision !== currentRevision) {
+    if (compilerRevision < currentRevision) {
+      var runtimeVersions = _base.REVISION_CHANGES[currentRevision],
+          compilerVersions = _base.REVISION_CHANGES[compilerRevision];
+      throw new _exception2['default']('Template was precompiled with an older version of Handlebars than the current runtime. ' + 'Please update your precompiler to a newer version (' + runtimeVersions + ') or downgrade your runtime to an older version (' + compilerVersions + ').');
+    } else {
+      // Use the embedded version info since the runtime doesn't know about this revision yet
+      throw new _exception2['default']('Template was precompiled with a newer version of Handlebars than the current runtime. ' + 'Please update your runtime to a newer version (' + compilerInfo[1] + ').');
+    }
+  }
+}
+
+function template(templateSpec, env) {
+  /* istanbul ignore next */
+  if (!env) {
+    throw new _exception2['default']('No environment passed to template');
+  }
+  if (!templateSpec || !templateSpec.main) {
+    throw new _exception2['default']('Unknown template object: ' + typeof templateSpec);
+  }
+
+  templateSpec.main.decorator = templateSpec.main_d;
+
+  // Note: Using env.VM references rather than local var references throughout this section to allow
+  // for external users to override these as psuedo-supported APIs.
+  env.VM.checkRevision(templateSpec.compiler);
+
+  function invokePartialWrapper(partial, context, options) {
+    if (options.hash) {
+      context = Utils.extend({}, context, options.hash);
+      if (options.ids) {
+        options.ids[0] = true;
+      }
+    }
+
+    partial = env.VM.resolvePartial.call(this, partial, context, options);
+    var result = env.VM.invokePartial.call(this, partial, context, options);
+
+    if (result == null && env.compile) {
+      options.partials[options.name] = env.compile(partial, templateSpec.compilerOptions, env);
+      result = options.partials[options.name](context, options);
+    }
+    if (result != null) {
+      if (options.indent) {
+        var lines = result.split('\n');
+        for (var i = 0, l = lines.length; i < l; i++) {
+          if (!lines[i] && i + 1 === l) {
+            break;
+          }
+
+          lines[i] = options.indent + lines[i];
+        }
+        result = lines.join('\n');
+      }
+      return result;
+    } else {
+      throw new _exception2['default']('The partial ' + options.name + ' could not be compiled when running in runtime-only mode');
+    }
+  }
+
+  // Just add water
+  var container = {
+    strict: function strict(obj, name) {
+      if (!(name in obj)) {
+        throw new _exception2['default']('"' + name + '" not defined in ' + obj);
+      }
+      return obj[name];
+    },
+    lookup: function lookup(depths, name) {
+      var len = depths.length;
+      for (var i = 0; i < len; i++) {
+        if (depths[i] && depths[i][name] != null) {
+          return depths[i][name];
+        }
+      }
+    },
+    lambda: function lambda(current, context) {
+      return typeof current === 'function' ? current.call(context) : current;
+    },
+
+    escapeExpression: Utils.escapeExpression,
+    invokePartial: invokePartialWrapper,
+
+    fn: function fn(i) {
+      var ret = templateSpec[i];
+      ret.decorator = templateSpec[i + '_d'];
+      return ret;
+    },
+
+    programs: [],
+    program: function program(i, data, declaredBlockParams, blockParams, depths) {
+      var programWrapper = this.programs[i],
+          fn = this.fn(i);
+      if (data || depths || blockParams || declaredBlockParams) {
+        programWrapper = wrapProgram(this, i, fn, data, declaredBlockParams, blockParams, depths);
+      } else if (!programWrapper) {
+        programWrapper = this.programs[i] = wrapProgram(this, i, fn);
+      }
+      return programWrapper;
+    },
+
+    data: function data(value, depth) {
+      while (value && depth--) {
+        value = value._parent;
+      }
+      return value;
+    },
+    merge: function merge(param, common) {
+      var obj = param || common;
+
+      if (param && common && param !== common) {
+        obj = Utils.extend({}, common, param);
+      }
+
+      return obj;
+    },
+    // An empty object to use as replacement for null-contexts
+    nullContext: Object.seal({}),
+
+    noop: env.VM.noop,
+    compilerInfo: templateSpec.compiler
+  };
+
+  function ret(context) {
+    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+    var data = options.data;
+
+    ret._setup(options);
+    if (!options.partial && templateSpec.useData) {
+      data = initData(context, data);
+    }
+    var depths = undefined,
+        blockParams = templateSpec.useBlockParams ? [] : undefined;
+    if (templateSpec.useDepths) {
+      if (options.depths) {
+        depths = context != options.depths[0] ? [context].concat(options.depths) : options.depths;
+      } else {
+        depths = [context];
+      }
+    }
+
+    function main(context /*, options*/) {
+      return '' + templateSpec.main(container, context, container.helpers, container.partials, data, blockParams, depths);
+    }
+    main = executeDecorators(templateSpec.main, main, container, options.depths || [], data, blockParams);
+    return main(context, options);
+  }
+  ret.isTop = true;
+
+  ret._setup = function (options) {
+    if (!options.partial) {
+      container.helpers = container.merge(options.helpers, env.helpers);
+
+      if (templateSpec.usePartial) {
+        container.partials = container.merge(options.partials, env.partials);
+      }
+      if (templateSpec.usePartial || templateSpec.useDecorators) {
+        container.decorators = container.merge(options.decorators, env.decorators);
+      }
+    } else {
+      container.helpers = options.helpers;
+      container.partials = options.partials;
+      container.decorators = options.decorators;
+    }
+  };
+
+  ret._child = function (i, data, blockParams, depths) {
+    if (templateSpec.useBlockParams && !blockParams) {
+      throw new _exception2['default']('must pass block params');
+    }
+    if (templateSpec.useDepths && !depths) {
+      throw new _exception2['default']('must pass parent depths');
+    }
+
+    return wrapProgram(container, i, templateSpec[i], data, 0, blockParams, depths);
+  };
+  return ret;
+}
+
+function wrapProgram(container, i, fn, data, declaredBlockParams, blockParams, depths) {
+  function prog(context) {
+    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+    var currentDepths = depths;
+    if (depths && context != depths[0] && !(context === container.nullContext && depths[0] === null)) {
+      currentDepths = [context].concat(depths);
+    }
+
+    return fn(container, context, container.helpers, container.partials, options.data || data, blockParams && [options.blockParams].concat(blockParams), currentDepths);
+  }
+
+  prog = executeDecorators(fn, prog, container, depths, data, blockParams);
+
+  prog.program = i;
+  prog.depth = depths ? depths.length : 0;
+  prog.blockParams = declaredBlockParams || 0;
+  return prog;
+}
+
+function resolvePartial(partial, context, options) {
+  if (!partial) {
+    if (options.name === '@partial-block') {
+      partial = options.data['partial-block'];
+    } else {
+      partial = options.partials[options.name];
+    }
+  } else if (!partial.call && !options.name) {
+    // This is a dynamic partial that returned a string
+    options.name = partial;
+    partial = options.partials[partial];
+  }
+  return partial;
+}
+
+function invokePartial(partial, context, options) {
+  // Use the current closure context to save the partial-block if this partial
+  var currentPartialBlock = options.data && options.data['partial-block'];
+  options.partial = true;
+  if (options.ids) {
+    options.data.contextPath = options.ids[0] || options.data.contextPath;
+  }
+
+  var partialBlock = undefined;
+  if (options.fn && options.fn !== noop) {
+    (function () {
+      options.data = _base.createFrame(options.data);
+      // Wrapper function to get access to currentPartialBlock from the closure
+      var fn = options.fn;
+      partialBlock = options.data['partial-block'] = function partialBlockWrapper(context) {
+        var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+        // Restore the partial-block from the closure for the execution of the block
+        // i.e. the part inside the block of the partial call.
+        options.data = _base.createFrame(options.data);
+        options.data['partial-block'] = currentPartialBlock;
+        return fn(context, options);
+      };
+      if (fn.partials) {
+        options.partials = Utils.extend({}, options.partials, fn.partials);
+      }
+    })();
+  }
+
+  if (partial === undefined && partialBlock) {
+    partial = partialBlock;
+  }
+
+  if (partial === undefined) {
+    throw new _exception2['default']('The partial ' + options.name + ' could not be found');
+  } else if (partial instanceof Function) {
+    return partial(context, options);
+  }
+}
+
+function noop() {
+  return '';
+}
+
+function initData(context, data) {
+  if (!data || !('root' in data)) {
+    data = data ? _base.createFrame(data) : {};
+    data.root = context;
+  }
+  return data;
+}
+
+function executeDecorators(fn, prog, container, depths, data, blockParams) {
+  if (fn.decorator) {
+    var props = {};
+    prog = fn.decorator(prog, props, container, depths && depths[0], data, blockParams, depths);
+    Utils.extend(prog, props);
+  }
+  return prog;
+}
+
+
+},{"./base":17,"./exception":20,"./utils":33}],32:[function(require,module,exports){
+// Build out our basic SafeString type
+'use strict';
+
+exports.__esModule = true;
+function SafeString(string) {
+  this.string = string;
+}
+
+SafeString.prototype.toString = SafeString.prototype.toHTML = function () {
+  return '' + this.string;
+};
+
+exports['default'] = SafeString;
+module.exports = exports['default'];
+
+
+},{}],33:[function(require,module,exports){
+'use strict';
+
+exports.__esModule = true;
+exports.extend = extend;
+exports.indexOf = indexOf;
+exports.escapeExpression = escapeExpression;
+exports.isEmpty = isEmpty;
+exports.createFrame = createFrame;
+exports.blockParams = blockParams;
+exports.appendContextPath = appendContextPath;
+var escape = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#x27;',
+  '`': '&#x60;',
+  '=': '&#x3D;'
+};
+
+var badChars = /[&<>"'`=]/g,
+    possible = /[&<>"'`=]/;
+
+function escapeChar(chr) {
+  return escape[chr];
+}
+
+function extend(obj /* , ...source */) {
+  for (var i = 1; i < arguments.length; i++) {
+    for (var key in arguments[i]) {
+      if (Object.prototype.hasOwnProperty.call(arguments[i], key)) {
+        obj[key] = arguments[i][key];
+      }
+    }
+  }
+
+  return obj;
+}
+
+var toString = Object.prototype.toString;
+
+exports.toString = toString;
+// Sourced from lodash
+// https://github.com/bestiejs/lodash/blob/master/LICENSE.txt
+/* eslint-disable func-style */
+var isFunction = function isFunction(value) {
+  return typeof value === 'function';
+};
+// fallback for older versions of Chrome and Safari
+/* istanbul ignore next */
+if (isFunction(/x/)) {
+  exports.isFunction = isFunction = function (value) {
+    return typeof value === 'function' && toString.call(value) === '[object Function]';
+  };
+}
+exports.isFunction = isFunction;
+
+/* eslint-enable func-style */
+
+/* istanbul ignore next */
+var isArray = Array.isArray || function (value) {
+  return value && typeof value === 'object' ? toString.call(value) === '[object Array]' : false;
+};
+
+exports.isArray = isArray;
+// Older IE versions do not directly support indexOf so we must implement our own, sadly.
+
+function indexOf(array, value) {
+  for (var i = 0, len = array.length; i < len; i++) {
+    if (array[i] === value) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function escapeExpression(string) {
+  if (typeof string !== 'string') {
+    // don't escape SafeStrings, since they're already safe
+    if (string && string.toHTML) {
+      return string.toHTML();
+    } else if (string == null) {
+      return '';
+    } else if (!string) {
+      return string + '';
+    }
+
+    // Force a string conversion as this will be done by the append regardless and
+    // the regex test will do this transparently behind the scenes, causing issues if
+    // an object's to string has escaped characters in it.
+    string = '' + string;
+  }
+
+  if (!possible.test(string)) {
+    return string;
+  }
+  return string.replace(badChars, escapeChar);
+}
+
+function isEmpty(value) {
+  if (!value && value !== 0) {
+    return true;
+  } else if (isArray(value) && value.length === 0) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function createFrame(object) {
+  var frame = extend({}, object);
+  frame._parent = object;
+  return frame;
+}
+
+function blockParams(params, ids) {
+  params.path = ids;
+  return params;
+}
+
+function appendContextPath(contextPath, id) {
+  return (contextPath ? contextPath + '.' : '') + id;
+}
+
+
+},{}],34:[function(require,module,exports){
+// Create a simple path alias to allow browserify to resolve
+// the runtime on a supported path.
+module.exports = require('./dist/cjs/handlebars.runtime')['default'];
+
+},{"./dist/cjs/handlebars.runtime":16}],35:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v3.3.1
  * https://jquery.com/
@@ -14271,7 +22539,4544 @@ if ( !noGlobal ) {
 return jQuery;
 } );
 
-},{}],4:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
+//! moment.js
+//! version : 2.20.1
+//! authors : Tim Wood, Iskren Chernev, Moment.js contributors
+//! license : MIT
+//! momentjs.com
+
+;(function (global, factory) {
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+    typeof define === 'function' && define.amd ? define(factory) :
+    global.moment = factory()
+}(this, (function () { 'use strict';
+
+var hookCallback;
+
+function hooks () {
+    return hookCallback.apply(null, arguments);
+}
+
+// This is done to register the method called with moment()
+// without creating circular dependencies.
+function setHookCallback (callback) {
+    hookCallback = callback;
+}
+
+function isArray(input) {
+    return input instanceof Array || Object.prototype.toString.call(input) === '[object Array]';
+}
+
+function isObject(input) {
+    // IE8 will treat undefined and null as object if it wasn't for
+    // input != null
+    return input != null && Object.prototype.toString.call(input) === '[object Object]';
+}
+
+function isObjectEmpty(obj) {
+    if (Object.getOwnPropertyNames) {
+        return (Object.getOwnPropertyNames(obj).length === 0);
+    } else {
+        var k;
+        for (k in obj) {
+            if (obj.hasOwnProperty(k)) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
+function isUndefined(input) {
+    return input === void 0;
+}
+
+function isNumber(input) {
+    return typeof input === 'number' || Object.prototype.toString.call(input) === '[object Number]';
+}
+
+function isDate(input) {
+    return input instanceof Date || Object.prototype.toString.call(input) === '[object Date]';
+}
+
+function map(arr, fn) {
+    var res = [], i;
+    for (i = 0; i < arr.length; ++i) {
+        res.push(fn(arr[i], i));
+    }
+    return res;
+}
+
+function hasOwnProp(a, b) {
+    return Object.prototype.hasOwnProperty.call(a, b);
+}
+
+function extend(a, b) {
+    for (var i in b) {
+        if (hasOwnProp(b, i)) {
+            a[i] = b[i];
+        }
+    }
+
+    if (hasOwnProp(b, 'toString')) {
+        a.toString = b.toString;
+    }
+
+    if (hasOwnProp(b, 'valueOf')) {
+        a.valueOf = b.valueOf;
+    }
+
+    return a;
+}
+
+function createUTC (input, format, locale, strict) {
+    return createLocalOrUTC(input, format, locale, strict, true).utc();
+}
+
+function defaultParsingFlags() {
+    // We need to deep clone this object.
+    return {
+        empty           : false,
+        unusedTokens    : [],
+        unusedInput     : [],
+        overflow        : -2,
+        charsLeftOver   : 0,
+        nullInput       : false,
+        invalidMonth    : null,
+        invalidFormat   : false,
+        userInvalidated : false,
+        iso             : false,
+        parsedDateParts : [],
+        meridiem        : null,
+        rfc2822         : false,
+        weekdayMismatch : false
+    };
+}
+
+function getParsingFlags(m) {
+    if (m._pf == null) {
+        m._pf = defaultParsingFlags();
+    }
+    return m._pf;
+}
+
+var some;
+if (Array.prototype.some) {
+    some = Array.prototype.some;
+} else {
+    some = function (fun) {
+        var t = Object(this);
+        var len = t.length >>> 0;
+
+        for (var i = 0; i < len; i++) {
+            if (i in t && fun.call(this, t[i], i, t)) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+}
+
+function isValid(m) {
+    if (m._isValid == null) {
+        var flags = getParsingFlags(m);
+        var parsedParts = some.call(flags.parsedDateParts, function (i) {
+            return i != null;
+        });
+        var isNowValid = !isNaN(m._d.getTime()) &&
+            flags.overflow < 0 &&
+            !flags.empty &&
+            !flags.invalidMonth &&
+            !flags.invalidWeekday &&
+            !flags.weekdayMismatch &&
+            !flags.nullInput &&
+            !flags.invalidFormat &&
+            !flags.userInvalidated &&
+            (!flags.meridiem || (flags.meridiem && parsedParts));
+
+        if (m._strict) {
+            isNowValid = isNowValid &&
+                flags.charsLeftOver === 0 &&
+                flags.unusedTokens.length === 0 &&
+                flags.bigHour === undefined;
+        }
+
+        if (Object.isFrozen == null || !Object.isFrozen(m)) {
+            m._isValid = isNowValid;
+        }
+        else {
+            return isNowValid;
+        }
+    }
+    return m._isValid;
+}
+
+function createInvalid (flags) {
+    var m = createUTC(NaN);
+    if (flags != null) {
+        extend(getParsingFlags(m), flags);
+    }
+    else {
+        getParsingFlags(m).userInvalidated = true;
+    }
+
+    return m;
+}
+
+// Plugins that add properties should also add the key here (null value),
+// so we can properly clone ourselves.
+var momentProperties = hooks.momentProperties = [];
+
+function copyConfig(to, from) {
+    var i, prop, val;
+
+    if (!isUndefined(from._isAMomentObject)) {
+        to._isAMomentObject = from._isAMomentObject;
+    }
+    if (!isUndefined(from._i)) {
+        to._i = from._i;
+    }
+    if (!isUndefined(from._f)) {
+        to._f = from._f;
+    }
+    if (!isUndefined(from._l)) {
+        to._l = from._l;
+    }
+    if (!isUndefined(from._strict)) {
+        to._strict = from._strict;
+    }
+    if (!isUndefined(from._tzm)) {
+        to._tzm = from._tzm;
+    }
+    if (!isUndefined(from._isUTC)) {
+        to._isUTC = from._isUTC;
+    }
+    if (!isUndefined(from._offset)) {
+        to._offset = from._offset;
+    }
+    if (!isUndefined(from._pf)) {
+        to._pf = getParsingFlags(from);
+    }
+    if (!isUndefined(from._locale)) {
+        to._locale = from._locale;
+    }
+
+    if (momentProperties.length > 0) {
+        for (i = 0; i < momentProperties.length; i++) {
+            prop = momentProperties[i];
+            val = from[prop];
+            if (!isUndefined(val)) {
+                to[prop] = val;
+            }
+        }
+    }
+
+    return to;
+}
+
+var updateInProgress = false;
+
+// Moment prototype object
+function Moment(config) {
+    copyConfig(this, config);
+    this._d = new Date(config._d != null ? config._d.getTime() : NaN);
+    if (!this.isValid()) {
+        this._d = new Date(NaN);
+    }
+    // Prevent infinite loop in case updateOffset creates new moment
+    // objects.
+    if (updateInProgress === false) {
+        updateInProgress = true;
+        hooks.updateOffset(this);
+        updateInProgress = false;
+    }
+}
+
+function isMoment (obj) {
+    return obj instanceof Moment || (obj != null && obj._isAMomentObject != null);
+}
+
+function absFloor (number) {
+    if (number < 0) {
+        // -0 -> 0
+        return Math.ceil(number) || 0;
+    } else {
+        return Math.floor(number);
+    }
+}
+
+function toInt(argumentForCoercion) {
+    var coercedNumber = +argumentForCoercion,
+        value = 0;
+
+    if (coercedNumber !== 0 && isFinite(coercedNumber)) {
+        value = absFloor(coercedNumber);
+    }
+
+    return value;
+}
+
+// compare two arrays, return the number of differences
+function compareArrays(array1, array2, dontConvert) {
+    var len = Math.min(array1.length, array2.length),
+        lengthDiff = Math.abs(array1.length - array2.length),
+        diffs = 0,
+        i;
+    for (i = 0; i < len; i++) {
+        if ((dontConvert && array1[i] !== array2[i]) ||
+            (!dontConvert && toInt(array1[i]) !== toInt(array2[i]))) {
+            diffs++;
+        }
+    }
+    return diffs + lengthDiff;
+}
+
+function warn(msg) {
+    if (hooks.suppressDeprecationWarnings === false &&
+            (typeof console !==  'undefined') && console.warn) {
+        console.warn('Deprecation warning: ' + msg);
+    }
+}
+
+function deprecate(msg, fn) {
+    var firstTime = true;
+
+    return extend(function () {
+        if (hooks.deprecationHandler != null) {
+            hooks.deprecationHandler(null, msg);
+        }
+        if (firstTime) {
+            var args = [];
+            var arg;
+            for (var i = 0; i < arguments.length; i++) {
+                arg = '';
+                if (typeof arguments[i] === 'object') {
+                    arg += '\n[' + i + '] ';
+                    for (var key in arguments[0]) {
+                        arg += key + ': ' + arguments[0][key] + ', ';
+                    }
+                    arg = arg.slice(0, -2); // Remove trailing comma and space
+                } else {
+                    arg = arguments[i];
+                }
+                args.push(arg);
+            }
+            warn(msg + '\nArguments: ' + Array.prototype.slice.call(args).join('') + '\n' + (new Error()).stack);
+            firstTime = false;
+        }
+        return fn.apply(this, arguments);
+    }, fn);
+}
+
+var deprecations = {};
+
+function deprecateSimple(name, msg) {
+    if (hooks.deprecationHandler != null) {
+        hooks.deprecationHandler(name, msg);
+    }
+    if (!deprecations[name]) {
+        warn(msg);
+        deprecations[name] = true;
+    }
+}
+
+hooks.suppressDeprecationWarnings = false;
+hooks.deprecationHandler = null;
+
+function isFunction(input) {
+    return input instanceof Function || Object.prototype.toString.call(input) === '[object Function]';
+}
+
+function set (config) {
+    var prop, i;
+    for (i in config) {
+        prop = config[i];
+        if (isFunction(prop)) {
+            this[i] = prop;
+        } else {
+            this['_' + i] = prop;
+        }
+    }
+    this._config = config;
+    // Lenient ordinal parsing accepts just a number in addition to
+    // number + (possibly) stuff coming from _dayOfMonthOrdinalParse.
+    // TODO: Remove "ordinalParse" fallback in next major release.
+    this._dayOfMonthOrdinalParseLenient = new RegExp(
+        (this._dayOfMonthOrdinalParse.source || this._ordinalParse.source) +
+            '|' + (/\d{1,2}/).source);
+}
+
+function mergeConfigs(parentConfig, childConfig) {
+    var res = extend({}, parentConfig), prop;
+    for (prop in childConfig) {
+        if (hasOwnProp(childConfig, prop)) {
+            if (isObject(parentConfig[prop]) && isObject(childConfig[prop])) {
+                res[prop] = {};
+                extend(res[prop], parentConfig[prop]);
+                extend(res[prop], childConfig[prop]);
+            } else if (childConfig[prop] != null) {
+                res[prop] = childConfig[prop];
+            } else {
+                delete res[prop];
+            }
+        }
+    }
+    for (prop in parentConfig) {
+        if (hasOwnProp(parentConfig, prop) &&
+                !hasOwnProp(childConfig, prop) &&
+                isObject(parentConfig[prop])) {
+            // make sure changes to properties don't modify parent config
+            res[prop] = extend({}, res[prop]);
+        }
+    }
+    return res;
+}
+
+function Locale(config) {
+    if (config != null) {
+        this.set(config);
+    }
+}
+
+var keys;
+
+if (Object.keys) {
+    keys = Object.keys;
+} else {
+    keys = function (obj) {
+        var i, res = [];
+        for (i in obj) {
+            if (hasOwnProp(obj, i)) {
+                res.push(i);
+            }
+        }
+        return res;
+    };
+}
+
+var defaultCalendar = {
+    sameDay : '[Today at] LT',
+    nextDay : '[Tomorrow at] LT',
+    nextWeek : 'dddd [at] LT',
+    lastDay : '[Yesterday at] LT',
+    lastWeek : '[Last] dddd [at] LT',
+    sameElse : 'L'
+};
+
+function calendar (key, mom, now) {
+    var output = this._calendar[key] || this._calendar['sameElse'];
+    return isFunction(output) ? output.call(mom, now) : output;
+}
+
+var defaultLongDateFormat = {
+    LTS  : 'h:mm:ss A',
+    LT   : 'h:mm A',
+    L    : 'MM/DD/YYYY',
+    LL   : 'MMMM D, YYYY',
+    LLL  : 'MMMM D, YYYY h:mm A',
+    LLLL : 'dddd, MMMM D, YYYY h:mm A'
+};
+
+function longDateFormat (key) {
+    var format = this._longDateFormat[key],
+        formatUpper = this._longDateFormat[key.toUpperCase()];
+
+    if (format || !formatUpper) {
+        return format;
+    }
+
+    this._longDateFormat[key] = formatUpper.replace(/MMMM|MM|DD|dddd/g, function (val) {
+        return val.slice(1);
+    });
+
+    return this._longDateFormat[key];
+}
+
+var defaultInvalidDate = 'Invalid date';
+
+function invalidDate () {
+    return this._invalidDate;
+}
+
+var defaultOrdinal = '%d';
+var defaultDayOfMonthOrdinalParse = /\d{1,2}/;
+
+function ordinal (number) {
+    return this._ordinal.replace('%d', number);
+}
+
+var defaultRelativeTime = {
+    future : 'in %s',
+    past   : '%s ago',
+    s  : 'a few seconds',
+    ss : '%d seconds',
+    m  : 'a minute',
+    mm : '%d minutes',
+    h  : 'an hour',
+    hh : '%d hours',
+    d  : 'a day',
+    dd : '%d days',
+    M  : 'a month',
+    MM : '%d months',
+    y  : 'a year',
+    yy : '%d years'
+};
+
+function relativeTime (number, withoutSuffix, string, isFuture) {
+    var output = this._relativeTime[string];
+    return (isFunction(output)) ?
+        output(number, withoutSuffix, string, isFuture) :
+        output.replace(/%d/i, number);
+}
+
+function pastFuture (diff, output) {
+    var format = this._relativeTime[diff > 0 ? 'future' : 'past'];
+    return isFunction(format) ? format(output) : format.replace(/%s/i, output);
+}
+
+var aliases = {};
+
+function addUnitAlias (unit, shorthand) {
+    var lowerCase = unit.toLowerCase();
+    aliases[lowerCase] = aliases[lowerCase + 's'] = aliases[shorthand] = unit;
+}
+
+function normalizeUnits(units) {
+    return typeof units === 'string' ? aliases[units] || aliases[units.toLowerCase()] : undefined;
+}
+
+function normalizeObjectUnits(inputObject) {
+    var normalizedInput = {},
+        normalizedProp,
+        prop;
+
+    for (prop in inputObject) {
+        if (hasOwnProp(inputObject, prop)) {
+            normalizedProp = normalizeUnits(prop);
+            if (normalizedProp) {
+                normalizedInput[normalizedProp] = inputObject[prop];
+            }
+        }
+    }
+
+    return normalizedInput;
+}
+
+var priorities = {};
+
+function addUnitPriority(unit, priority) {
+    priorities[unit] = priority;
+}
+
+function getPrioritizedUnits(unitsObj) {
+    var units = [];
+    for (var u in unitsObj) {
+        units.push({unit: u, priority: priorities[u]});
+    }
+    units.sort(function (a, b) {
+        return a.priority - b.priority;
+    });
+    return units;
+}
+
+function zeroFill(number, targetLength, forceSign) {
+    var absNumber = '' + Math.abs(number),
+        zerosToFill = targetLength - absNumber.length,
+        sign = number >= 0;
+    return (sign ? (forceSign ? '+' : '') : '-') +
+        Math.pow(10, Math.max(0, zerosToFill)).toString().substr(1) + absNumber;
+}
+
+var formattingTokens = /(\[[^\[]*\])|(\\)?([Hh]mm(ss)?|Mo|MM?M?M?|Do|DDDo|DD?D?D?|ddd?d?|do?|w[o|w]?|W[o|W]?|Qo?|YYYYYY|YYYYY|YYYY|YY|gg(ggg?)?|GG(GGG?)?|e|E|a|A|hh?|HH?|kk?|mm?|ss?|S{1,9}|x|X|zz?|ZZ?|.)/g;
+
+var localFormattingTokens = /(\[[^\[]*\])|(\\)?(LTS|LT|LL?L?L?|l{1,4})/g;
+
+var formatFunctions = {};
+
+var formatTokenFunctions = {};
+
+// token:    'M'
+// padded:   ['MM', 2]
+// ordinal:  'Mo'
+// callback: function () { this.month() + 1 }
+function addFormatToken (token, padded, ordinal, callback) {
+    var func = callback;
+    if (typeof callback === 'string') {
+        func = function () {
+            return this[callback]();
+        };
+    }
+    if (token) {
+        formatTokenFunctions[token] = func;
+    }
+    if (padded) {
+        formatTokenFunctions[padded[0]] = function () {
+            return zeroFill(func.apply(this, arguments), padded[1], padded[2]);
+        };
+    }
+    if (ordinal) {
+        formatTokenFunctions[ordinal] = function () {
+            return this.localeData().ordinal(func.apply(this, arguments), token);
+        };
+    }
+}
+
+function removeFormattingTokens(input) {
+    if (input.match(/\[[\s\S]/)) {
+        return input.replace(/^\[|\]$/g, '');
+    }
+    return input.replace(/\\/g, '');
+}
+
+function makeFormatFunction(format) {
+    var array = format.match(formattingTokens), i, length;
+
+    for (i = 0, length = array.length; i < length; i++) {
+        if (formatTokenFunctions[array[i]]) {
+            array[i] = formatTokenFunctions[array[i]];
+        } else {
+            array[i] = removeFormattingTokens(array[i]);
+        }
+    }
+
+    return function (mom) {
+        var output = '', i;
+        for (i = 0; i < length; i++) {
+            output += isFunction(array[i]) ? array[i].call(mom, format) : array[i];
+        }
+        return output;
+    };
+}
+
+// format date using native date object
+function formatMoment(m, format) {
+    if (!m.isValid()) {
+        return m.localeData().invalidDate();
+    }
+
+    format = expandFormat(format, m.localeData());
+    formatFunctions[format] = formatFunctions[format] || makeFormatFunction(format);
+
+    return formatFunctions[format](m);
+}
+
+function expandFormat(format, locale) {
+    var i = 5;
+
+    function replaceLongDateFormatTokens(input) {
+        return locale.longDateFormat(input) || input;
+    }
+
+    localFormattingTokens.lastIndex = 0;
+    while (i >= 0 && localFormattingTokens.test(format)) {
+        format = format.replace(localFormattingTokens, replaceLongDateFormatTokens);
+        localFormattingTokens.lastIndex = 0;
+        i -= 1;
+    }
+
+    return format;
+}
+
+var match1         = /\d/;            //       0 - 9
+var match2         = /\d\d/;          //      00 - 99
+var match3         = /\d{3}/;         //     000 - 999
+var match4         = /\d{4}/;         //    0000 - 9999
+var match6         = /[+-]?\d{6}/;    // -999999 - 999999
+var match1to2      = /\d\d?/;         //       0 - 99
+var match3to4      = /\d\d\d\d?/;     //     999 - 9999
+var match5to6      = /\d\d\d\d\d\d?/; //   99999 - 999999
+var match1to3      = /\d{1,3}/;       //       0 - 999
+var match1to4      = /\d{1,4}/;       //       0 - 9999
+var match1to6      = /[+-]?\d{1,6}/;  // -999999 - 999999
+
+var matchUnsigned  = /\d+/;           //       0 - inf
+var matchSigned    = /[+-]?\d+/;      //    -inf - inf
+
+var matchOffset    = /Z|[+-]\d\d:?\d\d/gi; // +00:00 -00:00 +0000 -0000 or Z
+var matchShortOffset = /Z|[+-]\d\d(?::?\d\d)?/gi; // +00 -00 +00:00 -00:00 +0000 -0000 or Z
+
+var matchTimestamp = /[+-]?\d+(\.\d{1,3})?/; // 123456789 123456789.123
+
+// any word (or two) characters or numbers including two/three word month in arabic.
+// includes scottish gaelic two word and hyphenated months
+var matchWord = /[0-9]{0,256}['a-z\u00A0-\u05FF\u0700-\uD7FF\uF900-\uFDCF\uFDF0-\uFF07\uFF10-\uFFEF]{1,256}|[\u0600-\u06FF\/]{1,256}(\s*?[\u0600-\u06FF]{1,256}){1,2}/i;
+
+
+var regexes = {};
+
+function addRegexToken (token, regex, strictRegex) {
+    regexes[token] = isFunction(regex) ? regex : function (isStrict, localeData) {
+        return (isStrict && strictRegex) ? strictRegex : regex;
+    };
+}
+
+function getParseRegexForToken (token, config) {
+    if (!hasOwnProp(regexes, token)) {
+        return new RegExp(unescapeFormat(token));
+    }
+
+    return regexes[token](config._strict, config._locale);
+}
+
+// Code from http://stackoverflow.com/questions/3561493/is-there-a-regexp-escape-function-in-javascript
+function unescapeFormat(s) {
+    return regexEscape(s.replace('\\', '').replace(/\\(\[)|\\(\])|\[([^\]\[]*)\]|\\(.)/g, function (matched, p1, p2, p3, p4) {
+        return p1 || p2 || p3 || p4;
+    }));
+}
+
+function regexEscape(s) {
+    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+}
+
+var tokens = {};
+
+function addParseToken (token, callback) {
+    var i, func = callback;
+    if (typeof token === 'string') {
+        token = [token];
+    }
+    if (isNumber(callback)) {
+        func = function (input, array) {
+            array[callback] = toInt(input);
+        };
+    }
+    for (i = 0; i < token.length; i++) {
+        tokens[token[i]] = func;
+    }
+}
+
+function addWeekParseToken (token, callback) {
+    addParseToken(token, function (input, array, config, token) {
+        config._w = config._w || {};
+        callback(input, config._w, config, token);
+    });
+}
+
+function addTimeToArrayFromToken(token, input, config) {
+    if (input != null && hasOwnProp(tokens, token)) {
+        tokens[token](input, config._a, config, token);
+    }
+}
+
+var YEAR = 0;
+var MONTH = 1;
+var DATE = 2;
+var HOUR = 3;
+var MINUTE = 4;
+var SECOND = 5;
+var MILLISECOND = 6;
+var WEEK = 7;
+var WEEKDAY = 8;
+
+// FORMATTING
+
+addFormatToken('Y', 0, 0, function () {
+    var y = this.year();
+    return y <= 9999 ? '' + y : '+' + y;
+});
+
+addFormatToken(0, ['YY', 2], 0, function () {
+    return this.year() % 100;
+});
+
+addFormatToken(0, ['YYYY',   4],       0, 'year');
+addFormatToken(0, ['YYYYY',  5],       0, 'year');
+addFormatToken(0, ['YYYYYY', 6, true], 0, 'year');
+
+// ALIASES
+
+addUnitAlias('year', 'y');
+
+// PRIORITIES
+
+addUnitPriority('year', 1);
+
+// PARSING
+
+addRegexToken('Y',      matchSigned);
+addRegexToken('YY',     match1to2, match2);
+addRegexToken('YYYY',   match1to4, match4);
+addRegexToken('YYYYY',  match1to6, match6);
+addRegexToken('YYYYYY', match1to6, match6);
+
+addParseToken(['YYYYY', 'YYYYYY'], YEAR);
+addParseToken('YYYY', function (input, array) {
+    array[YEAR] = input.length === 2 ? hooks.parseTwoDigitYear(input) : toInt(input);
+});
+addParseToken('YY', function (input, array) {
+    array[YEAR] = hooks.parseTwoDigitYear(input);
+});
+addParseToken('Y', function (input, array) {
+    array[YEAR] = parseInt(input, 10);
+});
+
+// HELPERS
+
+function daysInYear(year) {
+    return isLeapYear(year) ? 366 : 365;
+}
+
+function isLeapYear(year) {
+    return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+}
+
+// HOOKS
+
+hooks.parseTwoDigitYear = function (input) {
+    return toInt(input) + (toInt(input) > 68 ? 1900 : 2000);
+};
+
+// MOMENTS
+
+var getSetYear = makeGetSet('FullYear', true);
+
+function getIsLeapYear () {
+    return isLeapYear(this.year());
+}
+
+function makeGetSet (unit, keepTime) {
+    return function (value) {
+        if (value != null) {
+            set$1(this, unit, value);
+            hooks.updateOffset(this, keepTime);
+            return this;
+        } else {
+            return get(this, unit);
+        }
+    };
+}
+
+function get (mom, unit) {
+    return mom.isValid() ?
+        mom._d['get' + (mom._isUTC ? 'UTC' : '') + unit]() : NaN;
+}
+
+function set$1 (mom, unit, value) {
+    if (mom.isValid() && !isNaN(value)) {
+        if (unit === 'FullYear' && isLeapYear(mom.year()) && mom.month() === 1 && mom.date() === 29) {
+            mom._d['set' + (mom._isUTC ? 'UTC' : '') + unit](value, mom.month(), daysInMonth(value, mom.month()));
+        }
+        else {
+            mom._d['set' + (mom._isUTC ? 'UTC' : '') + unit](value);
+        }
+    }
+}
+
+// MOMENTS
+
+function stringGet (units) {
+    units = normalizeUnits(units);
+    if (isFunction(this[units])) {
+        return this[units]();
+    }
+    return this;
+}
+
+
+function stringSet (units, value) {
+    if (typeof units === 'object') {
+        units = normalizeObjectUnits(units);
+        var prioritized = getPrioritizedUnits(units);
+        for (var i = 0; i < prioritized.length; i++) {
+            this[prioritized[i].unit](units[prioritized[i].unit]);
+        }
+    } else {
+        units = normalizeUnits(units);
+        if (isFunction(this[units])) {
+            return this[units](value);
+        }
+    }
+    return this;
+}
+
+function mod(n, x) {
+    return ((n % x) + x) % x;
+}
+
+var indexOf;
+
+if (Array.prototype.indexOf) {
+    indexOf = Array.prototype.indexOf;
+} else {
+    indexOf = function (o) {
+        // I know
+        var i;
+        for (i = 0; i < this.length; ++i) {
+            if (this[i] === o) {
+                return i;
+            }
+        }
+        return -1;
+    };
+}
+
+function daysInMonth(year, month) {
+    if (isNaN(year) || isNaN(month)) {
+        return NaN;
+    }
+    var modMonth = mod(month, 12);
+    year += (month - modMonth) / 12;
+    return modMonth === 1 ? (isLeapYear(year) ? 29 : 28) : (31 - modMonth % 7 % 2);
+}
+
+// FORMATTING
+
+addFormatToken('M', ['MM', 2], 'Mo', function () {
+    return this.month() + 1;
+});
+
+addFormatToken('MMM', 0, 0, function (format) {
+    return this.localeData().monthsShort(this, format);
+});
+
+addFormatToken('MMMM', 0, 0, function (format) {
+    return this.localeData().months(this, format);
+});
+
+// ALIASES
+
+addUnitAlias('month', 'M');
+
+// PRIORITY
+
+addUnitPriority('month', 8);
+
+// PARSING
+
+addRegexToken('M',    match1to2);
+addRegexToken('MM',   match1to2, match2);
+addRegexToken('MMM',  function (isStrict, locale) {
+    return locale.monthsShortRegex(isStrict);
+});
+addRegexToken('MMMM', function (isStrict, locale) {
+    return locale.monthsRegex(isStrict);
+});
+
+addParseToken(['M', 'MM'], function (input, array) {
+    array[MONTH] = toInt(input) - 1;
+});
+
+addParseToken(['MMM', 'MMMM'], function (input, array, config, token) {
+    var month = config._locale.monthsParse(input, token, config._strict);
+    // if we didn't find a month name, mark the date as invalid.
+    if (month != null) {
+        array[MONTH] = month;
+    } else {
+        getParsingFlags(config).invalidMonth = input;
+    }
+});
+
+// LOCALES
+
+var MONTHS_IN_FORMAT = /D[oD]?(\[[^\[\]]*\]|\s)+MMMM?/;
+var defaultLocaleMonths = 'January_February_March_April_May_June_July_August_September_October_November_December'.split('_');
+function localeMonths (m, format) {
+    if (!m) {
+        return isArray(this._months) ? this._months :
+            this._months['standalone'];
+    }
+    return isArray(this._months) ? this._months[m.month()] :
+        this._months[(this._months.isFormat || MONTHS_IN_FORMAT).test(format) ? 'format' : 'standalone'][m.month()];
+}
+
+var defaultLocaleMonthsShort = 'Jan_Feb_Mar_Apr_May_Jun_Jul_Aug_Sep_Oct_Nov_Dec'.split('_');
+function localeMonthsShort (m, format) {
+    if (!m) {
+        return isArray(this._monthsShort) ? this._monthsShort :
+            this._monthsShort['standalone'];
+    }
+    return isArray(this._monthsShort) ? this._monthsShort[m.month()] :
+        this._monthsShort[MONTHS_IN_FORMAT.test(format) ? 'format' : 'standalone'][m.month()];
+}
+
+function handleStrictParse(monthName, format, strict) {
+    var i, ii, mom, llc = monthName.toLocaleLowerCase();
+    if (!this._monthsParse) {
+        // this is not used
+        this._monthsParse = [];
+        this._longMonthsParse = [];
+        this._shortMonthsParse = [];
+        for (i = 0; i < 12; ++i) {
+            mom = createUTC([2000, i]);
+            this._shortMonthsParse[i] = this.monthsShort(mom, '').toLocaleLowerCase();
+            this._longMonthsParse[i] = this.months(mom, '').toLocaleLowerCase();
+        }
+    }
+
+    if (strict) {
+        if (format === 'MMM') {
+            ii = indexOf.call(this._shortMonthsParse, llc);
+            return ii !== -1 ? ii : null;
+        } else {
+            ii = indexOf.call(this._longMonthsParse, llc);
+            return ii !== -1 ? ii : null;
+        }
+    } else {
+        if (format === 'MMM') {
+            ii = indexOf.call(this._shortMonthsParse, llc);
+            if (ii !== -1) {
+                return ii;
+            }
+            ii = indexOf.call(this._longMonthsParse, llc);
+            return ii !== -1 ? ii : null;
+        } else {
+            ii = indexOf.call(this._longMonthsParse, llc);
+            if (ii !== -1) {
+                return ii;
+            }
+            ii = indexOf.call(this._shortMonthsParse, llc);
+            return ii !== -1 ? ii : null;
+        }
+    }
+}
+
+function localeMonthsParse (monthName, format, strict) {
+    var i, mom, regex;
+
+    if (this._monthsParseExact) {
+        return handleStrictParse.call(this, monthName, format, strict);
+    }
+
+    if (!this._monthsParse) {
+        this._monthsParse = [];
+        this._longMonthsParse = [];
+        this._shortMonthsParse = [];
+    }
+
+    // TODO: add sorting
+    // Sorting makes sure if one month (or abbr) is a prefix of another
+    // see sorting in computeMonthsParse
+    for (i = 0; i < 12; i++) {
+        // make the regex if we don't have it already
+        mom = createUTC([2000, i]);
+        if (strict && !this._longMonthsParse[i]) {
+            this._longMonthsParse[i] = new RegExp('^' + this.months(mom, '').replace('.', '') + '$', 'i');
+            this._shortMonthsParse[i] = new RegExp('^' + this.monthsShort(mom, '').replace('.', '') + '$', 'i');
+        }
+        if (!strict && !this._monthsParse[i]) {
+            regex = '^' + this.months(mom, '') + '|^' + this.monthsShort(mom, '');
+            this._monthsParse[i] = new RegExp(regex.replace('.', ''), 'i');
+        }
+        // test the regex
+        if (strict && format === 'MMMM' && this._longMonthsParse[i].test(monthName)) {
+            return i;
+        } else if (strict && format === 'MMM' && this._shortMonthsParse[i].test(monthName)) {
+            return i;
+        } else if (!strict && this._monthsParse[i].test(monthName)) {
+            return i;
+        }
+    }
+}
+
+// MOMENTS
+
+function setMonth (mom, value) {
+    var dayOfMonth;
+
+    if (!mom.isValid()) {
+        // No op
+        return mom;
+    }
+
+    if (typeof value === 'string') {
+        if (/^\d+$/.test(value)) {
+            value = toInt(value);
+        } else {
+            value = mom.localeData().monthsParse(value);
+            // TODO: Another silent failure?
+            if (!isNumber(value)) {
+                return mom;
+            }
+        }
+    }
+
+    dayOfMonth = Math.min(mom.date(), daysInMonth(mom.year(), value));
+    mom._d['set' + (mom._isUTC ? 'UTC' : '') + 'Month'](value, dayOfMonth);
+    return mom;
+}
+
+function getSetMonth (value) {
+    if (value != null) {
+        setMonth(this, value);
+        hooks.updateOffset(this, true);
+        return this;
+    } else {
+        return get(this, 'Month');
+    }
+}
+
+function getDaysInMonth () {
+    return daysInMonth(this.year(), this.month());
+}
+
+var defaultMonthsShortRegex = matchWord;
+function monthsShortRegex (isStrict) {
+    if (this._monthsParseExact) {
+        if (!hasOwnProp(this, '_monthsRegex')) {
+            computeMonthsParse.call(this);
+        }
+        if (isStrict) {
+            return this._monthsShortStrictRegex;
+        } else {
+            return this._monthsShortRegex;
+        }
+    } else {
+        if (!hasOwnProp(this, '_monthsShortRegex')) {
+            this._monthsShortRegex = defaultMonthsShortRegex;
+        }
+        return this._monthsShortStrictRegex && isStrict ?
+            this._monthsShortStrictRegex : this._monthsShortRegex;
+    }
+}
+
+var defaultMonthsRegex = matchWord;
+function monthsRegex (isStrict) {
+    if (this._monthsParseExact) {
+        if (!hasOwnProp(this, '_monthsRegex')) {
+            computeMonthsParse.call(this);
+        }
+        if (isStrict) {
+            return this._monthsStrictRegex;
+        } else {
+            return this._monthsRegex;
+        }
+    } else {
+        if (!hasOwnProp(this, '_monthsRegex')) {
+            this._monthsRegex = defaultMonthsRegex;
+        }
+        return this._monthsStrictRegex && isStrict ?
+            this._monthsStrictRegex : this._monthsRegex;
+    }
+}
+
+function computeMonthsParse () {
+    function cmpLenRev(a, b) {
+        return b.length - a.length;
+    }
+
+    var shortPieces = [], longPieces = [], mixedPieces = [],
+        i, mom;
+    for (i = 0; i < 12; i++) {
+        // make the regex if we don't have it already
+        mom = createUTC([2000, i]);
+        shortPieces.push(this.monthsShort(mom, ''));
+        longPieces.push(this.months(mom, ''));
+        mixedPieces.push(this.months(mom, ''));
+        mixedPieces.push(this.monthsShort(mom, ''));
+    }
+    // Sorting makes sure if one month (or abbr) is a prefix of another it
+    // will match the longer piece.
+    shortPieces.sort(cmpLenRev);
+    longPieces.sort(cmpLenRev);
+    mixedPieces.sort(cmpLenRev);
+    for (i = 0; i < 12; i++) {
+        shortPieces[i] = regexEscape(shortPieces[i]);
+        longPieces[i] = regexEscape(longPieces[i]);
+    }
+    for (i = 0; i < 24; i++) {
+        mixedPieces[i] = regexEscape(mixedPieces[i]);
+    }
+
+    this._monthsRegex = new RegExp('^(' + mixedPieces.join('|') + ')', 'i');
+    this._monthsShortRegex = this._monthsRegex;
+    this._monthsStrictRegex = new RegExp('^(' + longPieces.join('|') + ')', 'i');
+    this._monthsShortStrictRegex = new RegExp('^(' + shortPieces.join('|') + ')', 'i');
+}
+
+function createDate (y, m, d, h, M, s, ms) {
+    // can't just apply() to create a date:
+    // https://stackoverflow.com/q/181348
+    var date = new Date(y, m, d, h, M, s, ms);
+
+    // the date constructor remaps years 0-99 to 1900-1999
+    if (y < 100 && y >= 0 && isFinite(date.getFullYear())) {
+        date.setFullYear(y);
+    }
+    return date;
+}
+
+function createUTCDate (y) {
+    var date = new Date(Date.UTC.apply(null, arguments));
+
+    // the Date.UTC function remaps years 0-99 to 1900-1999
+    if (y < 100 && y >= 0 && isFinite(date.getUTCFullYear())) {
+        date.setUTCFullYear(y);
+    }
+    return date;
+}
+
+// start-of-first-week - start-of-year
+function firstWeekOffset(year, dow, doy) {
+    var // first-week day -- which january is always in the first week (4 for iso, 1 for other)
+        fwd = 7 + dow - doy,
+        // first-week day local weekday -- which local weekday is fwd
+        fwdlw = (7 + createUTCDate(year, 0, fwd).getUTCDay() - dow) % 7;
+
+    return -fwdlw + fwd - 1;
+}
+
+// https://en.wikipedia.org/wiki/ISO_week_date#Calculating_a_date_given_the_year.2C_week_number_and_weekday
+function dayOfYearFromWeeks(year, week, weekday, dow, doy) {
+    var localWeekday = (7 + weekday - dow) % 7,
+        weekOffset = firstWeekOffset(year, dow, doy),
+        dayOfYear = 1 + 7 * (week - 1) + localWeekday + weekOffset,
+        resYear, resDayOfYear;
+
+    if (dayOfYear <= 0) {
+        resYear = year - 1;
+        resDayOfYear = daysInYear(resYear) + dayOfYear;
+    } else if (dayOfYear > daysInYear(year)) {
+        resYear = year + 1;
+        resDayOfYear = dayOfYear - daysInYear(year);
+    } else {
+        resYear = year;
+        resDayOfYear = dayOfYear;
+    }
+
+    return {
+        year: resYear,
+        dayOfYear: resDayOfYear
+    };
+}
+
+function weekOfYear(mom, dow, doy) {
+    var weekOffset = firstWeekOffset(mom.year(), dow, doy),
+        week = Math.floor((mom.dayOfYear() - weekOffset - 1) / 7) + 1,
+        resWeek, resYear;
+
+    if (week < 1) {
+        resYear = mom.year() - 1;
+        resWeek = week + weeksInYear(resYear, dow, doy);
+    } else if (week > weeksInYear(mom.year(), dow, doy)) {
+        resWeek = week - weeksInYear(mom.year(), dow, doy);
+        resYear = mom.year() + 1;
+    } else {
+        resYear = mom.year();
+        resWeek = week;
+    }
+
+    return {
+        week: resWeek,
+        year: resYear
+    };
+}
+
+function weeksInYear(year, dow, doy) {
+    var weekOffset = firstWeekOffset(year, dow, doy),
+        weekOffsetNext = firstWeekOffset(year + 1, dow, doy);
+    return (daysInYear(year) - weekOffset + weekOffsetNext) / 7;
+}
+
+// FORMATTING
+
+addFormatToken('w', ['ww', 2], 'wo', 'week');
+addFormatToken('W', ['WW', 2], 'Wo', 'isoWeek');
+
+// ALIASES
+
+addUnitAlias('week', 'w');
+addUnitAlias('isoWeek', 'W');
+
+// PRIORITIES
+
+addUnitPriority('week', 5);
+addUnitPriority('isoWeek', 5);
+
+// PARSING
+
+addRegexToken('w',  match1to2);
+addRegexToken('ww', match1to2, match2);
+addRegexToken('W',  match1to2);
+addRegexToken('WW', match1to2, match2);
+
+addWeekParseToken(['w', 'ww', 'W', 'WW'], function (input, week, config, token) {
+    week[token.substr(0, 1)] = toInt(input);
+});
+
+// HELPERS
+
+// LOCALES
+
+function localeWeek (mom) {
+    return weekOfYear(mom, this._week.dow, this._week.doy).week;
+}
+
+var defaultLocaleWeek = {
+    dow : 0, // Sunday is the first day of the week.
+    doy : 6  // The week that contains Jan 1st is the first week of the year.
+};
+
+function localeFirstDayOfWeek () {
+    return this._week.dow;
+}
+
+function localeFirstDayOfYear () {
+    return this._week.doy;
+}
+
+// MOMENTS
+
+function getSetWeek (input) {
+    var week = this.localeData().week(this);
+    return input == null ? week : this.add((input - week) * 7, 'd');
+}
+
+function getSetISOWeek (input) {
+    var week = weekOfYear(this, 1, 4).week;
+    return input == null ? week : this.add((input - week) * 7, 'd');
+}
+
+// FORMATTING
+
+addFormatToken('d', 0, 'do', 'day');
+
+addFormatToken('dd', 0, 0, function (format) {
+    return this.localeData().weekdaysMin(this, format);
+});
+
+addFormatToken('ddd', 0, 0, function (format) {
+    return this.localeData().weekdaysShort(this, format);
+});
+
+addFormatToken('dddd', 0, 0, function (format) {
+    return this.localeData().weekdays(this, format);
+});
+
+addFormatToken('e', 0, 0, 'weekday');
+addFormatToken('E', 0, 0, 'isoWeekday');
+
+// ALIASES
+
+addUnitAlias('day', 'd');
+addUnitAlias('weekday', 'e');
+addUnitAlias('isoWeekday', 'E');
+
+// PRIORITY
+addUnitPriority('day', 11);
+addUnitPriority('weekday', 11);
+addUnitPriority('isoWeekday', 11);
+
+// PARSING
+
+addRegexToken('d',    match1to2);
+addRegexToken('e',    match1to2);
+addRegexToken('E',    match1to2);
+addRegexToken('dd',   function (isStrict, locale) {
+    return locale.weekdaysMinRegex(isStrict);
+});
+addRegexToken('ddd',   function (isStrict, locale) {
+    return locale.weekdaysShortRegex(isStrict);
+});
+addRegexToken('dddd',   function (isStrict, locale) {
+    return locale.weekdaysRegex(isStrict);
+});
+
+addWeekParseToken(['dd', 'ddd', 'dddd'], function (input, week, config, token) {
+    var weekday = config._locale.weekdaysParse(input, token, config._strict);
+    // if we didn't get a weekday name, mark the date as invalid
+    if (weekday != null) {
+        week.d = weekday;
+    } else {
+        getParsingFlags(config).invalidWeekday = input;
+    }
+});
+
+addWeekParseToken(['d', 'e', 'E'], function (input, week, config, token) {
+    week[token] = toInt(input);
+});
+
+// HELPERS
+
+function parseWeekday(input, locale) {
+    if (typeof input !== 'string') {
+        return input;
+    }
+
+    if (!isNaN(input)) {
+        return parseInt(input, 10);
+    }
+
+    input = locale.weekdaysParse(input);
+    if (typeof input === 'number') {
+        return input;
+    }
+
+    return null;
+}
+
+function parseIsoWeekday(input, locale) {
+    if (typeof input === 'string') {
+        return locale.weekdaysParse(input) % 7 || 7;
+    }
+    return isNaN(input) ? null : input;
+}
+
+// LOCALES
+
+var defaultLocaleWeekdays = 'Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday'.split('_');
+function localeWeekdays (m, format) {
+    if (!m) {
+        return isArray(this._weekdays) ? this._weekdays :
+            this._weekdays['standalone'];
+    }
+    return isArray(this._weekdays) ? this._weekdays[m.day()] :
+        this._weekdays[this._weekdays.isFormat.test(format) ? 'format' : 'standalone'][m.day()];
+}
+
+var defaultLocaleWeekdaysShort = 'Sun_Mon_Tue_Wed_Thu_Fri_Sat'.split('_');
+function localeWeekdaysShort (m) {
+    return (m) ? this._weekdaysShort[m.day()] : this._weekdaysShort;
+}
+
+var defaultLocaleWeekdaysMin = 'Su_Mo_Tu_We_Th_Fr_Sa'.split('_');
+function localeWeekdaysMin (m) {
+    return (m) ? this._weekdaysMin[m.day()] : this._weekdaysMin;
+}
+
+function handleStrictParse$1(weekdayName, format, strict) {
+    var i, ii, mom, llc = weekdayName.toLocaleLowerCase();
+    if (!this._weekdaysParse) {
+        this._weekdaysParse = [];
+        this._shortWeekdaysParse = [];
+        this._minWeekdaysParse = [];
+
+        for (i = 0; i < 7; ++i) {
+            mom = createUTC([2000, 1]).day(i);
+            this._minWeekdaysParse[i] = this.weekdaysMin(mom, '').toLocaleLowerCase();
+            this._shortWeekdaysParse[i] = this.weekdaysShort(mom, '').toLocaleLowerCase();
+            this._weekdaysParse[i] = this.weekdays(mom, '').toLocaleLowerCase();
+        }
+    }
+
+    if (strict) {
+        if (format === 'dddd') {
+            ii = indexOf.call(this._weekdaysParse, llc);
+            return ii !== -1 ? ii : null;
+        } else if (format === 'ddd') {
+            ii = indexOf.call(this._shortWeekdaysParse, llc);
+            return ii !== -1 ? ii : null;
+        } else {
+            ii = indexOf.call(this._minWeekdaysParse, llc);
+            return ii !== -1 ? ii : null;
+        }
+    } else {
+        if (format === 'dddd') {
+            ii = indexOf.call(this._weekdaysParse, llc);
+            if (ii !== -1) {
+                return ii;
+            }
+            ii = indexOf.call(this._shortWeekdaysParse, llc);
+            if (ii !== -1) {
+                return ii;
+            }
+            ii = indexOf.call(this._minWeekdaysParse, llc);
+            return ii !== -1 ? ii : null;
+        } else if (format === 'ddd') {
+            ii = indexOf.call(this._shortWeekdaysParse, llc);
+            if (ii !== -1) {
+                return ii;
+            }
+            ii = indexOf.call(this._weekdaysParse, llc);
+            if (ii !== -1) {
+                return ii;
+            }
+            ii = indexOf.call(this._minWeekdaysParse, llc);
+            return ii !== -1 ? ii : null;
+        } else {
+            ii = indexOf.call(this._minWeekdaysParse, llc);
+            if (ii !== -1) {
+                return ii;
+            }
+            ii = indexOf.call(this._weekdaysParse, llc);
+            if (ii !== -1) {
+                return ii;
+            }
+            ii = indexOf.call(this._shortWeekdaysParse, llc);
+            return ii !== -1 ? ii : null;
+        }
+    }
+}
+
+function localeWeekdaysParse (weekdayName, format, strict) {
+    var i, mom, regex;
+
+    if (this._weekdaysParseExact) {
+        return handleStrictParse$1.call(this, weekdayName, format, strict);
+    }
+
+    if (!this._weekdaysParse) {
+        this._weekdaysParse = [];
+        this._minWeekdaysParse = [];
+        this._shortWeekdaysParse = [];
+        this._fullWeekdaysParse = [];
+    }
+
+    for (i = 0; i < 7; i++) {
+        // make the regex if we don't have it already
+
+        mom = createUTC([2000, 1]).day(i);
+        if (strict && !this._fullWeekdaysParse[i]) {
+            this._fullWeekdaysParse[i] = new RegExp('^' + this.weekdays(mom, '').replace('.', '\.?') + '$', 'i');
+            this._shortWeekdaysParse[i] = new RegExp('^' + this.weekdaysShort(mom, '').replace('.', '\.?') + '$', 'i');
+            this._minWeekdaysParse[i] = new RegExp('^' + this.weekdaysMin(mom, '').replace('.', '\.?') + '$', 'i');
+        }
+        if (!this._weekdaysParse[i]) {
+            regex = '^' + this.weekdays(mom, '') + '|^' + this.weekdaysShort(mom, '') + '|^' + this.weekdaysMin(mom, '');
+            this._weekdaysParse[i] = new RegExp(regex.replace('.', ''), 'i');
+        }
+        // test the regex
+        if (strict && format === 'dddd' && this._fullWeekdaysParse[i].test(weekdayName)) {
+            return i;
+        } else if (strict && format === 'ddd' && this._shortWeekdaysParse[i].test(weekdayName)) {
+            return i;
+        } else if (strict && format === 'dd' && this._minWeekdaysParse[i].test(weekdayName)) {
+            return i;
+        } else if (!strict && this._weekdaysParse[i].test(weekdayName)) {
+            return i;
+        }
+    }
+}
+
+// MOMENTS
+
+function getSetDayOfWeek (input) {
+    if (!this.isValid()) {
+        return input != null ? this : NaN;
+    }
+    var day = this._isUTC ? this._d.getUTCDay() : this._d.getDay();
+    if (input != null) {
+        input = parseWeekday(input, this.localeData());
+        return this.add(input - day, 'd');
+    } else {
+        return day;
+    }
+}
+
+function getSetLocaleDayOfWeek (input) {
+    if (!this.isValid()) {
+        return input != null ? this : NaN;
+    }
+    var weekday = (this.day() + 7 - this.localeData()._week.dow) % 7;
+    return input == null ? weekday : this.add(input - weekday, 'd');
+}
+
+function getSetISODayOfWeek (input) {
+    if (!this.isValid()) {
+        return input != null ? this : NaN;
+    }
+
+    // behaves the same as moment#day except
+    // as a getter, returns 7 instead of 0 (1-7 range instead of 0-6)
+    // as a setter, sunday should belong to the previous week.
+
+    if (input != null) {
+        var weekday = parseIsoWeekday(input, this.localeData());
+        return this.day(this.day() % 7 ? weekday : weekday - 7);
+    } else {
+        return this.day() || 7;
+    }
+}
+
+var defaultWeekdaysRegex = matchWord;
+function weekdaysRegex (isStrict) {
+    if (this._weekdaysParseExact) {
+        if (!hasOwnProp(this, '_weekdaysRegex')) {
+            computeWeekdaysParse.call(this);
+        }
+        if (isStrict) {
+            return this._weekdaysStrictRegex;
+        } else {
+            return this._weekdaysRegex;
+        }
+    } else {
+        if (!hasOwnProp(this, '_weekdaysRegex')) {
+            this._weekdaysRegex = defaultWeekdaysRegex;
+        }
+        return this._weekdaysStrictRegex && isStrict ?
+            this._weekdaysStrictRegex : this._weekdaysRegex;
+    }
+}
+
+var defaultWeekdaysShortRegex = matchWord;
+function weekdaysShortRegex (isStrict) {
+    if (this._weekdaysParseExact) {
+        if (!hasOwnProp(this, '_weekdaysRegex')) {
+            computeWeekdaysParse.call(this);
+        }
+        if (isStrict) {
+            return this._weekdaysShortStrictRegex;
+        } else {
+            return this._weekdaysShortRegex;
+        }
+    } else {
+        if (!hasOwnProp(this, '_weekdaysShortRegex')) {
+            this._weekdaysShortRegex = defaultWeekdaysShortRegex;
+        }
+        return this._weekdaysShortStrictRegex && isStrict ?
+            this._weekdaysShortStrictRegex : this._weekdaysShortRegex;
+    }
+}
+
+var defaultWeekdaysMinRegex = matchWord;
+function weekdaysMinRegex (isStrict) {
+    if (this._weekdaysParseExact) {
+        if (!hasOwnProp(this, '_weekdaysRegex')) {
+            computeWeekdaysParse.call(this);
+        }
+        if (isStrict) {
+            return this._weekdaysMinStrictRegex;
+        } else {
+            return this._weekdaysMinRegex;
+        }
+    } else {
+        if (!hasOwnProp(this, '_weekdaysMinRegex')) {
+            this._weekdaysMinRegex = defaultWeekdaysMinRegex;
+        }
+        return this._weekdaysMinStrictRegex && isStrict ?
+            this._weekdaysMinStrictRegex : this._weekdaysMinRegex;
+    }
+}
+
+
+function computeWeekdaysParse () {
+    function cmpLenRev(a, b) {
+        return b.length - a.length;
+    }
+
+    var minPieces = [], shortPieces = [], longPieces = [], mixedPieces = [],
+        i, mom, minp, shortp, longp;
+    for (i = 0; i < 7; i++) {
+        // make the regex if we don't have it already
+        mom = createUTC([2000, 1]).day(i);
+        minp = this.weekdaysMin(mom, '');
+        shortp = this.weekdaysShort(mom, '');
+        longp = this.weekdays(mom, '');
+        minPieces.push(minp);
+        shortPieces.push(shortp);
+        longPieces.push(longp);
+        mixedPieces.push(minp);
+        mixedPieces.push(shortp);
+        mixedPieces.push(longp);
+    }
+    // Sorting makes sure if one weekday (or abbr) is a prefix of another it
+    // will match the longer piece.
+    minPieces.sort(cmpLenRev);
+    shortPieces.sort(cmpLenRev);
+    longPieces.sort(cmpLenRev);
+    mixedPieces.sort(cmpLenRev);
+    for (i = 0; i < 7; i++) {
+        shortPieces[i] = regexEscape(shortPieces[i]);
+        longPieces[i] = regexEscape(longPieces[i]);
+        mixedPieces[i] = regexEscape(mixedPieces[i]);
+    }
+
+    this._weekdaysRegex = new RegExp('^(' + mixedPieces.join('|') + ')', 'i');
+    this._weekdaysShortRegex = this._weekdaysRegex;
+    this._weekdaysMinRegex = this._weekdaysRegex;
+
+    this._weekdaysStrictRegex = new RegExp('^(' + longPieces.join('|') + ')', 'i');
+    this._weekdaysShortStrictRegex = new RegExp('^(' + shortPieces.join('|') + ')', 'i');
+    this._weekdaysMinStrictRegex = new RegExp('^(' + minPieces.join('|') + ')', 'i');
+}
+
+// FORMATTING
+
+function hFormat() {
+    return this.hours() % 12 || 12;
+}
+
+function kFormat() {
+    return this.hours() || 24;
+}
+
+addFormatToken('H', ['HH', 2], 0, 'hour');
+addFormatToken('h', ['hh', 2], 0, hFormat);
+addFormatToken('k', ['kk', 2], 0, kFormat);
+
+addFormatToken('hmm', 0, 0, function () {
+    return '' + hFormat.apply(this) + zeroFill(this.minutes(), 2);
+});
+
+addFormatToken('hmmss', 0, 0, function () {
+    return '' + hFormat.apply(this) + zeroFill(this.minutes(), 2) +
+        zeroFill(this.seconds(), 2);
+});
+
+addFormatToken('Hmm', 0, 0, function () {
+    return '' + this.hours() + zeroFill(this.minutes(), 2);
+});
+
+addFormatToken('Hmmss', 0, 0, function () {
+    return '' + this.hours() + zeroFill(this.minutes(), 2) +
+        zeroFill(this.seconds(), 2);
+});
+
+function meridiem (token, lowercase) {
+    addFormatToken(token, 0, 0, function () {
+        return this.localeData().meridiem(this.hours(), this.minutes(), lowercase);
+    });
+}
+
+meridiem('a', true);
+meridiem('A', false);
+
+// ALIASES
+
+addUnitAlias('hour', 'h');
+
+// PRIORITY
+addUnitPriority('hour', 13);
+
+// PARSING
+
+function matchMeridiem (isStrict, locale) {
+    return locale._meridiemParse;
+}
+
+addRegexToken('a',  matchMeridiem);
+addRegexToken('A',  matchMeridiem);
+addRegexToken('H',  match1to2);
+addRegexToken('h',  match1to2);
+addRegexToken('k',  match1to2);
+addRegexToken('HH', match1to2, match2);
+addRegexToken('hh', match1to2, match2);
+addRegexToken('kk', match1to2, match2);
+
+addRegexToken('hmm', match3to4);
+addRegexToken('hmmss', match5to6);
+addRegexToken('Hmm', match3to4);
+addRegexToken('Hmmss', match5to6);
+
+addParseToken(['H', 'HH'], HOUR);
+addParseToken(['k', 'kk'], function (input, array, config) {
+    var kInput = toInt(input);
+    array[HOUR] = kInput === 24 ? 0 : kInput;
+});
+addParseToken(['a', 'A'], function (input, array, config) {
+    config._isPm = config._locale.isPM(input);
+    config._meridiem = input;
+});
+addParseToken(['h', 'hh'], function (input, array, config) {
+    array[HOUR] = toInt(input);
+    getParsingFlags(config).bigHour = true;
+});
+addParseToken('hmm', function (input, array, config) {
+    var pos = input.length - 2;
+    array[HOUR] = toInt(input.substr(0, pos));
+    array[MINUTE] = toInt(input.substr(pos));
+    getParsingFlags(config).bigHour = true;
+});
+addParseToken('hmmss', function (input, array, config) {
+    var pos1 = input.length - 4;
+    var pos2 = input.length - 2;
+    array[HOUR] = toInt(input.substr(0, pos1));
+    array[MINUTE] = toInt(input.substr(pos1, 2));
+    array[SECOND] = toInt(input.substr(pos2));
+    getParsingFlags(config).bigHour = true;
+});
+addParseToken('Hmm', function (input, array, config) {
+    var pos = input.length - 2;
+    array[HOUR] = toInt(input.substr(0, pos));
+    array[MINUTE] = toInt(input.substr(pos));
+});
+addParseToken('Hmmss', function (input, array, config) {
+    var pos1 = input.length - 4;
+    var pos2 = input.length - 2;
+    array[HOUR] = toInt(input.substr(0, pos1));
+    array[MINUTE] = toInt(input.substr(pos1, 2));
+    array[SECOND] = toInt(input.substr(pos2));
+});
+
+// LOCALES
+
+function localeIsPM (input) {
+    // IE8 Quirks Mode & IE7 Standards Mode do not allow accessing strings like arrays
+    // Using charAt should be more compatible.
+    return ((input + '').toLowerCase().charAt(0) === 'p');
+}
+
+var defaultLocaleMeridiemParse = /[ap]\.?m?\.?/i;
+function localeMeridiem (hours, minutes, isLower) {
+    if (hours > 11) {
+        return isLower ? 'pm' : 'PM';
+    } else {
+        return isLower ? 'am' : 'AM';
+    }
+}
+
+
+// MOMENTS
+
+// Setting the hour should keep the time, because the user explicitly
+// specified which hour he wants. So trying to maintain the same hour (in
+// a new timezone) makes sense. Adding/subtracting hours does not follow
+// this rule.
+var getSetHour = makeGetSet('Hours', true);
+
+// months
+// week
+// weekdays
+// meridiem
+var baseConfig = {
+    calendar: defaultCalendar,
+    longDateFormat: defaultLongDateFormat,
+    invalidDate: defaultInvalidDate,
+    ordinal: defaultOrdinal,
+    dayOfMonthOrdinalParse: defaultDayOfMonthOrdinalParse,
+    relativeTime: defaultRelativeTime,
+
+    months: defaultLocaleMonths,
+    monthsShort: defaultLocaleMonthsShort,
+
+    week: defaultLocaleWeek,
+
+    weekdays: defaultLocaleWeekdays,
+    weekdaysMin: defaultLocaleWeekdaysMin,
+    weekdaysShort: defaultLocaleWeekdaysShort,
+
+    meridiemParse: defaultLocaleMeridiemParse
+};
+
+// internal storage for locale config files
+var locales = {};
+var localeFamilies = {};
+var globalLocale;
+
+function normalizeLocale(key) {
+    return key ? key.toLowerCase().replace('_', '-') : key;
+}
+
+// pick the locale from the array
+// try ['en-au', 'en-gb'] as 'en-au', 'en-gb', 'en', as in move through the list trying each
+// substring from most specific to least, but move to the next array item if it's a more specific variant than the current root
+function chooseLocale(names) {
+    var i = 0, j, next, locale, split;
+
+    while (i < names.length) {
+        split = normalizeLocale(names[i]).split('-');
+        j = split.length;
+        next = normalizeLocale(names[i + 1]);
+        next = next ? next.split('-') : null;
+        while (j > 0) {
+            locale = loadLocale(split.slice(0, j).join('-'));
+            if (locale) {
+                return locale;
+            }
+            if (next && next.length >= j && compareArrays(split, next, true) >= j - 1) {
+                //the next array item is better than a shallower substring of this one
+                break;
+            }
+            j--;
+        }
+        i++;
+    }
+    return null;
+}
+
+function loadLocale(name) {
+    var oldLocale = null;
+    // TODO: Find a better way to register and load all the locales in Node
+    if (!locales[name] && (typeof module !== 'undefined') &&
+            module && module.exports) {
+        try {
+            oldLocale = globalLocale._abbr;
+            var aliasedRequire = require;
+            aliasedRequire('./locale/' + name);
+            getSetGlobalLocale(oldLocale);
+        } catch (e) {}
+    }
+    return locales[name];
+}
+
+// This function will load locale and then set the global locale.  If
+// no arguments are passed in, it will simply return the current global
+// locale key.
+function getSetGlobalLocale (key, values) {
+    var data;
+    if (key) {
+        if (isUndefined(values)) {
+            data = getLocale(key);
+        }
+        else {
+            data = defineLocale(key, values);
+        }
+
+        if (data) {
+            // moment.duration._locale = moment._locale = data;
+            globalLocale = data;
+        }
+    }
+
+    return globalLocale._abbr;
+}
+
+function defineLocale (name, config) {
+    if (config !== null) {
+        var parentConfig = baseConfig;
+        config.abbr = name;
+        if (locales[name] != null) {
+            deprecateSimple('defineLocaleOverride',
+                    'use moment.updateLocale(localeName, config) to change ' +
+                    'an existing locale. moment.defineLocale(localeName, ' +
+                    'config) should only be used for creating a new locale ' +
+                    'See http://momentjs.com/guides/#/warnings/define-locale/ for more info.');
+            parentConfig = locales[name]._config;
+        } else if (config.parentLocale != null) {
+            if (locales[config.parentLocale] != null) {
+                parentConfig = locales[config.parentLocale]._config;
+            } else {
+                if (!localeFamilies[config.parentLocale]) {
+                    localeFamilies[config.parentLocale] = [];
+                }
+                localeFamilies[config.parentLocale].push({
+                    name: name,
+                    config: config
+                });
+                return null;
+            }
+        }
+        locales[name] = new Locale(mergeConfigs(parentConfig, config));
+
+        if (localeFamilies[name]) {
+            localeFamilies[name].forEach(function (x) {
+                defineLocale(x.name, x.config);
+            });
+        }
+
+        // backwards compat for now: also set the locale
+        // make sure we set the locale AFTER all child locales have been
+        // created, so we won't end up with the child locale set.
+        getSetGlobalLocale(name);
+
+
+        return locales[name];
+    } else {
+        // useful for testing
+        delete locales[name];
+        return null;
+    }
+}
+
+function updateLocale(name, config) {
+    if (config != null) {
+        var locale, tmpLocale, parentConfig = baseConfig;
+        // MERGE
+        tmpLocale = loadLocale(name);
+        if (tmpLocale != null) {
+            parentConfig = tmpLocale._config;
+        }
+        config = mergeConfigs(parentConfig, config);
+        locale = new Locale(config);
+        locale.parentLocale = locales[name];
+        locales[name] = locale;
+
+        // backwards compat for now: also set the locale
+        getSetGlobalLocale(name);
+    } else {
+        // pass null for config to unupdate, useful for tests
+        if (locales[name] != null) {
+            if (locales[name].parentLocale != null) {
+                locales[name] = locales[name].parentLocale;
+            } else if (locales[name] != null) {
+                delete locales[name];
+            }
+        }
+    }
+    return locales[name];
+}
+
+// returns locale data
+function getLocale (key) {
+    var locale;
+
+    if (key && key._locale && key._locale._abbr) {
+        key = key._locale._abbr;
+    }
+
+    if (!key) {
+        return globalLocale;
+    }
+
+    if (!isArray(key)) {
+        //short-circuit everything else
+        locale = loadLocale(key);
+        if (locale) {
+            return locale;
+        }
+        key = [key];
+    }
+
+    return chooseLocale(key);
+}
+
+function listLocales() {
+    return keys(locales);
+}
+
+function checkOverflow (m) {
+    var overflow;
+    var a = m._a;
+
+    if (a && getParsingFlags(m).overflow === -2) {
+        overflow =
+            a[MONTH]       < 0 || a[MONTH]       > 11  ? MONTH :
+            a[DATE]        < 1 || a[DATE]        > daysInMonth(a[YEAR], a[MONTH]) ? DATE :
+            a[HOUR]        < 0 || a[HOUR]        > 24 || (a[HOUR] === 24 && (a[MINUTE] !== 0 || a[SECOND] !== 0 || a[MILLISECOND] !== 0)) ? HOUR :
+            a[MINUTE]      < 0 || a[MINUTE]      > 59  ? MINUTE :
+            a[SECOND]      < 0 || a[SECOND]      > 59  ? SECOND :
+            a[MILLISECOND] < 0 || a[MILLISECOND] > 999 ? MILLISECOND :
+            -1;
+
+        if (getParsingFlags(m)._overflowDayOfYear && (overflow < YEAR || overflow > DATE)) {
+            overflow = DATE;
+        }
+        if (getParsingFlags(m)._overflowWeeks && overflow === -1) {
+            overflow = WEEK;
+        }
+        if (getParsingFlags(m)._overflowWeekday && overflow === -1) {
+            overflow = WEEKDAY;
+        }
+
+        getParsingFlags(m).overflow = overflow;
+    }
+
+    return m;
+}
+
+// Pick the first defined of two or three arguments.
+function defaults(a, b, c) {
+    if (a != null) {
+        return a;
+    }
+    if (b != null) {
+        return b;
+    }
+    return c;
+}
+
+function currentDateArray(config) {
+    // hooks is actually the exported moment object
+    var nowValue = new Date(hooks.now());
+    if (config._useUTC) {
+        return [nowValue.getUTCFullYear(), nowValue.getUTCMonth(), nowValue.getUTCDate()];
+    }
+    return [nowValue.getFullYear(), nowValue.getMonth(), nowValue.getDate()];
+}
+
+// convert an array to a date.
+// the array should mirror the parameters below
+// note: all values past the year are optional and will default to the lowest possible value.
+// [year, month, day , hour, minute, second, millisecond]
+function configFromArray (config) {
+    var i, date, input = [], currentDate, expectedWeekday, yearToUse;
+
+    if (config._d) {
+        return;
+    }
+
+    currentDate = currentDateArray(config);
+
+    //compute day of the year from weeks and weekdays
+    if (config._w && config._a[DATE] == null && config._a[MONTH] == null) {
+        dayOfYearFromWeekInfo(config);
+    }
+
+    //if the day of the year is set, figure out what it is
+    if (config._dayOfYear != null) {
+        yearToUse = defaults(config._a[YEAR], currentDate[YEAR]);
+
+        if (config._dayOfYear > daysInYear(yearToUse) || config._dayOfYear === 0) {
+            getParsingFlags(config)._overflowDayOfYear = true;
+        }
+
+        date = createUTCDate(yearToUse, 0, config._dayOfYear);
+        config._a[MONTH] = date.getUTCMonth();
+        config._a[DATE] = date.getUTCDate();
+    }
+
+    // Default to current date.
+    // * if no year, month, day of month are given, default to today
+    // * if day of month is given, default month and year
+    // * if month is given, default only year
+    // * if year is given, don't default anything
+    for (i = 0; i < 3 && config._a[i] == null; ++i) {
+        config._a[i] = input[i] = currentDate[i];
+    }
+
+    // Zero out whatever was not defaulted, including time
+    for (; i < 7; i++) {
+        config._a[i] = input[i] = (config._a[i] == null) ? (i === 2 ? 1 : 0) : config._a[i];
+    }
+
+    // Check for 24:00:00.000
+    if (config._a[HOUR] === 24 &&
+            config._a[MINUTE] === 0 &&
+            config._a[SECOND] === 0 &&
+            config._a[MILLISECOND] === 0) {
+        config._nextDay = true;
+        config._a[HOUR] = 0;
+    }
+
+    config._d = (config._useUTC ? createUTCDate : createDate).apply(null, input);
+    expectedWeekday = config._useUTC ? config._d.getUTCDay() : config._d.getDay();
+
+    // Apply timezone offset from input. The actual utcOffset can be changed
+    // with parseZone.
+    if (config._tzm != null) {
+        config._d.setUTCMinutes(config._d.getUTCMinutes() - config._tzm);
+    }
+
+    if (config._nextDay) {
+        config._a[HOUR] = 24;
+    }
+
+    // check for mismatching day of week
+    if (config._w && typeof config._w.d !== 'undefined' && config._w.d !== expectedWeekday) {
+        getParsingFlags(config).weekdayMismatch = true;
+    }
+}
+
+function dayOfYearFromWeekInfo(config) {
+    var w, weekYear, week, weekday, dow, doy, temp, weekdayOverflow;
+
+    w = config._w;
+    if (w.GG != null || w.W != null || w.E != null) {
+        dow = 1;
+        doy = 4;
+
+        // TODO: We need to take the current isoWeekYear, but that depends on
+        // how we interpret now (local, utc, fixed offset). So create
+        // a now version of current config (take local/utc/offset flags, and
+        // create now).
+        weekYear = defaults(w.GG, config._a[YEAR], weekOfYear(createLocal(), 1, 4).year);
+        week = defaults(w.W, 1);
+        weekday = defaults(w.E, 1);
+        if (weekday < 1 || weekday > 7) {
+            weekdayOverflow = true;
+        }
+    } else {
+        dow = config._locale._week.dow;
+        doy = config._locale._week.doy;
+
+        var curWeek = weekOfYear(createLocal(), dow, doy);
+
+        weekYear = defaults(w.gg, config._a[YEAR], curWeek.year);
+
+        // Default to current week.
+        week = defaults(w.w, curWeek.week);
+
+        if (w.d != null) {
+            // weekday -- low day numbers are considered next week
+            weekday = w.d;
+            if (weekday < 0 || weekday > 6) {
+                weekdayOverflow = true;
+            }
+        } else if (w.e != null) {
+            // local weekday -- counting starts from begining of week
+            weekday = w.e + dow;
+            if (w.e < 0 || w.e > 6) {
+                weekdayOverflow = true;
+            }
+        } else {
+            // default to begining of week
+            weekday = dow;
+        }
+    }
+    if (week < 1 || week > weeksInYear(weekYear, dow, doy)) {
+        getParsingFlags(config)._overflowWeeks = true;
+    } else if (weekdayOverflow != null) {
+        getParsingFlags(config)._overflowWeekday = true;
+    } else {
+        temp = dayOfYearFromWeeks(weekYear, week, weekday, dow, doy);
+        config._a[YEAR] = temp.year;
+        config._dayOfYear = temp.dayOfYear;
+    }
+}
+
+// iso 8601 regex
+// 0000-00-00 0000-W00 or 0000-W00-0 + T + 00 or 00:00 or 00:00:00 or 00:00:00.000 + +00:00 or +0000 or +00)
+var extendedIsoRegex = /^\s*((?:[+-]\d{6}|\d{4})-(?:\d\d-\d\d|W\d\d-\d|W\d\d|\d\d\d|\d\d))(?:(T| )(\d\d(?::\d\d(?::\d\d(?:[.,]\d+)?)?)?)([\+\-]\d\d(?::?\d\d)?|\s*Z)?)?$/;
+var basicIsoRegex = /^\s*((?:[+-]\d{6}|\d{4})(?:\d\d\d\d|W\d\d\d|W\d\d|\d\d\d|\d\d))(?:(T| )(\d\d(?:\d\d(?:\d\d(?:[.,]\d+)?)?)?)([\+\-]\d\d(?::?\d\d)?|\s*Z)?)?$/;
+
+var tzRegex = /Z|[+-]\d\d(?::?\d\d)?/;
+
+var isoDates = [
+    ['YYYYYY-MM-DD', /[+-]\d{6}-\d\d-\d\d/],
+    ['YYYY-MM-DD', /\d{4}-\d\d-\d\d/],
+    ['GGGG-[W]WW-E', /\d{4}-W\d\d-\d/],
+    ['GGGG-[W]WW', /\d{4}-W\d\d/, false],
+    ['YYYY-DDD', /\d{4}-\d{3}/],
+    ['YYYY-MM', /\d{4}-\d\d/, false],
+    ['YYYYYYMMDD', /[+-]\d{10}/],
+    ['YYYYMMDD', /\d{8}/],
+    // YYYYMM is NOT allowed by the standard
+    ['GGGG[W]WWE', /\d{4}W\d{3}/],
+    ['GGGG[W]WW', /\d{4}W\d{2}/, false],
+    ['YYYYDDD', /\d{7}/]
+];
+
+// iso time formats and regexes
+var isoTimes = [
+    ['HH:mm:ss.SSSS', /\d\d:\d\d:\d\d\.\d+/],
+    ['HH:mm:ss,SSSS', /\d\d:\d\d:\d\d,\d+/],
+    ['HH:mm:ss', /\d\d:\d\d:\d\d/],
+    ['HH:mm', /\d\d:\d\d/],
+    ['HHmmss.SSSS', /\d\d\d\d\d\d\.\d+/],
+    ['HHmmss,SSSS', /\d\d\d\d\d\d,\d+/],
+    ['HHmmss', /\d\d\d\d\d\d/],
+    ['HHmm', /\d\d\d\d/],
+    ['HH', /\d\d/]
+];
+
+var aspNetJsonRegex = /^\/?Date\((\-?\d+)/i;
+
+// date from iso format
+function configFromISO(config) {
+    var i, l,
+        string = config._i,
+        match = extendedIsoRegex.exec(string) || basicIsoRegex.exec(string),
+        allowTime, dateFormat, timeFormat, tzFormat;
+
+    if (match) {
+        getParsingFlags(config).iso = true;
+
+        for (i = 0, l = isoDates.length; i < l; i++) {
+            if (isoDates[i][1].exec(match[1])) {
+                dateFormat = isoDates[i][0];
+                allowTime = isoDates[i][2] !== false;
+                break;
+            }
+        }
+        if (dateFormat == null) {
+            config._isValid = false;
+            return;
+        }
+        if (match[3]) {
+            for (i = 0, l = isoTimes.length; i < l; i++) {
+                if (isoTimes[i][1].exec(match[3])) {
+                    // match[2] should be 'T' or space
+                    timeFormat = (match[2] || ' ') + isoTimes[i][0];
+                    break;
+                }
+            }
+            if (timeFormat == null) {
+                config._isValid = false;
+                return;
+            }
+        }
+        if (!allowTime && timeFormat != null) {
+            config._isValid = false;
+            return;
+        }
+        if (match[4]) {
+            if (tzRegex.exec(match[4])) {
+                tzFormat = 'Z';
+            } else {
+                config._isValid = false;
+                return;
+            }
+        }
+        config._f = dateFormat + (timeFormat || '') + (tzFormat || '');
+        configFromStringAndFormat(config);
+    } else {
+        config._isValid = false;
+    }
+}
+
+// RFC 2822 regex: For details see https://tools.ietf.org/html/rfc2822#section-3.3
+var rfc2822 = /^(?:(Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s)?(\d{1,2})\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s(\d{2,4})\s(\d\d):(\d\d)(?::(\d\d))?\s(?:(UT|GMT|[ECMP][SD]T)|([Zz])|([+-]\d{4}))$/;
+
+function extractFromRFC2822Strings(yearStr, monthStr, dayStr, hourStr, minuteStr, secondStr) {
+    var result = [
+        untruncateYear(yearStr),
+        defaultLocaleMonthsShort.indexOf(monthStr),
+        parseInt(dayStr, 10),
+        parseInt(hourStr, 10),
+        parseInt(minuteStr, 10)
+    ];
+
+    if (secondStr) {
+        result.push(parseInt(secondStr, 10));
+    }
+
+    return result;
+}
+
+function untruncateYear(yearStr) {
+    var year = parseInt(yearStr, 10);
+    if (year <= 49) {
+        return 2000 + year;
+    } else if (year <= 999) {
+        return 1900 + year;
+    }
+    return year;
+}
+
+function preprocessRFC2822(s) {
+    // Remove comments and folding whitespace and replace multiple-spaces with a single space
+    return s.replace(/\([^)]*\)|[\n\t]/g, ' ').replace(/(\s\s+)/g, ' ').trim();
+}
+
+function checkWeekday(weekdayStr, parsedInput, config) {
+    if (weekdayStr) {
+        // TODO: Replace the vanilla JS Date object with an indepentent day-of-week check.
+        var weekdayProvided = defaultLocaleWeekdaysShort.indexOf(weekdayStr),
+            weekdayActual = new Date(parsedInput[0], parsedInput[1], parsedInput[2]).getDay();
+        if (weekdayProvided !== weekdayActual) {
+            getParsingFlags(config).weekdayMismatch = true;
+            config._isValid = false;
+            return false;
+        }
+    }
+    return true;
+}
+
+var obsOffsets = {
+    UT: 0,
+    GMT: 0,
+    EDT: -4 * 60,
+    EST: -5 * 60,
+    CDT: -5 * 60,
+    CST: -6 * 60,
+    MDT: -6 * 60,
+    MST: -7 * 60,
+    PDT: -7 * 60,
+    PST: -8 * 60
+};
+
+function calculateOffset(obsOffset, militaryOffset, numOffset) {
+    if (obsOffset) {
+        return obsOffsets[obsOffset];
+    } else if (militaryOffset) {
+        // the only allowed military tz is Z
+        return 0;
+    } else {
+        var hm = parseInt(numOffset, 10);
+        var m = hm % 100, h = (hm - m) / 100;
+        return h * 60 + m;
+    }
+}
+
+// date and time from ref 2822 format
+function configFromRFC2822(config) {
+    var match = rfc2822.exec(preprocessRFC2822(config._i));
+    if (match) {
+        var parsedArray = extractFromRFC2822Strings(match[4], match[3], match[2], match[5], match[6], match[7]);
+        if (!checkWeekday(match[1], parsedArray, config)) {
+            return;
+        }
+
+        config._a = parsedArray;
+        config._tzm = calculateOffset(match[8], match[9], match[10]);
+
+        config._d = createUTCDate.apply(null, config._a);
+        config._d.setUTCMinutes(config._d.getUTCMinutes() - config._tzm);
+
+        getParsingFlags(config).rfc2822 = true;
+    } else {
+        config._isValid = false;
+    }
+}
+
+// date from iso format or fallback
+function configFromString(config) {
+    var matched = aspNetJsonRegex.exec(config._i);
+
+    if (matched !== null) {
+        config._d = new Date(+matched[1]);
+        return;
+    }
+
+    configFromISO(config);
+    if (config._isValid === false) {
+        delete config._isValid;
+    } else {
+        return;
+    }
+
+    configFromRFC2822(config);
+    if (config._isValid === false) {
+        delete config._isValid;
+    } else {
+        return;
+    }
+
+    // Final attempt, use Input Fallback
+    hooks.createFromInputFallback(config);
+}
+
+hooks.createFromInputFallback = deprecate(
+    'value provided is not in a recognized RFC2822 or ISO format. moment construction falls back to js Date(), ' +
+    'which is not reliable across all browsers and versions. Non RFC2822/ISO date formats are ' +
+    'discouraged and will be removed in an upcoming major release. Please refer to ' +
+    'http://momentjs.com/guides/#/warnings/js-date/ for more info.',
+    function (config) {
+        config._d = new Date(config._i + (config._useUTC ? ' UTC' : ''));
+    }
+);
+
+// constant that refers to the ISO standard
+hooks.ISO_8601 = function () {};
+
+// constant that refers to the RFC 2822 form
+hooks.RFC_2822 = function () {};
+
+// date from string and format string
+function configFromStringAndFormat(config) {
+    // TODO: Move this to another part of the creation flow to prevent circular deps
+    if (config._f === hooks.ISO_8601) {
+        configFromISO(config);
+        return;
+    }
+    if (config._f === hooks.RFC_2822) {
+        configFromRFC2822(config);
+        return;
+    }
+    config._a = [];
+    getParsingFlags(config).empty = true;
+
+    // This array is used to make a Date, either with `new Date` or `Date.UTC`
+    var string = '' + config._i,
+        i, parsedInput, tokens, token, skipped,
+        stringLength = string.length,
+        totalParsedInputLength = 0;
+
+    tokens = expandFormat(config._f, config._locale).match(formattingTokens) || [];
+
+    for (i = 0; i < tokens.length; i++) {
+        token = tokens[i];
+        parsedInput = (string.match(getParseRegexForToken(token, config)) || [])[0];
+        // console.log('token', token, 'parsedInput', parsedInput,
+        //         'regex', getParseRegexForToken(token, config));
+        if (parsedInput) {
+            skipped = string.substr(0, string.indexOf(parsedInput));
+            if (skipped.length > 0) {
+                getParsingFlags(config).unusedInput.push(skipped);
+            }
+            string = string.slice(string.indexOf(parsedInput) + parsedInput.length);
+            totalParsedInputLength += parsedInput.length;
+        }
+        // don't parse if it's not a known token
+        if (formatTokenFunctions[token]) {
+            if (parsedInput) {
+                getParsingFlags(config).empty = false;
+            }
+            else {
+                getParsingFlags(config).unusedTokens.push(token);
+            }
+            addTimeToArrayFromToken(token, parsedInput, config);
+        }
+        else if (config._strict && !parsedInput) {
+            getParsingFlags(config).unusedTokens.push(token);
+        }
+    }
+
+    // add remaining unparsed input length to the string
+    getParsingFlags(config).charsLeftOver = stringLength - totalParsedInputLength;
+    if (string.length > 0) {
+        getParsingFlags(config).unusedInput.push(string);
+    }
+
+    // clear _12h flag if hour is <= 12
+    if (config._a[HOUR] <= 12 &&
+        getParsingFlags(config).bigHour === true &&
+        config._a[HOUR] > 0) {
+        getParsingFlags(config).bigHour = undefined;
+    }
+
+    getParsingFlags(config).parsedDateParts = config._a.slice(0);
+    getParsingFlags(config).meridiem = config._meridiem;
+    // handle meridiem
+    config._a[HOUR] = meridiemFixWrap(config._locale, config._a[HOUR], config._meridiem);
+
+    configFromArray(config);
+    checkOverflow(config);
+}
+
+
+function meridiemFixWrap (locale, hour, meridiem) {
+    var isPm;
+
+    if (meridiem == null) {
+        // nothing to do
+        return hour;
+    }
+    if (locale.meridiemHour != null) {
+        return locale.meridiemHour(hour, meridiem);
+    } else if (locale.isPM != null) {
+        // Fallback
+        isPm = locale.isPM(meridiem);
+        if (isPm && hour < 12) {
+            hour += 12;
+        }
+        if (!isPm && hour === 12) {
+            hour = 0;
+        }
+        return hour;
+    } else {
+        // this is not supposed to happen
+        return hour;
+    }
+}
+
+// date from string and array of format strings
+function configFromStringAndArray(config) {
+    var tempConfig,
+        bestMoment,
+
+        scoreToBeat,
+        i,
+        currentScore;
+
+    if (config._f.length === 0) {
+        getParsingFlags(config).invalidFormat = true;
+        config._d = new Date(NaN);
+        return;
+    }
+
+    for (i = 0; i < config._f.length; i++) {
+        currentScore = 0;
+        tempConfig = copyConfig({}, config);
+        if (config._useUTC != null) {
+            tempConfig._useUTC = config._useUTC;
+        }
+        tempConfig._f = config._f[i];
+        configFromStringAndFormat(tempConfig);
+
+        if (!isValid(tempConfig)) {
+            continue;
+        }
+
+        // if there is any input that was not parsed add a penalty for that format
+        currentScore += getParsingFlags(tempConfig).charsLeftOver;
+
+        //or tokens
+        currentScore += getParsingFlags(tempConfig).unusedTokens.length * 10;
+
+        getParsingFlags(tempConfig).score = currentScore;
+
+        if (scoreToBeat == null || currentScore < scoreToBeat) {
+            scoreToBeat = currentScore;
+            bestMoment = tempConfig;
+        }
+    }
+
+    extend(config, bestMoment || tempConfig);
+}
+
+function configFromObject(config) {
+    if (config._d) {
+        return;
+    }
+
+    var i = normalizeObjectUnits(config._i);
+    config._a = map([i.year, i.month, i.day || i.date, i.hour, i.minute, i.second, i.millisecond], function (obj) {
+        return obj && parseInt(obj, 10);
+    });
+
+    configFromArray(config);
+}
+
+function createFromConfig (config) {
+    var res = new Moment(checkOverflow(prepareConfig(config)));
+    if (res._nextDay) {
+        // Adding is smart enough around DST
+        res.add(1, 'd');
+        res._nextDay = undefined;
+    }
+
+    return res;
+}
+
+function prepareConfig (config) {
+    var input = config._i,
+        format = config._f;
+
+    config._locale = config._locale || getLocale(config._l);
+
+    if (input === null || (format === undefined && input === '')) {
+        return createInvalid({nullInput: true});
+    }
+
+    if (typeof input === 'string') {
+        config._i = input = config._locale.preparse(input);
+    }
+
+    if (isMoment(input)) {
+        return new Moment(checkOverflow(input));
+    } else if (isDate(input)) {
+        config._d = input;
+    } else if (isArray(format)) {
+        configFromStringAndArray(config);
+    } else if (format) {
+        configFromStringAndFormat(config);
+    }  else {
+        configFromInput(config);
+    }
+
+    if (!isValid(config)) {
+        config._d = null;
+    }
+
+    return config;
+}
+
+function configFromInput(config) {
+    var input = config._i;
+    if (isUndefined(input)) {
+        config._d = new Date(hooks.now());
+    } else if (isDate(input)) {
+        config._d = new Date(input.valueOf());
+    } else if (typeof input === 'string') {
+        configFromString(config);
+    } else if (isArray(input)) {
+        config._a = map(input.slice(0), function (obj) {
+            return parseInt(obj, 10);
+        });
+        configFromArray(config);
+    } else if (isObject(input)) {
+        configFromObject(config);
+    } else if (isNumber(input)) {
+        // from milliseconds
+        config._d = new Date(input);
+    } else {
+        hooks.createFromInputFallback(config);
+    }
+}
+
+function createLocalOrUTC (input, format, locale, strict, isUTC) {
+    var c = {};
+
+    if (locale === true || locale === false) {
+        strict = locale;
+        locale = undefined;
+    }
+
+    if ((isObject(input) && isObjectEmpty(input)) ||
+            (isArray(input) && input.length === 0)) {
+        input = undefined;
+    }
+    // object construction must be done this way.
+    // https://github.com/moment/moment/issues/1423
+    c._isAMomentObject = true;
+    c._useUTC = c._isUTC = isUTC;
+    c._l = locale;
+    c._i = input;
+    c._f = format;
+    c._strict = strict;
+
+    return createFromConfig(c);
+}
+
+function createLocal (input, format, locale, strict) {
+    return createLocalOrUTC(input, format, locale, strict, false);
+}
+
+var prototypeMin = deprecate(
+    'moment().min is deprecated, use moment.max instead. http://momentjs.com/guides/#/warnings/min-max/',
+    function () {
+        var other = createLocal.apply(null, arguments);
+        if (this.isValid() && other.isValid()) {
+            return other < this ? this : other;
+        } else {
+            return createInvalid();
+        }
+    }
+);
+
+var prototypeMax = deprecate(
+    'moment().max is deprecated, use moment.min instead. http://momentjs.com/guides/#/warnings/min-max/',
+    function () {
+        var other = createLocal.apply(null, arguments);
+        if (this.isValid() && other.isValid()) {
+            return other > this ? this : other;
+        } else {
+            return createInvalid();
+        }
+    }
+);
+
+// Pick a moment m from moments so that m[fn](other) is true for all
+// other. This relies on the function fn to be transitive.
+//
+// moments should either be an array of moment objects or an array, whose
+// first element is an array of moment objects.
+function pickBy(fn, moments) {
+    var res, i;
+    if (moments.length === 1 && isArray(moments[0])) {
+        moments = moments[0];
+    }
+    if (!moments.length) {
+        return createLocal();
+    }
+    res = moments[0];
+    for (i = 1; i < moments.length; ++i) {
+        if (!moments[i].isValid() || moments[i][fn](res)) {
+            res = moments[i];
+        }
+    }
+    return res;
+}
+
+// TODO: Use [].sort instead?
+function min () {
+    var args = [].slice.call(arguments, 0);
+
+    return pickBy('isBefore', args);
+}
+
+function max () {
+    var args = [].slice.call(arguments, 0);
+
+    return pickBy('isAfter', args);
+}
+
+var now = function () {
+    return Date.now ? Date.now() : +(new Date());
+};
+
+var ordering = ['year', 'quarter', 'month', 'week', 'day', 'hour', 'minute', 'second', 'millisecond'];
+
+function isDurationValid(m) {
+    for (var key in m) {
+        if (!(indexOf.call(ordering, key) !== -1 && (m[key] == null || !isNaN(m[key])))) {
+            return false;
+        }
+    }
+
+    var unitHasDecimal = false;
+    for (var i = 0; i < ordering.length; ++i) {
+        if (m[ordering[i]]) {
+            if (unitHasDecimal) {
+                return false; // only allow non-integers for smallest unit
+            }
+            if (parseFloat(m[ordering[i]]) !== toInt(m[ordering[i]])) {
+                unitHasDecimal = true;
+            }
+        }
+    }
+
+    return true;
+}
+
+function isValid$1() {
+    return this._isValid;
+}
+
+function createInvalid$1() {
+    return createDuration(NaN);
+}
+
+function Duration (duration) {
+    var normalizedInput = normalizeObjectUnits(duration),
+        years = normalizedInput.year || 0,
+        quarters = normalizedInput.quarter || 0,
+        months = normalizedInput.month || 0,
+        weeks = normalizedInput.week || 0,
+        days = normalizedInput.day || 0,
+        hours = normalizedInput.hour || 0,
+        minutes = normalizedInput.minute || 0,
+        seconds = normalizedInput.second || 0,
+        milliseconds = normalizedInput.millisecond || 0;
+
+    this._isValid = isDurationValid(normalizedInput);
+
+    // representation for dateAddRemove
+    this._milliseconds = +milliseconds +
+        seconds * 1e3 + // 1000
+        minutes * 6e4 + // 1000 * 60
+        hours * 1000 * 60 * 60; //using 1000 * 60 * 60 instead of 36e5 to avoid floating point rounding errors https://github.com/moment/moment/issues/2978
+    // Because of dateAddRemove treats 24 hours as different from a
+    // day when working around DST, we need to store them separately
+    this._days = +days +
+        weeks * 7;
+    // It is impossible to translate months into days without knowing
+    // which months you are are talking about, so we have to store
+    // it separately.
+    this._months = +months +
+        quarters * 3 +
+        years * 12;
+
+    this._data = {};
+
+    this._locale = getLocale();
+
+    this._bubble();
+}
+
+function isDuration (obj) {
+    return obj instanceof Duration;
+}
+
+function absRound (number) {
+    if (number < 0) {
+        return Math.round(-1 * number) * -1;
+    } else {
+        return Math.round(number);
+    }
+}
+
+// FORMATTING
+
+function offset (token, separator) {
+    addFormatToken(token, 0, 0, function () {
+        var offset = this.utcOffset();
+        var sign = '+';
+        if (offset < 0) {
+            offset = -offset;
+            sign = '-';
+        }
+        return sign + zeroFill(~~(offset / 60), 2) + separator + zeroFill(~~(offset) % 60, 2);
+    });
+}
+
+offset('Z', ':');
+offset('ZZ', '');
+
+// PARSING
+
+addRegexToken('Z',  matchShortOffset);
+addRegexToken('ZZ', matchShortOffset);
+addParseToken(['Z', 'ZZ'], function (input, array, config) {
+    config._useUTC = true;
+    config._tzm = offsetFromString(matchShortOffset, input);
+});
+
+// HELPERS
+
+// timezone chunker
+// '+10:00' > ['10',  '00']
+// '-1530'  > ['-15', '30']
+var chunkOffset = /([\+\-]|\d\d)/gi;
+
+function offsetFromString(matcher, string) {
+    var matches = (string || '').match(matcher);
+
+    if (matches === null) {
+        return null;
+    }
+
+    var chunk   = matches[matches.length - 1] || [];
+    var parts   = (chunk + '').match(chunkOffset) || ['-', 0, 0];
+    var minutes = +(parts[1] * 60) + toInt(parts[2]);
+
+    return minutes === 0 ?
+      0 :
+      parts[0] === '+' ? minutes : -minutes;
+}
+
+// Return a moment from input, that is local/utc/zone equivalent to model.
+function cloneWithOffset(input, model) {
+    var res, diff;
+    if (model._isUTC) {
+        res = model.clone();
+        diff = (isMoment(input) || isDate(input) ? input.valueOf() : createLocal(input).valueOf()) - res.valueOf();
+        // Use low-level api, because this fn is low-level api.
+        res._d.setTime(res._d.valueOf() + diff);
+        hooks.updateOffset(res, false);
+        return res;
+    } else {
+        return createLocal(input).local();
+    }
+}
+
+function getDateOffset (m) {
+    // On Firefox.24 Date#getTimezoneOffset returns a floating point.
+    // https://github.com/moment/moment/pull/1871
+    return -Math.round(m._d.getTimezoneOffset() / 15) * 15;
+}
+
+// HOOKS
+
+// This function will be called whenever a moment is mutated.
+// It is intended to keep the offset in sync with the timezone.
+hooks.updateOffset = function () {};
+
+// MOMENTS
+
+// keepLocalTime = true means only change the timezone, without
+// affecting the local hour. So 5:31:26 +0300 --[utcOffset(2, true)]-->
+// 5:31:26 +0200 It is possible that 5:31:26 doesn't exist with offset
+// +0200, so we adjust the time as needed, to be valid.
+//
+// Keeping the time actually adds/subtracts (one hour)
+// from the actual represented time. That is why we call updateOffset
+// a second time. In case it wants us to change the offset again
+// _changeInProgress == true case, then we have to adjust, because
+// there is no such time in the given timezone.
+function getSetOffset (input, keepLocalTime, keepMinutes) {
+    var offset = this._offset || 0,
+        localAdjust;
+    if (!this.isValid()) {
+        return input != null ? this : NaN;
+    }
+    if (input != null) {
+        if (typeof input === 'string') {
+            input = offsetFromString(matchShortOffset, input);
+            if (input === null) {
+                return this;
+            }
+        } else if (Math.abs(input) < 16 && !keepMinutes) {
+            input = input * 60;
+        }
+        if (!this._isUTC && keepLocalTime) {
+            localAdjust = getDateOffset(this);
+        }
+        this._offset = input;
+        this._isUTC = true;
+        if (localAdjust != null) {
+            this.add(localAdjust, 'm');
+        }
+        if (offset !== input) {
+            if (!keepLocalTime || this._changeInProgress) {
+                addSubtract(this, createDuration(input - offset, 'm'), 1, false);
+            } else if (!this._changeInProgress) {
+                this._changeInProgress = true;
+                hooks.updateOffset(this, true);
+                this._changeInProgress = null;
+            }
+        }
+        return this;
+    } else {
+        return this._isUTC ? offset : getDateOffset(this);
+    }
+}
+
+function getSetZone (input, keepLocalTime) {
+    if (input != null) {
+        if (typeof input !== 'string') {
+            input = -input;
+        }
+
+        this.utcOffset(input, keepLocalTime);
+
+        return this;
+    } else {
+        return -this.utcOffset();
+    }
+}
+
+function setOffsetToUTC (keepLocalTime) {
+    return this.utcOffset(0, keepLocalTime);
+}
+
+function setOffsetToLocal (keepLocalTime) {
+    if (this._isUTC) {
+        this.utcOffset(0, keepLocalTime);
+        this._isUTC = false;
+
+        if (keepLocalTime) {
+            this.subtract(getDateOffset(this), 'm');
+        }
+    }
+    return this;
+}
+
+function setOffsetToParsedOffset () {
+    if (this._tzm != null) {
+        this.utcOffset(this._tzm, false, true);
+    } else if (typeof this._i === 'string') {
+        var tZone = offsetFromString(matchOffset, this._i);
+        if (tZone != null) {
+            this.utcOffset(tZone);
+        }
+        else {
+            this.utcOffset(0, true);
+        }
+    }
+    return this;
+}
+
+function hasAlignedHourOffset (input) {
+    if (!this.isValid()) {
+        return false;
+    }
+    input = input ? createLocal(input).utcOffset() : 0;
+
+    return (this.utcOffset() - input) % 60 === 0;
+}
+
+function isDaylightSavingTime () {
+    return (
+        this.utcOffset() > this.clone().month(0).utcOffset() ||
+        this.utcOffset() > this.clone().month(5).utcOffset()
+    );
+}
+
+function isDaylightSavingTimeShifted () {
+    if (!isUndefined(this._isDSTShifted)) {
+        return this._isDSTShifted;
+    }
+
+    var c = {};
+
+    copyConfig(c, this);
+    c = prepareConfig(c);
+
+    if (c._a) {
+        var other = c._isUTC ? createUTC(c._a) : createLocal(c._a);
+        this._isDSTShifted = this.isValid() &&
+            compareArrays(c._a, other.toArray()) > 0;
+    } else {
+        this._isDSTShifted = false;
+    }
+
+    return this._isDSTShifted;
+}
+
+function isLocal () {
+    return this.isValid() ? !this._isUTC : false;
+}
+
+function isUtcOffset () {
+    return this.isValid() ? this._isUTC : false;
+}
+
+function isUtc () {
+    return this.isValid() ? this._isUTC && this._offset === 0 : false;
+}
+
+// ASP.NET json date format regex
+var aspNetRegex = /^(\-|\+)?(?:(\d*)[. ])?(\d+)\:(\d+)(?:\:(\d+)(\.\d*)?)?$/;
+
+// from http://docs.closure-library.googlecode.com/git/closure_goog_date_date.js.source.html
+// somewhat more in line with 4.4.3.2 2004 spec, but allows decimal anywhere
+// and further modified to allow for strings containing both week and day
+var isoRegex = /^(-|\+)?P(?:([-+]?[0-9,.]*)Y)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)W)?(?:([-+]?[0-9,.]*)D)?(?:T(?:([-+]?[0-9,.]*)H)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)S)?)?$/;
+
+function createDuration (input, key) {
+    var duration = input,
+        // matching against regexp is expensive, do it on demand
+        match = null,
+        sign,
+        ret,
+        diffRes;
+
+    if (isDuration(input)) {
+        duration = {
+            ms : input._milliseconds,
+            d  : input._days,
+            M  : input._months
+        };
+    } else if (isNumber(input)) {
+        duration = {};
+        if (key) {
+            duration[key] = input;
+        } else {
+            duration.milliseconds = input;
+        }
+    } else if (!!(match = aspNetRegex.exec(input))) {
+        sign = (match[1] === '-') ? -1 : 1;
+        duration = {
+            y  : 0,
+            d  : toInt(match[DATE])                         * sign,
+            h  : toInt(match[HOUR])                         * sign,
+            m  : toInt(match[MINUTE])                       * sign,
+            s  : toInt(match[SECOND])                       * sign,
+            ms : toInt(absRound(match[MILLISECOND] * 1000)) * sign // the millisecond decimal point is included in the match
+        };
+    } else if (!!(match = isoRegex.exec(input))) {
+        sign = (match[1] === '-') ? -1 : (match[1] === '+') ? 1 : 1;
+        duration = {
+            y : parseIso(match[2], sign),
+            M : parseIso(match[3], sign),
+            w : parseIso(match[4], sign),
+            d : parseIso(match[5], sign),
+            h : parseIso(match[6], sign),
+            m : parseIso(match[7], sign),
+            s : parseIso(match[8], sign)
+        };
+    } else if (duration == null) {// checks for null or undefined
+        duration = {};
+    } else if (typeof duration === 'object' && ('from' in duration || 'to' in duration)) {
+        diffRes = momentsDifference(createLocal(duration.from), createLocal(duration.to));
+
+        duration = {};
+        duration.ms = diffRes.milliseconds;
+        duration.M = diffRes.months;
+    }
+
+    ret = new Duration(duration);
+
+    if (isDuration(input) && hasOwnProp(input, '_locale')) {
+        ret._locale = input._locale;
+    }
+
+    return ret;
+}
+
+createDuration.fn = Duration.prototype;
+createDuration.invalid = createInvalid$1;
+
+function parseIso (inp, sign) {
+    // We'd normally use ~~inp for this, but unfortunately it also
+    // converts floats to ints.
+    // inp may be undefined, so careful calling replace on it.
+    var res = inp && parseFloat(inp.replace(',', '.'));
+    // apply sign while we're at it
+    return (isNaN(res) ? 0 : res) * sign;
+}
+
+function positiveMomentsDifference(base, other) {
+    var res = {milliseconds: 0, months: 0};
+
+    res.months = other.month() - base.month() +
+        (other.year() - base.year()) * 12;
+    if (base.clone().add(res.months, 'M').isAfter(other)) {
+        --res.months;
+    }
+
+    res.milliseconds = +other - +(base.clone().add(res.months, 'M'));
+
+    return res;
+}
+
+function momentsDifference(base, other) {
+    var res;
+    if (!(base.isValid() && other.isValid())) {
+        return {milliseconds: 0, months: 0};
+    }
+
+    other = cloneWithOffset(other, base);
+    if (base.isBefore(other)) {
+        res = positiveMomentsDifference(base, other);
+    } else {
+        res = positiveMomentsDifference(other, base);
+        res.milliseconds = -res.milliseconds;
+        res.months = -res.months;
+    }
+
+    return res;
+}
+
+// TODO: remove 'name' arg after deprecation is removed
+function createAdder(direction, name) {
+    return function (val, period) {
+        var dur, tmp;
+        //invert the arguments, but complain about it
+        if (period !== null && !isNaN(+period)) {
+            deprecateSimple(name, 'moment().' + name  + '(period, number) is deprecated. Please use moment().' + name + '(number, period). ' +
+            'See http://momentjs.com/guides/#/warnings/add-inverted-param/ for more info.');
+            tmp = val; val = period; period = tmp;
+        }
+
+        val = typeof val === 'string' ? +val : val;
+        dur = createDuration(val, period);
+        addSubtract(this, dur, direction);
+        return this;
+    };
+}
+
+function addSubtract (mom, duration, isAdding, updateOffset) {
+    var milliseconds = duration._milliseconds,
+        days = absRound(duration._days),
+        months = absRound(duration._months);
+
+    if (!mom.isValid()) {
+        // No op
+        return;
+    }
+
+    updateOffset = updateOffset == null ? true : updateOffset;
+
+    if (months) {
+        setMonth(mom, get(mom, 'Month') + months * isAdding);
+    }
+    if (days) {
+        set$1(mom, 'Date', get(mom, 'Date') + days * isAdding);
+    }
+    if (milliseconds) {
+        mom._d.setTime(mom._d.valueOf() + milliseconds * isAdding);
+    }
+    if (updateOffset) {
+        hooks.updateOffset(mom, days || months);
+    }
+}
+
+var add      = createAdder(1, 'add');
+var subtract = createAdder(-1, 'subtract');
+
+function getCalendarFormat(myMoment, now) {
+    var diff = myMoment.diff(now, 'days', true);
+    return diff < -6 ? 'sameElse' :
+            diff < -1 ? 'lastWeek' :
+            diff < 0 ? 'lastDay' :
+            diff < 1 ? 'sameDay' :
+            diff < 2 ? 'nextDay' :
+            diff < 7 ? 'nextWeek' : 'sameElse';
+}
+
+function calendar$1 (time, formats) {
+    // We want to compare the start of today, vs this.
+    // Getting start-of-today depends on whether we're local/utc/offset or not.
+    var now = time || createLocal(),
+        sod = cloneWithOffset(now, this).startOf('day'),
+        format = hooks.calendarFormat(this, sod) || 'sameElse';
+
+    var output = formats && (isFunction(formats[format]) ? formats[format].call(this, now) : formats[format]);
+
+    return this.format(output || this.localeData().calendar(format, this, createLocal(now)));
+}
+
+function clone () {
+    return new Moment(this);
+}
+
+function isAfter (input, units) {
+    var localInput = isMoment(input) ? input : createLocal(input);
+    if (!(this.isValid() && localInput.isValid())) {
+        return false;
+    }
+    units = normalizeUnits(!isUndefined(units) ? units : 'millisecond');
+    if (units === 'millisecond') {
+        return this.valueOf() > localInput.valueOf();
+    } else {
+        return localInput.valueOf() < this.clone().startOf(units).valueOf();
+    }
+}
+
+function isBefore (input, units) {
+    var localInput = isMoment(input) ? input : createLocal(input);
+    if (!(this.isValid() && localInput.isValid())) {
+        return false;
+    }
+    units = normalizeUnits(!isUndefined(units) ? units : 'millisecond');
+    if (units === 'millisecond') {
+        return this.valueOf() < localInput.valueOf();
+    } else {
+        return this.clone().endOf(units).valueOf() < localInput.valueOf();
+    }
+}
+
+function isBetween (from, to, units, inclusivity) {
+    inclusivity = inclusivity || '()';
+    return (inclusivity[0] === '(' ? this.isAfter(from, units) : !this.isBefore(from, units)) &&
+        (inclusivity[1] === ')' ? this.isBefore(to, units) : !this.isAfter(to, units));
+}
+
+function isSame (input, units) {
+    var localInput = isMoment(input) ? input : createLocal(input),
+        inputMs;
+    if (!(this.isValid() && localInput.isValid())) {
+        return false;
+    }
+    units = normalizeUnits(units || 'millisecond');
+    if (units === 'millisecond') {
+        return this.valueOf() === localInput.valueOf();
+    } else {
+        inputMs = localInput.valueOf();
+        return this.clone().startOf(units).valueOf() <= inputMs && inputMs <= this.clone().endOf(units).valueOf();
+    }
+}
+
+function isSameOrAfter (input, units) {
+    return this.isSame(input, units) || this.isAfter(input,units);
+}
+
+function isSameOrBefore (input, units) {
+    return this.isSame(input, units) || this.isBefore(input,units);
+}
+
+function diff (input, units, asFloat) {
+    var that,
+        zoneDelta,
+        delta, output;
+
+    if (!this.isValid()) {
+        return NaN;
+    }
+
+    that = cloneWithOffset(input, this);
+
+    if (!that.isValid()) {
+        return NaN;
+    }
+
+    zoneDelta = (that.utcOffset() - this.utcOffset()) * 6e4;
+
+    units = normalizeUnits(units);
+
+    switch (units) {
+        case 'year': output = monthDiff(this, that) / 12; break;
+        case 'month': output = monthDiff(this, that); break;
+        case 'quarter': output = monthDiff(this, that) / 3; break;
+        case 'second': output = (this - that) / 1e3; break; // 1000
+        case 'minute': output = (this - that) / 6e4; break; // 1000 * 60
+        case 'hour': output = (this - that) / 36e5; break; // 1000 * 60 * 60
+        case 'day': output = (this - that - zoneDelta) / 864e5; break; // 1000 * 60 * 60 * 24, negate dst
+        case 'week': output = (this - that - zoneDelta) / 6048e5; break; // 1000 * 60 * 60 * 24 * 7, negate dst
+        default: output = this - that;
+    }
+
+    return asFloat ? output : absFloor(output);
+}
+
+function monthDiff (a, b) {
+    // difference in months
+    var wholeMonthDiff = ((b.year() - a.year()) * 12) + (b.month() - a.month()),
+        // b is in (anchor - 1 month, anchor + 1 month)
+        anchor = a.clone().add(wholeMonthDiff, 'months'),
+        anchor2, adjust;
+
+    if (b - anchor < 0) {
+        anchor2 = a.clone().add(wholeMonthDiff - 1, 'months');
+        // linear across the month
+        adjust = (b - anchor) / (anchor - anchor2);
+    } else {
+        anchor2 = a.clone().add(wholeMonthDiff + 1, 'months');
+        // linear across the month
+        adjust = (b - anchor) / (anchor2 - anchor);
+    }
+
+    //check for negative zero, return zero if negative zero
+    return -(wholeMonthDiff + adjust) || 0;
+}
+
+hooks.defaultFormat = 'YYYY-MM-DDTHH:mm:ssZ';
+hooks.defaultFormatUtc = 'YYYY-MM-DDTHH:mm:ss[Z]';
+
+function toString () {
+    return this.clone().locale('en').format('ddd MMM DD YYYY HH:mm:ss [GMT]ZZ');
+}
+
+function toISOString(keepOffset) {
+    if (!this.isValid()) {
+        return null;
+    }
+    var utc = keepOffset !== true;
+    var m = utc ? this.clone().utc() : this;
+    if (m.year() < 0 || m.year() > 9999) {
+        return formatMoment(m, utc ? 'YYYYYY-MM-DD[T]HH:mm:ss.SSS[Z]' : 'YYYYYY-MM-DD[T]HH:mm:ss.SSSZ');
+    }
+    if (isFunction(Date.prototype.toISOString)) {
+        // native implementation is ~50x faster, use it when we can
+        if (utc) {
+            return this.toDate().toISOString();
+        } else {
+            return new Date(this._d.valueOf()).toISOString().replace('Z', formatMoment(m, 'Z'));
+        }
+    }
+    return formatMoment(m, utc ? 'YYYY-MM-DD[T]HH:mm:ss.SSS[Z]' : 'YYYY-MM-DD[T]HH:mm:ss.SSSZ');
+}
+
+/**
+ * Return a human readable representation of a moment that can
+ * also be evaluated to get a new moment which is the same
+ *
+ * @link https://nodejs.org/dist/latest/docs/api/util.html#util_custom_inspect_function_on_objects
+ */
+function inspect () {
+    if (!this.isValid()) {
+        return 'moment.invalid(/* ' + this._i + ' */)';
+    }
+    var func = 'moment';
+    var zone = '';
+    if (!this.isLocal()) {
+        func = this.utcOffset() === 0 ? 'moment.utc' : 'moment.parseZone';
+        zone = 'Z';
+    }
+    var prefix = '[' + func + '("]';
+    var year = (0 <= this.year() && this.year() <= 9999) ? 'YYYY' : 'YYYYYY';
+    var datetime = '-MM-DD[T]HH:mm:ss.SSS';
+    var suffix = zone + '[")]';
+
+    return this.format(prefix + year + datetime + suffix);
+}
+
+function format (inputString) {
+    if (!inputString) {
+        inputString = this.isUtc() ? hooks.defaultFormatUtc : hooks.defaultFormat;
+    }
+    var output = formatMoment(this, inputString);
+    return this.localeData().postformat(output);
+}
+
+function from (time, withoutSuffix) {
+    if (this.isValid() &&
+            ((isMoment(time) && time.isValid()) ||
+             createLocal(time).isValid())) {
+        return createDuration({to: this, from: time}).locale(this.locale()).humanize(!withoutSuffix);
+    } else {
+        return this.localeData().invalidDate();
+    }
+}
+
+function fromNow (withoutSuffix) {
+    return this.from(createLocal(), withoutSuffix);
+}
+
+function to (time, withoutSuffix) {
+    if (this.isValid() &&
+            ((isMoment(time) && time.isValid()) ||
+             createLocal(time).isValid())) {
+        return createDuration({from: this, to: time}).locale(this.locale()).humanize(!withoutSuffix);
+    } else {
+        return this.localeData().invalidDate();
+    }
+}
+
+function toNow (withoutSuffix) {
+    return this.to(createLocal(), withoutSuffix);
+}
+
+// If passed a locale key, it will set the locale for this
+// instance.  Otherwise, it will return the locale configuration
+// variables for this instance.
+function locale (key) {
+    var newLocaleData;
+
+    if (key === undefined) {
+        return this._locale._abbr;
+    } else {
+        newLocaleData = getLocale(key);
+        if (newLocaleData != null) {
+            this._locale = newLocaleData;
+        }
+        return this;
+    }
+}
+
+var lang = deprecate(
+    'moment().lang() is deprecated. Instead, use moment().localeData() to get the language configuration. Use moment().locale() to change languages.',
+    function (key) {
+        if (key === undefined) {
+            return this.localeData();
+        } else {
+            return this.locale(key);
+        }
+    }
+);
+
+function localeData () {
+    return this._locale;
+}
+
+function startOf (units) {
+    units = normalizeUnits(units);
+    // the following switch intentionally omits break keywords
+    // to utilize falling through the cases.
+    switch (units) {
+        case 'year':
+            this.month(0);
+            /* falls through */
+        case 'quarter':
+        case 'month':
+            this.date(1);
+            /* falls through */
+        case 'week':
+        case 'isoWeek':
+        case 'day':
+        case 'date':
+            this.hours(0);
+            /* falls through */
+        case 'hour':
+            this.minutes(0);
+            /* falls through */
+        case 'minute':
+            this.seconds(0);
+            /* falls through */
+        case 'second':
+            this.milliseconds(0);
+    }
+
+    // weeks are a special case
+    if (units === 'week') {
+        this.weekday(0);
+    }
+    if (units === 'isoWeek') {
+        this.isoWeekday(1);
+    }
+
+    // quarters are also special
+    if (units === 'quarter') {
+        this.month(Math.floor(this.month() / 3) * 3);
+    }
+
+    return this;
+}
+
+function endOf (units) {
+    units = normalizeUnits(units);
+    if (units === undefined || units === 'millisecond') {
+        return this;
+    }
+
+    // 'date' is an alias for 'day', so it should be considered as such.
+    if (units === 'date') {
+        units = 'day';
+    }
+
+    return this.startOf(units).add(1, (units === 'isoWeek' ? 'week' : units)).subtract(1, 'ms');
+}
+
+function valueOf () {
+    return this._d.valueOf() - ((this._offset || 0) * 60000);
+}
+
+function unix () {
+    return Math.floor(this.valueOf() / 1000);
+}
+
+function toDate () {
+    return new Date(this.valueOf());
+}
+
+function toArray () {
+    var m = this;
+    return [m.year(), m.month(), m.date(), m.hour(), m.minute(), m.second(), m.millisecond()];
+}
+
+function toObject () {
+    var m = this;
+    return {
+        years: m.year(),
+        months: m.month(),
+        date: m.date(),
+        hours: m.hours(),
+        minutes: m.minutes(),
+        seconds: m.seconds(),
+        milliseconds: m.milliseconds()
+    };
+}
+
+function toJSON () {
+    // new Date(NaN).toJSON() === null
+    return this.isValid() ? this.toISOString() : null;
+}
+
+function isValid$2 () {
+    return isValid(this);
+}
+
+function parsingFlags () {
+    return extend({}, getParsingFlags(this));
+}
+
+function invalidAt () {
+    return getParsingFlags(this).overflow;
+}
+
+function creationData() {
+    return {
+        input: this._i,
+        format: this._f,
+        locale: this._locale,
+        isUTC: this._isUTC,
+        strict: this._strict
+    };
+}
+
+// FORMATTING
+
+addFormatToken(0, ['gg', 2], 0, function () {
+    return this.weekYear() % 100;
+});
+
+addFormatToken(0, ['GG', 2], 0, function () {
+    return this.isoWeekYear() % 100;
+});
+
+function addWeekYearFormatToken (token, getter) {
+    addFormatToken(0, [token, token.length], 0, getter);
+}
+
+addWeekYearFormatToken('gggg',     'weekYear');
+addWeekYearFormatToken('ggggg',    'weekYear');
+addWeekYearFormatToken('GGGG',  'isoWeekYear');
+addWeekYearFormatToken('GGGGG', 'isoWeekYear');
+
+// ALIASES
+
+addUnitAlias('weekYear', 'gg');
+addUnitAlias('isoWeekYear', 'GG');
+
+// PRIORITY
+
+addUnitPriority('weekYear', 1);
+addUnitPriority('isoWeekYear', 1);
+
+
+// PARSING
+
+addRegexToken('G',      matchSigned);
+addRegexToken('g',      matchSigned);
+addRegexToken('GG',     match1to2, match2);
+addRegexToken('gg',     match1to2, match2);
+addRegexToken('GGGG',   match1to4, match4);
+addRegexToken('gggg',   match1to4, match4);
+addRegexToken('GGGGG',  match1to6, match6);
+addRegexToken('ggggg',  match1to6, match6);
+
+addWeekParseToken(['gggg', 'ggggg', 'GGGG', 'GGGGG'], function (input, week, config, token) {
+    week[token.substr(0, 2)] = toInt(input);
+});
+
+addWeekParseToken(['gg', 'GG'], function (input, week, config, token) {
+    week[token] = hooks.parseTwoDigitYear(input);
+});
+
+// MOMENTS
+
+function getSetWeekYear (input) {
+    return getSetWeekYearHelper.call(this,
+            input,
+            this.week(),
+            this.weekday(),
+            this.localeData()._week.dow,
+            this.localeData()._week.doy);
+}
+
+function getSetISOWeekYear (input) {
+    return getSetWeekYearHelper.call(this,
+            input, this.isoWeek(), this.isoWeekday(), 1, 4);
+}
+
+function getISOWeeksInYear () {
+    return weeksInYear(this.year(), 1, 4);
+}
+
+function getWeeksInYear () {
+    var weekInfo = this.localeData()._week;
+    return weeksInYear(this.year(), weekInfo.dow, weekInfo.doy);
+}
+
+function getSetWeekYearHelper(input, week, weekday, dow, doy) {
+    var weeksTarget;
+    if (input == null) {
+        return weekOfYear(this, dow, doy).year;
+    } else {
+        weeksTarget = weeksInYear(input, dow, doy);
+        if (week > weeksTarget) {
+            week = weeksTarget;
+        }
+        return setWeekAll.call(this, input, week, weekday, dow, doy);
+    }
+}
+
+function setWeekAll(weekYear, week, weekday, dow, doy) {
+    var dayOfYearData = dayOfYearFromWeeks(weekYear, week, weekday, dow, doy),
+        date = createUTCDate(dayOfYearData.year, 0, dayOfYearData.dayOfYear);
+
+    this.year(date.getUTCFullYear());
+    this.month(date.getUTCMonth());
+    this.date(date.getUTCDate());
+    return this;
+}
+
+// FORMATTING
+
+addFormatToken('Q', 0, 'Qo', 'quarter');
+
+// ALIASES
+
+addUnitAlias('quarter', 'Q');
+
+// PRIORITY
+
+addUnitPriority('quarter', 7);
+
+// PARSING
+
+addRegexToken('Q', match1);
+addParseToken('Q', function (input, array) {
+    array[MONTH] = (toInt(input) - 1) * 3;
+});
+
+// MOMENTS
+
+function getSetQuarter (input) {
+    return input == null ? Math.ceil((this.month() + 1) / 3) : this.month((input - 1) * 3 + this.month() % 3);
+}
+
+// FORMATTING
+
+addFormatToken('D', ['DD', 2], 'Do', 'date');
+
+// ALIASES
+
+addUnitAlias('date', 'D');
+
+// PRIOROITY
+addUnitPriority('date', 9);
+
+// PARSING
+
+addRegexToken('D',  match1to2);
+addRegexToken('DD', match1to2, match2);
+addRegexToken('Do', function (isStrict, locale) {
+    // TODO: Remove "ordinalParse" fallback in next major release.
+    return isStrict ?
+      (locale._dayOfMonthOrdinalParse || locale._ordinalParse) :
+      locale._dayOfMonthOrdinalParseLenient;
+});
+
+addParseToken(['D', 'DD'], DATE);
+addParseToken('Do', function (input, array) {
+    array[DATE] = toInt(input.match(match1to2)[0]);
+});
+
+// MOMENTS
+
+var getSetDayOfMonth = makeGetSet('Date', true);
+
+// FORMATTING
+
+addFormatToken('DDD', ['DDDD', 3], 'DDDo', 'dayOfYear');
+
+// ALIASES
+
+addUnitAlias('dayOfYear', 'DDD');
+
+// PRIORITY
+addUnitPriority('dayOfYear', 4);
+
+// PARSING
+
+addRegexToken('DDD',  match1to3);
+addRegexToken('DDDD', match3);
+addParseToken(['DDD', 'DDDD'], function (input, array, config) {
+    config._dayOfYear = toInt(input);
+});
+
+// HELPERS
+
+// MOMENTS
+
+function getSetDayOfYear (input) {
+    var dayOfYear = Math.round((this.clone().startOf('day') - this.clone().startOf('year')) / 864e5) + 1;
+    return input == null ? dayOfYear : this.add((input - dayOfYear), 'd');
+}
+
+// FORMATTING
+
+addFormatToken('m', ['mm', 2], 0, 'minute');
+
+// ALIASES
+
+addUnitAlias('minute', 'm');
+
+// PRIORITY
+
+addUnitPriority('minute', 14);
+
+// PARSING
+
+addRegexToken('m',  match1to2);
+addRegexToken('mm', match1to2, match2);
+addParseToken(['m', 'mm'], MINUTE);
+
+// MOMENTS
+
+var getSetMinute = makeGetSet('Minutes', false);
+
+// FORMATTING
+
+addFormatToken('s', ['ss', 2], 0, 'second');
+
+// ALIASES
+
+addUnitAlias('second', 's');
+
+// PRIORITY
+
+addUnitPriority('second', 15);
+
+// PARSING
+
+addRegexToken('s',  match1to2);
+addRegexToken('ss', match1to2, match2);
+addParseToken(['s', 'ss'], SECOND);
+
+// MOMENTS
+
+var getSetSecond = makeGetSet('Seconds', false);
+
+// FORMATTING
+
+addFormatToken('S', 0, 0, function () {
+    return ~~(this.millisecond() / 100);
+});
+
+addFormatToken(0, ['SS', 2], 0, function () {
+    return ~~(this.millisecond() / 10);
+});
+
+addFormatToken(0, ['SSS', 3], 0, 'millisecond');
+addFormatToken(0, ['SSSS', 4], 0, function () {
+    return this.millisecond() * 10;
+});
+addFormatToken(0, ['SSSSS', 5], 0, function () {
+    return this.millisecond() * 100;
+});
+addFormatToken(0, ['SSSSSS', 6], 0, function () {
+    return this.millisecond() * 1000;
+});
+addFormatToken(0, ['SSSSSSS', 7], 0, function () {
+    return this.millisecond() * 10000;
+});
+addFormatToken(0, ['SSSSSSSS', 8], 0, function () {
+    return this.millisecond() * 100000;
+});
+addFormatToken(0, ['SSSSSSSSS', 9], 0, function () {
+    return this.millisecond() * 1000000;
+});
+
+
+// ALIASES
+
+addUnitAlias('millisecond', 'ms');
+
+// PRIORITY
+
+addUnitPriority('millisecond', 16);
+
+// PARSING
+
+addRegexToken('S',    match1to3, match1);
+addRegexToken('SS',   match1to3, match2);
+addRegexToken('SSS',  match1to3, match3);
+
+var token;
+for (token = 'SSSS'; token.length <= 9; token += 'S') {
+    addRegexToken(token, matchUnsigned);
+}
+
+function parseMs(input, array) {
+    array[MILLISECOND] = toInt(('0.' + input) * 1000);
+}
+
+for (token = 'S'; token.length <= 9; token += 'S') {
+    addParseToken(token, parseMs);
+}
+// MOMENTS
+
+var getSetMillisecond = makeGetSet('Milliseconds', false);
+
+// FORMATTING
+
+addFormatToken('z',  0, 0, 'zoneAbbr');
+addFormatToken('zz', 0, 0, 'zoneName');
+
+// MOMENTS
+
+function getZoneAbbr () {
+    return this._isUTC ? 'UTC' : '';
+}
+
+function getZoneName () {
+    return this._isUTC ? 'Coordinated Universal Time' : '';
+}
+
+var proto = Moment.prototype;
+
+proto.add               = add;
+proto.calendar          = calendar$1;
+proto.clone             = clone;
+proto.diff              = diff;
+proto.endOf             = endOf;
+proto.format            = format;
+proto.from              = from;
+proto.fromNow           = fromNow;
+proto.to                = to;
+proto.toNow             = toNow;
+proto.get               = stringGet;
+proto.invalidAt         = invalidAt;
+proto.isAfter           = isAfter;
+proto.isBefore          = isBefore;
+proto.isBetween         = isBetween;
+proto.isSame            = isSame;
+proto.isSameOrAfter     = isSameOrAfter;
+proto.isSameOrBefore    = isSameOrBefore;
+proto.isValid           = isValid$2;
+proto.lang              = lang;
+proto.locale            = locale;
+proto.localeData        = localeData;
+proto.max               = prototypeMax;
+proto.min               = prototypeMin;
+proto.parsingFlags      = parsingFlags;
+proto.set               = stringSet;
+proto.startOf           = startOf;
+proto.subtract          = subtract;
+proto.toArray           = toArray;
+proto.toObject          = toObject;
+proto.toDate            = toDate;
+proto.toISOString       = toISOString;
+proto.inspect           = inspect;
+proto.toJSON            = toJSON;
+proto.toString          = toString;
+proto.unix              = unix;
+proto.valueOf           = valueOf;
+proto.creationData      = creationData;
+
+// Year
+proto.year       = getSetYear;
+proto.isLeapYear = getIsLeapYear;
+
+// Week Year
+proto.weekYear    = getSetWeekYear;
+proto.isoWeekYear = getSetISOWeekYear;
+
+// Quarter
+proto.quarter = proto.quarters = getSetQuarter;
+
+// Month
+proto.month       = getSetMonth;
+proto.daysInMonth = getDaysInMonth;
+
+// Week
+proto.week           = proto.weeks        = getSetWeek;
+proto.isoWeek        = proto.isoWeeks     = getSetISOWeek;
+proto.weeksInYear    = getWeeksInYear;
+proto.isoWeeksInYear = getISOWeeksInYear;
+
+// Day
+proto.date       = getSetDayOfMonth;
+proto.day        = proto.days             = getSetDayOfWeek;
+proto.weekday    = getSetLocaleDayOfWeek;
+proto.isoWeekday = getSetISODayOfWeek;
+proto.dayOfYear  = getSetDayOfYear;
+
+// Hour
+proto.hour = proto.hours = getSetHour;
+
+// Minute
+proto.minute = proto.minutes = getSetMinute;
+
+// Second
+proto.second = proto.seconds = getSetSecond;
+
+// Millisecond
+proto.millisecond = proto.milliseconds = getSetMillisecond;
+
+// Offset
+proto.utcOffset            = getSetOffset;
+proto.utc                  = setOffsetToUTC;
+proto.local                = setOffsetToLocal;
+proto.parseZone            = setOffsetToParsedOffset;
+proto.hasAlignedHourOffset = hasAlignedHourOffset;
+proto.isDST                = isDaylightSavingTime;
+proto.isLocal              = isLocal;
+proto.isUtcOffset          = isUtcOffset;
+proto.isUtc                = isUtc;
+proto.isUTC                = isUtc;
+
+// Timezone
+proto.zoneAbbr = getZoneAbbr;
+proto.zoneName = getZoneName;
+
+// Deprecations
+proto.dates  = deprecate('dates accessor is deprecated. Use date instead.', getSetDayOfMonth);
+proto.months = deprecate('months accessor is deprecated. Use month instead', getSetMonth);
+proto.years  = deprecate('years accessor is deprecated. Use year instead', getSetYear);
+proto.zone   = deprecate('moment().zone is deprecated, use moment().utcOffset instead. http://momentjs.com/guides/#/warnings/zone/', getSetZone);
+proto.isDSTShifted = deprecate('isDSTShifted is deprecated. See http://momentjs.com/guides/#/warnings/dst-shifted/ for more information', isDaylightSavingTimeShifted);
+
+function createUnix (input) {
+    return createLocal(input * 1000);
+}
+
+function createInZone () {
+    return createLocal.apply(null, arguments).parseZone();
+}
+
+function preParsePostFormat (string) {
+    return string;
+}
+
+var proto$1 = Locale.prototype;
+
+proto$1.calendar        = calendar;
+proto$1.longDateFormat  = longDateFormat;
+proto$1.invalidDate     = invalidDate;
+proto$1.ordinal         = ordinal;
+proto$1.preparse        = preParsePostFormat;
+proto$1.postformat      = preParsePostFormat;
+proto$1.relativeTime    = relativeTime;
+proto$1.pastFuture      = pastFuture;
+proto$1.set             = set;
+
+// Month
+proto$1.months            =        localeMonths;
+proto$1.monthsShort       =        localeMonthsShort;
+proto$1.monthsParse       =        localeMonthsParse;
+proto$1.monthsRegex       = monthsRegex;
+proto$1.monthsShortRegex  = monthsShortRegex;
+
+// Week
+proto$1.week = localeWeek;
+proto$1.firstDayOfYear = localeFirstDayOfYear;
+proto$1.firstDayOfWeek = localeFirstDayOfWeek;
+
+// Day of Week
+proto$1.weekdays       =        localeWeekdays;
+proto$1.weekdaysMin    =        localeWeekdaysMin;
+proto$1.weekdaysShort  =        localeWeekdaysShort;
+proto$1.weekdaysParse  =        localeWeekdaysParse;
+
+proto$1.weekdaysRegex       =        weekdaysRegex;
+proto$1.weekdaysShortRegex  =        weekdaysShortRegex;
+proto$1.weekdaysMinRegex    =        weekdaysMinRegex;
+
+// Hours
+proto$1.isPM = localeIsPM;
+proto$1.meridiem = localeMeridiem;
+
+function get$1 (format, index, field, setter) {
+    var locale = getLocale();
+    var utc = createUTC().set(setter, index);
+    return locale[field](utc, format);
+}
+
+function listMonthsImpl (format, index, field) {
+    if (isNumber(format)) {
+        index = format;
+        format = undefined;
+    }
+
+    format = format || '';
+
+    if (index != null) {
+        return get$1(format, index, field, 'month');
+    }
+
+    var i;
+    var out = [];
+    for (i = 0; i < 12; i++) {
+        out[i] = get$1(format, i, field, 'month');
+    }
+    return out;
+}
+
+// ()
+// (5)
+// (fmt, 5)
+// (fmt)
+// (true)
+// (true, 5)
+// (true, fmt, 5)
+// (true, fmt)
+function listWeekdaysImpl (localeSorted, format, index, field) {
+    if (typeof localeSorted === 'boolean') {
+        if (isNumber(format)) {
+            index = format;
+            format = undefined;
+        }
+
+        format = format || '';
+    } else {
+        format = localeSorted;
+        index = format;
+        localeSorted = false;
+
+        if (isNumber(format)) {
+            index = format;
+            format = undefined;
+        }
+
+        format = format || '';
+    }
+
+    var locale = getLocale(),
+        shift = localeSorted ? locale._week.dow : 0;
+
+    if (index != null) {
+        return get$1(format, (index + shift) % 7, field, 'day');
+    }
+
+    var i;
+    var out = [];
+    for (i = 0; i < 7; i++) {
+        out[i] = get$1(format, (i + shift) % 7, field, 'day');
+    }
+    return out;
+}
+
+function listMonths (format, index) {
+    return listMonthsImpl(format, index, 'months');
+}
+
+function listMonthsShort (format, index) {
+    return listMonthsImpl(format, index, 'monthsShort');
+}
+
+function listWeekdays (localeSorted, format, index) {
+    return listWeekdaysImpl(localeSorted, format, index, 'weekdays');
+}
+
+function listWeekdaysShort (localeSorted, format, index) {
+    return listWeekdaysImpl(localeSorted, format, index, 'weekdaysShort');
+}
+
+function listWeekdaysMin (localeSorted, format, index) {
+    return listWeekdaysImpl(localeSorted, format, index, 'weekdaysMin');
+}
+
+getSetGlobalLocale('en', {
+    dayOfMonthOrdinalParse: /\d{1,2}(th|st|nd|rd)/,
+    ordinal : function (number) {
+        var b = number % 10,
+            output = (toInt(number % 100 / 10) === 1) ? 'th' :
+            (b === 1) ? 'st' :
+            (b === 2) ? 'nd' :
+            (b === 3) ? 'rd' : 'th';
+        return number + output;
+    }
+});
+
+// Side effect imports
+hooks.lang = deprecate('moment.lang is deprecated. Use moment.locale instead.', getSetGlobalLocale);
+hooks.langData = deprecate('moment.langData is deprecated. Use moment.localeData instead.', getLocale);
+
+var mathAbs = Math.abs;
+
+function abs () {
+    var data           = this._data;
+
+    this._milliseconds = mathAbs(this._milliseconds);
+    this._days         = mathAbs(this._days);
+    this._months       = mathAbs(this._months);
+
+    data.milliseconds  = mathAbs(data.milliseconds);
+    data.seconds       = mathAbs(data.seconds);
+    data.minutes       = mathAbs(data.minutes);
+    data.hours         = mathAbs(data.hours);
+    data.months        = mathAbs(data.months);
+    data.years         = mathAbs(data.years);
+
+    return this;
+}
+
+function addSubtract$1 (duration, input, value, direction) {
+    var other = createDuration(input, value);
+
+    duration._milliseconds += direction * other._milliseconds;
+    duration._days         += direction * other._days;
+    duration._months       += direction * other._months;
+
+    return duration._bubble();
+}
+
+// supports only 2.0-style add(1, 's') or add(duration)
+function add$1 (input, value) {
+    return addSubtract$1(this, input, value, 1);
+}
+
+// supports only 2.0-style subtract(1, 's') or subtract(duration)
+function subtract$1 (input, value) {
+    return addSubtract$1(this, input, value, -1);
+}
+
+function absCeil (number) {
+    if (number < 0) {
+        return Math.floor(number);
+    } else {
+        return Math.ceil(number);
+    }
+}
+
+function bubble () {
+    var milliseconds = this._milliseconds;
+    var days         = this._days;
+    var months       = this._months;
+    var data         = this._data;
+    var seconds, minutes, hours, years, monthsFromDays;
+
+    // if we have a mix of positive and negative values, bubble down first
+    // check: https://github.com/moment/moment/issues/2166
+    if (!((milliseconds >= 0 && days >= 0 && months >= 0) ||
+            (milliseconds <= 0 && days <= 0 && months <= 0))) {
+        milliseconds += absCeil(monthsToDays(months) + days) * 864e5;
+        days = 0;
+        months = 0;
+    }
+
+    // The following code bubbles up values, see the tests for
+    // examples of what that means.
+    data.milliseconds = milliseconds % 1000;
+
+    seconds           = absFloor(milliseconds / 1000);
+    data.seconds      = seconds % 60;
+
+    minutes           = absFloor(seconds / 60);
+    data.minutes      = minutes % 60;
+
+    hours             = absFloor(minutes / 60);
+    data.hours        = hours % 24;
+
+    days += absFloor(hours / 24);
+
+    // convert days to months
+    monthsFromDays = absFloor(daysToMonths(days));
+    months += monthsFromDays;
+    days -= absCeil(monthsToDays(monthsFromDays));
+
+    // 12 months -> 1 year
+    years = absFloor(months / 12);
+    months %= 12;
+
+    data.days   = days;
+    data.months = months;
+    data.years  = years;
+
+    return this;
+}
+
+function daysToMonths (days) {
+    // 400 years have 146097 days (taking into account leap year rules)
+    // 400 years have 12 months === 4800
+    return days * 4800 / 146097;
+}
+
+function monthsToDays (months) {
+    // the reverse of daysToMonths
+    return months * 146097 / 4800;
+}
+
+function as (units) {
+    if (!this.isValid()) {
+        return NaN;
+    }
+    var days;
+    var months;
+    var milliseconds = this._milliseconds;
+
+    units = normalizeUnits(units);
+
+    if (units === 'month' || units === 'year') {
+        days   = this._days   + milliseconds / 864e5;
+        months = this._months + daysToMonths(days);
+        return units === 'month' ? months : months / 12;
+    } else {
+        // handle milliseconds separately because of floating point math errors (issue #1867)
+        days = this._days + Math.round(monthsToDays(this._months));
+        switch (units) {
+            case 'week'   : return days / 7     + milliseconds / 6048e5;
+            case 'day'    : return days         + milliseconds / 864e5;
+            case 'hour'   : return days * 24    + milliseconds / 36e5;
+            case 'minute' : return days * 1440  + milliseconds / 6e4;
+            case 'second' : return days * 86400 + milliseconds / 1000;
+            // Math.floor prevents floating point math errors here
+            case 'millisecond': return Math.floor(days * 864e5) + milliseconds;
+            default: throw new Error('Unknown unit ' + units);
+        }
+    }
+}
+
+// TODO: Use this.as('ms')?
+function valueOf$1 () {
+    if (!this.isValid()) {
+        return NaN;
+    }
+    return (
+        this._milliseconds +
+        this._days * 864e5 +
+        (this._months % 12) * 2592e6 +
+        toInt(this._months / 12) * 31536e6
+    );
+}
+
+function makeAs (alias) {
+    return function () {
+        return this.as(alias);
+    };
+}
+
+var asMilliseconds = makeAs('ms');
+var asSeconds      = makeAs('s');
+var asMinutes      = makeAs('m');
+var asHours        = makeAs('h');
+var asDays         = makeAs('d');
+var asWeeks        = makeAs('w');
+var asMonths       = makeAs('M');
+var asYears        = makeAs('y');
+
+function clone$1 () {
+    return createDuration(this);
+}
+
+function get$2 (units) {
+    units = normalizeUnits(units);
+    return this.isValid() ? this[units + 's']() : NaN;
+}
+
+function makeGetter(name) {
+    return function () {
+        return this.isValid() ? this._data[name] : NaN;
+    };
+}
+
+var milliseconds = makeGetter('milliseconds');
+var seconds      = makeGetter('seconds');
+var minutes      = makeGetter('minutes');
+var hours        = makeGetter('hours');
+var days         = makeGetter('days');
+var months       = makeGetter('months');
+var years        = makeGetter('years');
+
+function weeks () {
+    return absFloor(this.days() / 7);
+}
+
+var round = Math.round;
+var thresholds = {
+    ss: 44,         // a few seconds to seconds
+    s : 45,         // seconds to minute
+    m : 45,         // minutes to hour
+    h : 22,         // hours to day
+    d : 26,         // days to month
+    M : 11          // months to year
+};
+
+// helper function for moment.fn.from, moment.fn.fromNow, and moment.duration.fn.humanize
+function substituteTimeAgo(string, number, withoutSuffix, isFuture, locale) {
+    return locale.relativeTime(number || 1, !!withoutSuffix, string, isFuture);
+}
+
+function relativeTime$1 (posNegDuration, withoutSuffix, locale) {
+    var duration = createDuration(posNegDuration).abs();
+    var seconds  = round(duration.as('s'));
+    var minutes  = round(duration.as('m'));
+    var hours    = round(duration.as('h'));
+    var days     = round(duration.as('d'));
+    var months   = round(duration.as('M'));
+    var years    = round(duration.as('y'));
+
+    var a = seconds <= thresholds.ss && ['s', seconds]  ||
+            seconds < thresholds.s   && ['ss', seconds] ||
+            minutes <= 1             && ['m']           ||
+            minutes < thresholds.m   && ['mm', minutes] ||
+            hours   <= 1             && ['h']           ||
+            hours   < thresholds.h   && ['hh', hours]   ||
+            days    <= 1             && ['d']           ||
+            days    < thresholds.d   && ['dd', days]    ||
+            months  <= 1             && ['M']           ||
+            months  < thresholds.M   && ['MM', months]  ||
+            years   <= 1             && ['y']           || ['yy', years];
+
+    a[2] = withoutSuffix;
+    a[3] = +posNegDuration > 0;
+    a[4] = locale;
+    return substituteTimeAgo.apply(null, a);
+}
+
+// This function allows you to set the rounding function for relative time strings
+function getSetRelativeTimeRounding (roundingFunction) {
+    if (roundingFunction === undefined) {
+        return round;
+    }
+    if (typeof(roundingFunction) === 'function') {
+        round = roundingFunction;
+        return true;
+    }
+    return false;
+}
+
+// This function allows you to set a threshold for relative time strings
+function getSetRelativeTimeThreshold (threshold, limit) {
+    if (thresholds[threshold] === undefined) {
+        return false;
+    }
+    if (limit === undefined) {
+        return thresholds[threshold];
+    }
+    thresholds[threshold] = limit;
+    if (threshold === 's') {
+        thresholds.ss = limit - 1;
+    }
+    return true;
+}
+
+function humanize (withSuffix) {
+    if (!this.isValid()) {
+        return this.localeData().invalidDate();
+    }
+
+    var locale = this.localeData();
+    var output = relativeTime$1(this, !withSuffix, locale);
+
+    if (withSuffix) {
+        output = locale.pastFuture(+this, output);
+    }
+
+    return locale.postformat(output);
+}
+
+var abs$1 = Math.abs;
+
+function sign(x) {
+    return ((x > 0) - (x < 0)) || +x;
+}
+
+function toISOString$1() {
+    // for ISO strings we do not use the normal bubbling rules:
+    //  * milliseconds bubble up until they become hours
+    //  * days do not bubble at all
+    //  * months bubble up until they become years
+    // This is because there is no context-free conversion between hours and days
+    // (think of clock changes)
+    // and also not between days and months (28-31 days per month)
+    if (!this.isValid()) {
+        return this.localeData().invalidDate();
+    }
+
+    var seconds = abs$1(this._milliseconds) / 1000;
+    var days         = abs$1(this._days);
+    var months       = abs$1(this._months);
+    var minutes, hours, years;
+
+    // 3600 seconds -> 60 minutes -> 1 hour
+    minutes           = absFloor(seconds / 60);
+    hours             = absFloor(minutes / 60);
+    seconds %= 60;
+    minutes %= 60;
+
+    // 12 months -> 1 year
+    years  = absFloor(months / 12);
+    months %= 12;
+
+
+    // inspired by https://github.com/dordille/moment-isoduration/blob/master/moment.isoduration.js
+    var Y = years;
+    var M = months;
+    var D = days;
+    var h = hours;
+    var m = minutes;
+    var s = seconds ? seconds.toFixed(3).replace(/\.?0+$/, '') : '';
+    var total = this.asSeconds();
+
+    if (!total) {
+        // this is the same as C#'s (Noda) and python (isodate)...
+        // but not other JS (goog.date)
+        return 'P0D';
+    }
+
+    var totalSign = total < 0 ? '-' : '';
+    var ymSign = sign(this._months) !== sign(total) ? '-' : '';
+    var daysSign = sign(this._days) !== sign(total) ? '-' : '';
+    var hmsSign = sign(this._milliseconds) !== sign(total) ? '-' : '';
+
+    return totalSign + 'P' +
+        (Y ? ymSign + Y + 'Y' : '') +
+        (M ? ymSign + M + 'M' : '') +
+        (D ? daysSign + D + 'D' : '') +
+        ((h || m || s) ? 'T' : '') +
+        (h ? hmsSign + h + 'H' : '') +
+        (m ? hmsSign + m + 'M' : '') +
+        (s ? hmsSign + s + 'S' : '');
+}
+
+var proto$2 = Duration.prototype;
+
+proto$2.isValid        = isValid$1;
+proto$2.abs            = abs;
+proto$2.add            = add$1;
+proto$2.subtract       = subtract$1;
+proto$2.as             = as;
+proto$2.asMilliseconds = asMilliseconds;
+proto$2.asSeconds      = asSeconds;
+proto$2.asMinutes      = asMinutes;
+proto$2.asHours        = asHours;
+proto$2.asDays         = asDays;
+proto$2.asWeeks        = asWeeks;
+proto$2.asMonths       = asMonths;
+proto$2.asYears        = asYears;
+proto$2.valueOf        = valueOf$1;
+proto$2._bubble        = bubble;
+proto$2.clone          = clone$1;
+proto$2.get            = get$2;
+proto$2.milliseconds   = milliseconds;
+proto$2.seconds        = seconds;
+proto$2.minutes        = minutes;
+proto$2.hours          = hours;
+proto$2.days           = days;
+proto$2.weeks          = weeks;
+proto$2.months         = months;
+proto$2.years          = years;
+proto$2.humanize       = humanize;
+proto$2.toISOString    = toISOString$1;
+proto$2.toString       = toISOString$1;
+proto$2.toJSON         = toISOString$1;
+proto$2.locale         = locale;
+proto$2.localeData     = localeData;
+
+// Deprecations
+proto$2.toIsoString = deprecate('toIsoString() is deprecated. Please use toISOString() instead (notice the capitals)', toISOString$1);
+proto$2.lang = lang;
+
+// Side effect imports
+
+// FORMATTING
+
+addFormatToken('X', 0, 0, 'unix');
+addFormatToken('x', 0, 0, 'valueOf');
+
+// PARSING
+
+addRegexToken('x', matchSigned);
+addRegexToken('X', matchTimestamp);
+addParseToken('X', function (input, array, config) {
+    config._d = new Date(parseFloat(input, 10) * 1000);
+});
+addParseToken('x', function (input, array, config) {
+    config._d = new Date(toInt(input));
+});
+
+// Side effect imports
+
+
+hooks.version = '2.20.1';
+
+setHookCallback(createLocal);
+
+hooks.fn                    = proto;
+hooks.min                   = min;
+hooks.max                   = max;
+hooks.now                   = now;
+hooks.utc                   = createUTC;
+hooks.unix                  = createUnix;
+hooks.months                = listMonths;
+hooks.isDate                = isDate;
+hooks.locale                = getSetGlobalLocale;
+hooks.invalid               = createInvalid;
+hooks.duration              = createDuration;
+hooks.isMoment              = isMoment;
+hooks.weekdays              = listWeekdays;
+hooks.parseZone             = createInZone;
+hooks.localeData            = getLocale;
+hooks.isDuration            = isDuration;
+hooks.monthsShort           = listMonthsShort;
+hooks.weekdaysMin           = listWeekdaysMin;
+hooks.defineLocale          = defineLocale;
+hooks.updateLocale          = updateLocale;
+hooks.locales               = listLocales;
+hooks.weekdaysShort         = listWeekdaysShort;
+hooks.normalizeUnits        = normalizeUnits;
+hooks.relativeTimeRounding  = getSetRelativeTimeRounding;
+hooks.relativeTimeThreshold = getSetRelativeTimeThreshold;
+hooks.calendarFormat        = getCalendarFormat;
+hooks.prototype             = proto;
+
+// currently HTML5 input type only supports 24-hour formats
+hooks.HTML5_FMT = {
+    DATETIME_LOCAL: 'YYYY-MM-DDTHH:mm',             // <input type="datetime-local" />
+    DATETIME_LOCAL_SECONDS: 'YYYY-MM-DDTHH:mm:ss',  // <input type="datetime-local" step="1" />
+    DATETIME_LOCAL_MS: 'YYYY-MM-DDTHH:mm:ss.SSS',   // <input type="datetime-local" step="0.001" />
+    DATE: 'YYYY-MM-DD',                             // <input type="date" />
+    TIME: 'HH:mm',                                  // <input type="time" />
+    TIME_SECONDS: 'HH:mm:ss',                       // <input type="time" step="1" />
+    TIME_MS: 'HH:mm:ss.SSS',                        // <input type="time" step="0.001" />
+    WEEK: 'YYYY-[W]WW',                             // <input type="week" />
+    MONTH: 'YYYY-MM'                                // <input type="month" />
+};
+
+return hooks;
+
+})));
+
+},{}],37:[function(require,module,exports){
 (function (global){
 /**!
  * @fileOverview Kickass library to create and place poppers near their reference elements.
@@ -16720,4 +29525,1554 @@ return Popper;
 
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}]},{},[1]);
+},{}],38:[function(require,module,exports){
+//     Underscore.js 1.8.3
+//     http://underscorejs.org
+//     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+//     Underscore may be freely distributed under the MIT license.
+
+(function() {
+
+  // Baseline setup
+  // --------------
+
+  // Establish the root object, `window` in the browser, or `exports` on the server.
+  var root = this;
+
+  // Save the previous value of the `_` variable.
+  var previousUnderscore = root._;
+
+  // Save bytes in the minified (but not gzipped) version:
+  var ArrayProto = Array.prototype, ObjProto = Object.prototype, FuncProto = Function.prototype;
+
+  // Create quick reference variables for speed access to core prototypes.
+  var
+    push             = ArrayProto.push,
+    slice            = ArrayProto.slice,
+    toString         = ObjProto.toString,
+    hasOwnProperty   = ObjProto.hasOwnProperty;
+
+  // All **ECMAScript 5** native function implementations that we hope to use
+  // are declared here.
+  var
+    nativeIsArray      = Array.isArray,
+    nativeKeys         = Object.keys,
+    nativeBind         = FuncProto.bind,
+    nativeCreate       = Object.create;
+
+  // Naked function reference for surrogate-prototype-swapping.
+  var Ctor = function(){};
+
+  // Create a safe reference to the Underscore object for use below.
+  var _ = function(obj) {
+    if (obj instanceof _) return obj;
+    if (!(this instanceof _)) return new _(obj);
+    this._wrapped = obj;
+  };
+
+  // Export the Underscore object for **Node.js**, with
+  // backwards-compatibility for the old `require()` API. If we're in
+  // the browser, add `_` as a global object.
+  if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = _;
+    }
+    exports._ = _;
+  } else {
+    root._ = _;
+  }
+
+  // Current version.
+  _.VERSION = '1.8.3';
+
+  // Internal function that returns an efficient (for current engines) version
+  // of the passed-in callback, to be repeatedly applied in other Underscore
+  // functions.
+  var optimizeCb = function(func, context, argCount) {
+    if (context === void 0) return func;
+    switch (argCount == null ? 3 : argCount) {
+      case 1: return function(value) {
+        return func.call(context, value);
+      };
+      case 2: return function(value, other) {
+        return func.call(context, value, other);
+      };
+      case 3: return function(value, index, collection) {
+        return func.call(context, value, index, collection);
+      };
+      case 4: return function(accumulator, value, index, collection) {
+        return func.call(context, accumulator, value, index, collection);
+      };
+    }
+    return function() {
+      return func.apply(context, arguments);
+    };
+  };
+
+  // A mostly-internal function to generate callbacks that can be applied
+  // to each element in a collection, returning the desired result — either
+  // identity, an arbitrary callback, a property matcher, or a property accessor.
+  var cb = function(value, context, argCount) {
+    if (value == null) return _.identity;
+    if (_.isFunction(value)) return optimizeCb(value, context, argCount);
+    if (_.isObject(value)) return _.matcher(value);
+    return _.property(value);
+  };
+  _.iteratee = function(value, context) {
+    return cb(value, context, Infinity);
+  };
+
+  // An internal function for creating assigner functions.
+  var createAssigner = function(keysFunc, undefinedOnly) {
+    return function(obj) {
+      var length = arguments.length;
+      if (length < 2 || obj == null) return obj;
+      for (var index = 1; index < length; index++) {
+        var source = arguments[index],
+            keys = keysFunc(source),
+            l = keys.length;
+        for (var i = 0; i < l; i++) {
+          var key = keys[i];
+          if (!undefinedOnly || obj[key] === void 0) obj[key] = source[key];
+        }
+      }
+      return obj;
+    };
+  };
+
+  // An internal function for creating a new object that inherits from another.
+  var baseCreate = function(prototype) {
+    if (!_.isObject(prototype)) return {};
+    if (nativeCreate) return nativeCreate(prototype);
+    Ctor.prototype = prototype;
+    var result = new Ctor;
+    Ctor.prototype = null;
+    return result;
+  };
+
+  var property = function(key) {
+    return function(obj) {
+      return obj == null ? void 0 : obj[key];
+    };
+  };
+
+  // Helper for collection methods to determine whether a collection
+  // should be iterated as an array or as an object
+  // Related: http://people.mozilla.org/~jorendorff/es6-draft.html#sec-tolength
+  // Avoids a very nasty iOS 8 JIT bug on ARM-64. #2094
+  var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
+  var getLength = property('length');
+  var isArrayLike = function(collection) {
+    var length = getLength(collection);
+    return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
+  };
+
+  // Collection Functions
+  // --------------------
+
+  // The cornerstone, an `each` implementation, aka `forEach`.
+  // Handles raw objects in addition to array-likes. Treats all
+  // sparse array-likes as if they were dense.
+  _.each = _.forEach = function(obj, iteratee, context) {
+    iteratee = optimizeCb(iteratee, context);
+    var i, length;
+    if (isArrayLike(obj)) {
+      for (i = 0, length = obj.length; i < length; i++) {
+        iteratee(obj[i], i, obj);
+      }
+    } else {
+      var keys = _.keys(obj);
+      for (i = 0, length = keys.length; i < length; i++) {
+        iteratee(obj[keys[i]], keys[i], obj);
+      }
+    }
+    return obj;
+  };
+
+  // Return the results of applying the iteratee to each element.
+  _.map = _.collect = function(obj, iteratee, context) {
+    iteratee = cb(iteratee, context);
+    var keys = !isArrayLike(obj) && _.keys(obj),
+        length = (keys || obj).length,
+        results = Array(length);
+    for (var index = 0; index < length; index++) {
+      var currentKey = keys ? keys[index] : index;
+      results[index] = iteratee(obj[currentKey], currentKey, obj);
+    }
+    return results;
+  };
+
+  // Create a reducing function iterating left or right.
+  function createReduce(dir) {
+    // Optimized iterator function as using arguments.length
+    // in the main function will deoptimize the, see #1991.
+    function iterator(obj, iteratee, memo, keys, index, length) {
+      for (; index >= 0 && index < length; index += dir) {
+        var currentKey = keys ? keys[index] : index;
+        memo = iteratee(memo, obj[currentKey], currentKey, obj);
+      }
+      return memo;
+    }
+
+    return function(obj, iteratee, memo, context) {
+      iteratee = optimizeCb(iteratee, context, 4);
+      var keys = !isArrayLike(obj) && _.keys(obj),
+          length = (keys || obj).length,
+          index = dir > 0 ? 0 : length - 1;
+      // Determine the initial value if none is provided.
+      if (arguments.length < 3) {
+        memo = obj[keys ? keys[index] : index];
+        index += dir;
+      }
+      return iterator(obj, iteratee, memo, keys, index, length);
+    };
+  }
+
+  // **Reduce** builds up a single result from a list of values, aka `inject`,
+  // or `foldl`.
+  _.reduce = _.foldl = _.inject = createReduce(1);
+
+  // The right-associative version of reduce, also known as `foldr`.
+  _.reduceRight = _.foldr = createReduce(-1);
+
+  // Return the first value which passes a truth test. Aliased as `detect`.
+  _.find = _.detect = function(obj, predicate, context) {
+    var key;
+    if (isArrayLike(obj)) {
+      key = _.findIndex(obj, predicate, context);
+    } else {
+      key = _.findKey(obj, predicate, context);
+    }
+    if (key !== void 0 && key !== -1) return obj[key];
+  };
+
+  // Return all the elements that pass a truth test.
+  // Aliased as `select`.
+  _.filter = _.select = function(obj, predicate, context) {
+    var results = [];
+    predicate = cb(predicate, context);
+    _.each(obj, function(value, index, list) {
+      if (predicate(value, index, list)) results.push(value);
+    });
+    return results;
+  };
+
+  // Return all the elements for which a truth test fails.
+  _.reject = function(obj, predicate, context) {
+    return _.filter(obj, _.negate(cb(predicate)), context);
+  };
+
+  // Determine whether all of the elements match a truth test.
+  // Aliased as `all`.
+  _.every = _.all = function(obj, predicate, context) {
+    predicate = cb(predicate, context);
+    var keys = !isArrayLike(obj) && _.keys(obj),
+        length = (keys || obj).length;
+    for (var index = 0; index < length; index++) {
+      var currentKey = keys ? keys[index] : index;
+      if (!predicate(obj[currentKey], currentKey, obj)) return false;
+    }
+    return true;
+  };
+
+  // Determine if at least one element in the object matches a truth test.
+  // Aliased as `any`.
+  _.some = _.any = function(obj, predicate, context) {
+    predicate = cb(predicate, context);
+    var keys = !isArrayLike(obj) && _.keys(obj),
+        length = (keys || obj).length;
+    for (var index = 0; index < length; index++) {
+      var currentKey = keys ? keys[index] : index;
+      if (predicate(obj[currentKey], currentKey, obj)) return true;
+    }
+    return false;
+  };
+
+  // Determine if the array or object contains a given item (using `===`).
+  // Aliased as `includes` and `include`.
+  _.contains = _.includes = _.include = function(obj, item, fromIndex, guard) {
+    if (!isArrayLike(obj)) obj = _.values(obj);
+    if (typeof fromIndex != 'number' || guard) fromIndex = 0;
+    return _.indexOf(obj, item, fromIndex) >= 0;
+  };
+
+  // Invoke a method (with arguments) on every item in a collection.
+  _.invoke = function(obj, method) {
+    var args = slice.call(arguments, 2);
+    var isFunc = _.isFunction(method);
+    return _.map(obj, function(value) {
+      var func = isFunc ? method : value[method];
+      return func == null ? func : func.apply(value, args);
+    });
+  };
+
+  // Convenience version of a common use case of `map`: fetching a property.
+  _.pluck = function(obj, key) {
+    return _.map(obj, _.property(key));
+  };
+
+  // Convenience version of a common use case of `filter`: selecting only objects
+  // containing specific `key:value` pairs.
+  _.where = function(obj, attrs) {
+    return _.filter(obj, _.matcher(attrs));
+  };
+
+  // Convenience version of a common use case of `find`: getting the first object
+  // containing specific `key:value` pairs.
+  _.findWhere = function(obj, attrs) {
+    return _.find(obj, _.matcher(attrs));
+  };
+
+  // Return the maximum element (or element-based computation).
+  _.max = function(obj, iteratee, context) {
+    var result = -Infinity, lastComputed = -Infinity,
+        value, computed;
+    if (iteratee == null && obj != null) {
+      obj = isArrayLike(obj) ? obj : _.values(obj);
+      for (var i = 0, length = obj.length; i < length; i++) {
+        value = obj[i];
+        if (value > result) {
+          result = value;
+        }
+      }
+    } else {
+      iteratee = cb(iteratee, context);
+      _.each(obj, function(value, index, list) {
+        computed = iteratee(value, index, list);
+        if (computed > lastComputed || computed === -Infinity && result === -Infinity) {
+          result = value;
+          lastComputed = computed;
+        }
+      });
+    }
+    return result;
+  };
+
+  // Return the minimum element (or element-based computation).
+  _.min = function(obj, iteratee, context) {
+    var result = Infinity, lastComputed = Infinity,
+        value, computed;
+    if (iteratee == null && obj != null) {
+      obj = isArrayLike(obj) ? obj : _.values(obj);
+      for (var i = 0, length = obj.length; i < length; i++) {
+        value = obj[i];
+        if (value < result) {
+          result = value;
+        }
+      }
+    } else {
+      iteratee = cb(iteratee, context);
+      _.each(obj, function(value, index, list) {
+        computed = iteratee(value, index, list);
+        if (computed < lastComputed || computed === Infinity && result === Infinity) {
+          result = value;
+          lastComputed = computed;
+        }
+      });
+    }
+    return result;
+  };
+
+  // Shuffle a collection, using the modern version of the
+  // [Fisher-Yates shuffle](http://en.wikipedia.org/wiki/Fisher–Yates_shuffle).
+  _.shuffle = function(obj) {
+    var set = isArrayLike(obj) ? obj : _.values(obj);
+    var length = set.length;
+    var shuffled = Array(length);
+    for (var index = 0, rand; index < length; index++) {
+      rand = _.random(0, index);
+      if (rand !== index) shuffled[index] = shuffled[rand];
+      shuffled[rand] = set[index];
+    }
+    return shuffled;
+  };
+
+  // Sample **n** random values from a collection.
+  // If **n** is not specified, returns a single random element.
+  // The internal `guard` argument allows it to work with `map`.
+  _.sample = function(obj, n, guard) {
+    if (n == null || guard) {
+      if (!isArrayLike(obj)) obj = _.values(obj);
+      return obj[_.random(obj.length - 1)];
+    }
+    return _.shuffle(obj).slice(0, Math.max(0, n));
+  };
+
+  // Sort the object's values by a criterion produced by an iteratee.
+  _.sortBy = function(obj, iteratee, context) {
+    iteratee = cb(iteratee, context);
+    return _.pluck(_.map(obj, function(value, index, list) {
+      return {
+        value: value,
+        index: index,
+        criteria: iteratee(value, index, list)
+      };
+    }).sort(function(left, right) {
+      var a = left.criteria;
+      var b = right.criteria;
+      if (a !== b) {
+        if (a > b || a === void 0) return 1;
+        if (a < b || b === void 0) return -1;
+      }
+      return left.index - right.index;
+    }), 'value');
+  };
+
+  // An internal function used for aggregate "group by" operations.
+  var group = function(behavior) {
+    return function(obj, iteratee, context) {
+      var result = {};
+      iteratee = cb(iteratee, context);
+      _.each(obj, function(value, index) {
+        var key = iteratee(value, index, obj);
+        behavior(result, value, key);
+      });
+      return result;
+    };
+  };
+
+  // Groups the object's values by a criterion. Pass either a string attribute
+  // to group by, or a function that returns the criterion.
+  _.groupBy = group(function(result, value, key) {
+    if (_.has(result, key)) result[key].push(value); else result[key] = [value];
+  });
+
+  // Indexes the object's values by a criterion, similar to `groupBy`, but for
+  // when you know that your index values will be unique.
+  _.indexBy = group(function(result, value, key) {
+    result[key] = value;
+  });
+
+  // Counts instances of an object that group by a certain criterion. Pass
+  // either a string attribute to count by, or a function that returns the
+  // criterion.
+  _.countBy = group(function(result, value, key) {
+    if (_.has(result, key)) result[key]++; else result[key] = 1;
+  });
+
+  // Safely create a real, live array from anything iterable.
+  _.toArray = function(obj) {
+    if (!obj) return [];
+    if (_.isArray(obj)) return slice.call(obj);
+    if (isArrayLike(obj)) return _.map(obj, _.identity);
+    return _.values(obj);
+  };
+
+  // Return the number of elements in an object.
+  _.size = function(obj) {
+    if (obj == null) return 0;
+    return isArrayLike(obj) ? obj.length : _.keys(obj).length;
+  };
+
+  // Split a collection into two arrays: one whose elements all satisfy the given
+  // predicate, and one whose elements all do not satisfy the predicate.
+  _.partition = function(obj, predicate, context) {
+    predicate = cb(predicate, context);
+    var pass = [], fail = [];
+    _.each(obj, function(value, key, obj) {
+      (predicate(value, key, obj) ? pass : fail).push(value);
+    });
+    return [pass, fail];
+  };
+
+  // Array Functions
+  // ---------------
+
+  // Get the first element of an array. Passing **n** will return the first N
+  // values in the array. Aliased as `head` and `take`. The **guard** check
+  // allows it to work with `_.map`.
+  _.first = _.head = _.take = function(array, n, guard) {
+    if (array == null) return void 0;
+    if (n == null || guard) return array[0];
+    return _.initial(array, array.length - n);
+  };
+
+  // Returns everything but the last entry of the array. Especially useful on
+  // the arguments object. Passing **n** will return all the values in
+  // the array, excluding the last N.
+  _.initial = function(array, n, guard) {
+    return slice.call(array, 0, Math.max(0, array.length - (n == null || guard ? 1 : n)));
+  };
+
+  // Get the last element of an array. Passing **n** will return the last N
+  // values in the array.
+  _.last = function(array, n, guard) {
+    if (array == null) return void 0;
+    if (n == null || guard) return array[array.length - 1];
+    return _.rest(array, Math.max(0, array.length - n));
+  };
+
+  // Returns everything but the first entry of the array. Aliased as `tail` and `drop`.
+  // Especially useful on the arguments object. Passing an **n** will return
+  // the rest N values in the array.
+  _.rest = _.tail = _.drop = function(array, n, guard) {
+    return slice.call(array, n == null || guard ? 1 : n);
+  };
+
+  // Trim out all falsy values from an array.
+  _.compact = function(array) {
+    return _.filter(array, _.identity);
+  };
+
+  // Internal implementation of a recursive `flatten` function.
+  var flatten = function(input, shallow, strict, startIndex) {
+    var output = [], idx = 0;
+    for (var i = startIndex || 0, length = getLength(input); i < length; i++) {
+      var value = input[i];
+      if (isArrayLike(value) && (_.isArray(value) || _.isArguments(value))) {
+        //flatten current level of array or arguments object
+        if (!shallow) value = flatten(value, shallow, strict);
+        var j = 0, len = value.length;
+        output.length += len;
+        while (j < len) {
+          output[idx++] = value[j++];
+        }
+      } else if (!strict) {
+        output[idx++] = value;
+      }
+    }
+    return output;
+  };
+
+  // Flatten out an array, either recursively (by default), or just one level.
+  _.flatten = function(array, shallow) {
+    return flatten(array, shallow, false);
+  };
+
+  // Return a version of the array that does not contain the specified value(s).
+  _.without = function(array) {
+    return _.difference(array, slice.call(arguments, 1));
+  };
+
+  // Produce a duplicate-free version of the array. If the array has already
+  // been sorted, you have the option of using a faster algorithm.
+  // Aliased as `unique`.
+  _.uniq = _.unique = function(array, isSorted, iteratee, context) {
+    if (!_.isBoolean(isSorted)) {
+      context = iteratee;
+      iteratee = isSorted;
+      isSorted = false;
+    }
+    if (iteratee != null) iteratee = cb(iteratee, context);
+    var result = [];
+    var seen = [];
+    for (var i = 0, length = getLength(array); i < length; i++) {
+      var value = array[i],
+          computed = iteratee ? iteratee(value, i, array) : value;
+      if (isSorted) {
+        if (!i || seen !== computed) result.push(value);
+        seen = computed;
+      } else if (iteratee) {
+        if (!_.contains(seen, computed)) {
+          seen.push(computed);
+          result.push(value);
+        }
+      } else if (!_.contains(result, value)) {
+        result.push(value);
+      }
+    }
+    return result;
+  };
+
+  // Produce an array that contains the union: each distinct element from all of
+  // the passed-in arrays.
+  _.union = function() {
+    return _.uniq(flatten(arguments, true, true));
+  };
+
+  // Produce an array that contains every item shared between all the
+  // passed-in arrays.
+  _.intersection = function(array) {
+    var result = [];
+    var argsLength = arguments.length;
+    for (var i = 0, length = getLength(array); i < length; i++) {
+      var item = array[i];
+      if (_.contains(result, item)) continue;
+      for (var j = 1; j < argsLength; j++) {
+        if (!_.contains(arguments[j], item)) break;
+      }
+      if (j === argsLength) result.push(item);
+    }
+    return result;
+  };
+
+  // Take the difference between one array and a number of other arrays.
+  // Only the elements present in just the first array will remain.
+  _.difference = function(array) {
+    var rest = flatten(arguments, true, true, 1);
+    return _.filter(array, function(value){
+      return !_.contains(rest, value);
+    });
+  };
+
+  // Zip together multiple lists into a single array -- elements that share
+  // an index go together.
+  _.zip = function() {
+    return _.unzip(arguments);
+  };
+
+  // Complement of _.zip. Unzip accepts an array of arrays and groups
+  // each array's elements on shared indices
+  _.unzip = function(array) {
+    var length = array && _.max(array, getLength).length || 0;
+    var result = Array(length);
+
+    for (var index = 0; index < length; index++) {
+      result[index] = _.pluck(array, index);
+    }
+    return result;
+  };
+
+  // Converts lists into objects. Pass either a single array of `[key, value]`
+  // pairs, or two parallel arrays of the same length -- one of keys, and one of
+  // the corresponding values.
+  _.object = function(list, values) {
+    var result = {};
+    for (var i = 0, length = getLength(list); i < length; i++) {
+      if (values) {
+        result[list[i]] = values[i];
+      } else {
+        result[list[i][0]] = list[i][1];
+      }
+    }
+    return result;
+  };
+
+  // Generator function to create the findIndex and findLastIndex functions
+  function createPredicateIndexFinder(dir) {
+    return function(array, predicate, context) {
+      predicate = cb(predicate, context);
+      var length = getLength(array);
+      var index = dir > 0 ? 0 : length - 1;
+      for (; index >= 0 && index < length; index += dir) {
+        if (predicate(array[index], index, array)) return index;
+      }
+      return -1;
+    };
+  }
+
+  // Returns the first index on an array-like that passes a predicate test
+  _.findIndex = createPredicateIndexFinder(1);
+  _.findLastIndex = createPredicateIndexFinder(-1);
+
+  // Use a comparator function to figure out the smallest index at which
+  // an object should be inserted so as to maintain order. Uses binary search.
+  _.sortedIndex = function(array, obj, iteratee, context) {
+    iteratee = cb(iteratee, context, 1);
+    var value = iteratee(obj);
+    var low = 0, high = getLength(array);
+    while (low < high) {
+      var mid = Math.floor((low + high) / 2);
+      if (iteratee(array[mid]) < value) low = mid + 1; else high = mid;
+    }
+    return low;
+  };
+
+  // Generator function to create the indexOf and lastIndexOf functions
+  function createIndexFinder(dir, predicateFind, sortedIndex) {
+    return function(array, item, idx) {
+      var i = 0, length = getLength(array);
+      if (typeof idx == 'number') {
+        if (dir > 0) {
+            i = idx >= 0 ? idx : Math.max(idx + length, i);
+        } else {
+            length = idx >= 0 ? Math.min(idx + 1, length) : idx + length + 1;
+        }
+      } else if (sortedIndex && idx && length) {
+        idx = sortedIndex(array, item);
+        return array[idx] === item ? idx : -1;
+      }
+      if (item !== item) {
+        idx = predicateFind(slice.call(array, i, length), _.isNaN);
+        return idx >= 0 ? idx + i : -1;
+      }
+      for (idx = dir > 0 ? i : length - 1; idx >= 0 && idx < length; idx += dir) {
+        if (array[idx] === item) return idx;
+      }
+      return -1;
+    };
+  }
+
+  // Return the position of the first occurrence of an item in an array,
+  // or -1 if the item is not included in the array.
+  // If the array is large and already in sort order, pass `true`
+  // for **isSorted** to use binary search.
+  _.indexOf = createIndexFinder(1, _.findIndex, _.sortedIndex);
+  _.lastIndexOf = createIndexFinder(-1, _.findLastIndex);
+
+  // Generate an integer Array containing an arithmetic progression. A port of
+  // the native Python `range()` function. See
+  // [the Python documentation](http://docs.python.org/library/functions.html#range).
+  _.range = function(start, stop, step) {
+    if (stop == null) {
+      stop = start || 0;
+      start = 0;
+    }
+    step = step || 1;
+
+    var length = Math.max(Math.ceil((stop - start) / step), 0);
+    var range = Array(length);
+
+    for (var idx = 0; idx < length; idx++, start += step) {
+      range[idx] = start;
+    }
+
+    return range;
+  };
+
+  // Function (ahem) Functions
+  // ------------------
+
+  // Determines whether to execute a function as a constructor
+  // or a normal function with the provided arguments
+  var executeBound = function(sourceFunc, boundFunc, context, callingContext, args) {
+    if (!(callingContext instanceof boundFunc)) return sourceFunc.apply(context, args);
+    var self = baseCreate(sourceFunc.prototype);
+    var result = sourceFunc.apply(self, args);
+    if (_.isObject(result)) return result;
+    return self;
+  };
+
+  // Create a function bound to a given object (assigning `this`, and arguments,
+  // optionally). Delegates to **ECMAScript 5**'s native `Function.bind` if
+  // available.
+  _.bind = function(func, context) {
+    if (nativeBind && func.bind === nativeBind) return nativeBind.apply(func, slice.call(arguments, 1));
+    if (!_.isFunction(func)) throw new TypeError('Bind must be called on a function');
+    var args = slice.call(arguments, 2);
+    var bound = function() {
+      return executeBound(func, bound, context, this, args.concat(slice.call(arguments)));
+    };
+    return bound;
+  };
+
+  // Partially apply a function by creating a version that has had some of its
+  // arguments pre-filled, without changing its dynamic `this` context. _ acts
+  // as a placeholder, allowing any combination of arguments to be pre-filled.
+  _.partial = function(func) {
+    var boundArgs = slice.call(arguments, 1);
+    var bound = function() {
+      var position = 0, length = boundArgs.length;
+      var args = Array(length);
+      for (var i = 0; i < length; i++) {
+        args[i] = boundArgs[i] === _ ? arguments[position++] : boundArgs[i];
+      }
+      while (position < arguments.length) args.push(arguments[position++]);
+      return executeBound(func, bound, this, this, args);
+    };
+    return bound;
+  };
+
+  // Bind a number of an object's methods to that object. Remaining arguments
+  // are the method names to be bound. Useful for ensuring that all callbacks
+  // defined on an object belong to it.
+  _.bindAll = function(obj) {
+    var i, length = arguments.length, key;
+    if (length <= 1) throw new Error('bindAll must be passed function names');
+    for (i = 1; i < length; i++) {
+      key = arguments[i];
+      obj[key] = _.bind(obj[key], obj);
+    }
+    return obj;
+  };
+
+  // Memoize an expensive function by storing its results.
+  _.memoize = function(func, hasher) {
+    var memoize = function(key) {
+      var cache = memoize.cache;
+      var address = '' + (hasher ? hasher.apply(this, arguments) : key);
+      if (!_.has(cache, address)) cache[address] = func.apply(this, arguments);
+      return cache[address];
+    };
+    memoize.cache = {};
+    return memoize;
+  };
+
+  // Delays a function for the given number of milliseconds, and then calls
+  // it with the arguments supplied.
+  _.delay = function(func, wait) {
+    var args = slice.call(arguments, 2);
+    return setTimeout(function(){
+      return func.apply(null, args);
+    }, wait);
+  };
+
+  // Defers a function, scheduling it to run after the current call stack has
+  // cleared.
+  _.defer = _.partial(_.delay, _, 1);
+
+  // Returns a function, that, when invoked, will only be triggered at most once
+  // during a given window of time. Normally, the throttled function will run
+  // as much as it can, without ever going more than once per `wait` duration;
+  // but if you'd like to disable the execution on the leading edge, pass
+  // `{leading: false}`. To disable execution on the trailing edge, ditto.
+  _.throttle = function(func, wait, options) {
+    var context, args, result;
+    var timeout = null;
+    var previous = 0;
+    if (!options) options = {};
+    var later = function() {
+      previous = options.leading === false ? 0 : _.now();
+      timeout = null;
+      result = func.apply(context, args);
+      if (!timeout) context = args = null;
+    };
+    return function() {
+      var now = _.now();
+      if (!previous && options.leading === false) previous = now;
+      var remaining = wait - (now - previous);
+      context = this;
+      args = arguments;
+      if (remaining <= 0 || remaining > wait) {
+        if (timeout) {
+          clearTimeout(timeout);
+          timeout = null;
+        }
+        previous = now;
+        result = func.apply(context, args);
+        if (!timeout) context = args = null;
+      } else if (!timeout && options.trailing !== false) {
+        timeout = setTimeout(later, remaining);
+      }
+      return result;
+    };
+  };
+
+  // Returns a function, that, as long as it continues to be invoked, will not
+  // be triggered. The function will be called after it stops being called for
+  // N milliseconds. If `immediate` is passed, trigger the function on the
+  // leading edge, instead of the trailing.
+  _.debounce = function(func, wait, immediate) {
+    var timeout, args, context, timestamp, result;
+
+    var later = function() {
+      var last = _.now() - timestamp;
+
+      if (last < wait && last >= 0) {
+        timeout = setTimeout(later, wait - last);
+      } else {
+        timeout = null;
+        if (!immediate) {
+          result = func.apply(context, args);
+          if (!timeout) context = args = null;
+        }
+      }
+    };
+
+    return function() {
+      context = this;
+      args = arguments;
+      timestamp = _.now();
+      var callNow = immediate && !timeout;
+      if (!timeout) timeout = setTimeout(later, wait);
+      if (callNow) {
+        result = func.apply(context, args);
+        context = args = null;
+      }
+
+      return result;
+    };
+  };
+
+  // Returns the first function passed as an argument to the second,
+  // allowing you to adjust arguments, run code before and after, and
+  // conditionally execute the original function.
+  _.wrap = function(func, wrapper) {
+    return _.partial(wrapper, func);
+  };
+
+  // Returns a negated version of the passed-in predicate.
+  _.negate = function(predicate) {
+    return function() {
+      return !predicate.apply(this, arguments);
+    };
+  };
+
+  // Returns a function that is the composition of a list of functions, each
+  // consuming the return value of the function that follows.
+  _.compose = function() {
+    var args = arguments;
+    var start = args.length - 1;
+    return function() {
+      var i = start;
+      var result = args[start].apply(this, arguments);
+      while (i--) result = args[i].call(this, result);
+      return result;
+    };
+  };
+
+  // Returns a function that will only be executed on and after the Nth call.
+  _.after = function(times, func) {
+    return function() {
+      if (--times < 1) {
+        return func.apply(this, arguments);
+      }
+    };
+  };
+
+  // Returns a function that will only be executed up to (but not including) the Nth call.
+  _.before = function(times, func) {
+    var memo;
+    return function() {
+      if (--times > 0) {
+        memo = func.apply(this, arguments);
+      }
+      if (times <= 1) func = null;
+      return memo;
+    };
+  };
+
+  // Returns a function that will be executed at most one time, no matter how
+  // often you call it. Useful for lazy initialization.
+  _.once = _.partial(_.before, 2);
+
+  // Object Functions
+  // ----------------
+
+  // Keys in IE < 9 that won't be iterated by `for key in ...` and thus missed.
+  var hasEnumBug = !{toString: null}.propertyIsEnumerable('toString');
+  var nonEnumerableProps = ['valueOf', 'isPrototypeOf', 'toString',
+                      'propertyIsEnumerable', 'hasOwnProperty', 'toLocaleString'];
+
+  function collectNonEnumProps(obj, keys) {
+    var nonEnumIdx = nonEnumerableProps.length;
+    var constructor = obj.constructor;
+    var proto = (_.isFunction(constructor) && constructor.prototype) || ObjProto;
+
+    // Constructor is a special case.
+    var prop = 'constructor';
+    if (_.has(obj, prop) && !_.contains(keys, prop)) keys.push(prop);
+
+    while (nonEnumIdx--) {
+      prop = nonEnumerableProps[nonEnumIdx];
+      if (prop in obj && obj[prop] !== proto[prop] && !_.contains(keys, prop)) {
+        keys.push(prop);
+      }
+    }
+  }
+
+  // Retrieve the names of an object's own properties.
+  // Delegates to **ECMAScript 5**'s native `Object.keys`
+  _.keys = function(obj) {
+    if (!_.isObject(obj)) return [];
+    if (nativeKeys) return nativeKeys(obj);
+    var keys = [];
+    for (var key in obj) if (_.has(obj, key)) keys.push(key);
+    // Ahem, IE < 9.
+    if (hasEnumBug) collectNonEnumProps(obj, keys);
+    return keys;
+  };
+
+  // Retrieve all the property names of an object.
+  _.allKeys = function(obj) {
+    if (!_.isObject(obj)) return [];
+    var keys = [];
+    for (var key in obj) keys.push(key);
+    // Ahem, IE < 9.
+    if (hasEnumBug) collectNonEnumProps(obj, keys);
+    return keys;
+  };
+
+  // Retrieve the values of an object's properties.
+  _.values = function(obj) {
+    var keys = _.keys(obj);
+    var length = keys.length;
+    var values = Array(length);
+    for (var i = 0; i < length; i++) {
+      values[i] = obj[keys[i]];
+    }
+    return values;
+  };
+
+  // Returns the results of applying the iteratee to each element of the object
+  // In contrast to _.map it returns an object
+  _.mapObject = function(obj, iteratee, context) {
+    iteratee = cb(iteratee, context);
+    var keys =  _.keys(obj),
+          length = keys.length,
+          results = {},
+          currentKey;
+      for (var index = 0; index < length; index++) {
+        currentKey = keys[index];
+        results[currentKey] = iteratee(obj[currentKey], currentKey, obj);
+      }
+      return results;
+  };
+
+  // Convert an object into a list of `[key, value]` pairs.
+  _.pairs = function(obj) {
+    var keys = _.keys(obj);
+    var length = keys.length;
+    var pairs = Array(length);
+    for (var i = 0; i < length; i++) {
+      pairs[i] = [keys[i], obj[keys[i]]];
+    }
+    return pairs;
+  };
+
+  // Invert the keys and values of an object. The values must be serializable.
+  _.invert = function(obj) {
+    var result = {};
+    var keys = _.keys(obj);
+    for (var i = 0, length = keys.length; i < length; i++) {
+      result[obj[keys[i]]] = keys[i];
+    }
+    return result;
+  };
+
+  // Return a sorted list of the function names available on the object.
+  // Aliased as `methods`
+  _.functions = _.methods = function(obj) {
+    var names = [];
+    for (var key in obj) {
+      if (_.isFunction(obj[key])) names.push(key);
+    }
+    return names.sort();
+  };
+
+  // Extend a given object with all the properties in passed-in object(s).
+  _.extend = createAssigner(_.allKeys);
+
+  // Assigns a given object with all the own properties in the passed-in object(s)
+  // (https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object/assign)
+  _.extendOwn = _.assign = createAssigner(_.keys);
+
+  // Returns the first key on an object that passes a predicate test
+  _.findKey = function(obj, predicate, context) {
+    predicate = cb(predicate, context);
+    var keys = _.keys(obj), key;
+    for (var i = 0, length = keys.length; i < length; i++) {
+      key = keys[i];
+      if (predicate(obj[key], key, obj)) return key;
+    }
+  };
+
+  // Return a copy of the object only containing the whitelisted properties.
+  _.pick = function(object, oiteratee, context) {
+    var result = {}, obj = object, iteratee, keys;
+    if (obj == null) return result;
+    if (_.isFunction(oiteratee)) {
+      keys = _.allKeys(obj);
+      iteratee = optimizeCb(oiteratee, context);
+    } else {
+      keys = flatten(arguments, false, false, 1);
+      iteratee = function(value, key, obj) { return key in obj; };
+      obj = Object(obj);
+    }
+    for (var i = 0, length = keys.length; i < length; i++) {
+      var key = keys[i];
+      var value = obj[key];
+      if (iteratee(value, key, obj)) result[key] = value;
+    }
+    return result;
+  };
+
+   // Return a copy of the object without the blacklisted properties.
+  _.omit = function(obj, iteratee, context) {
+    if (_.isFunction(iteratee)) {
+      iteratee = _.negate(iteratee);
+    } else {
+      var keys = _.map(flatten(arguments, false, false, 1), String);
+      iteratee = function(value, key) {
+        return !_.contains(keys, key);
+      };
+    }
+    return _.pick(obj, iteratee, context);
+  };
+
+  // Fill in a given object with default properties.
+  _.defaults = createAssigner(_.allKeys, true);
+
+  // Creates an object that inherits from the given prototype object.
+  // If additional properties are provided then they will be added to the
+  // created object.
+  _.create = function(prototype, props) {
+    var result = baseCreate(prototype);
+    if (props) _.extendOwn(result, props);
+    return result;
+  };
+
+  // Create a (shallow-cloned) duplicate of an object.
+  _.clone = function(obj) {
+    if (!_.isObject(obj)) return obj;
+    return _.isArray(obj) ? obj.slice() : _.extend({}, obj);
+  };
+
+  // Invokes interceptor with the obj, and then returns obj.
+  // The primary purpose of this method is to "tap into" a method chain, in
+  // order to perform operations on intermediate results within the chain.
+  _.tap = function(obj, interceptor) {
+    interceptor(obj);
+    return obj;
+  };
+
+  // Returns whether an object has a given set of `key:value` pairs.
+  _.isMatch = function(object, attrs) {
+    var keys = _.keys(attrs), length = keys.length;
+    if (object == null) return !length;
+    var obj = Object(object);
+    for (var i = 0; i < length; i++) {
+      var key = keys[i];
+      if (attrs[key] !== obj[key] || !(key in obj)) return false;
+    }
+    return true;
+  };
+
+
+  // Internal recursive comparison function for `isEqual`.
+  var eq = function(a, b, aStack, bStack) {
+    // Identical objects are equal. `0 === -0`, but they aren't identical.
+    // See the [Harmony `egal` proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).
+    if (a === b) return a !== 0 || 1 / a === 1 / b;
+    // A strict comparison is necessary because `null == undefined`.
+    if (a == null || b == null) return a === b;
+    // Unwrap any wrapped objects.
+    if (a instanceof _) a = a._wrapped;
+    if (b instanceof _) b = b._wrapped;
+    // Compare `[[Class]]` names.
+    var className = toString.call(a);
+    if (className !== toString.call(b)) return false;
+    switch (className) {
+      // Strings, numbers, regular expressions, dates, and booleans are compared by value.
+      case '[object RegExp]':
+      // RegExps are coerced to strings for comparison (Note: '' + /a/i === '/a/i')
+      case '[object String]':
+        // Primitives and their corresponding object wrappers are equivalent; thus, `"5"` is
+        // equivalent to `new String("5")`.
+        return '' + a === '' + b;
+      case '[object Number]':
+        // `NaN`s are equivalent, but non-reflexive.
+        // Object(NaN) is equivalent to NaN
+        if (+a !== +a) return +b !== +b;
+        // An `egal` comparison is performed for other numeric values.
+        return +a === 0 ? 1 / +a === 1 / b : +a === +b;
+      case '[object Date]':
+      case '[object Boolean]':
+        // Coerce dates and booleans to numeric primitive values. Dates are compared by their
+        // millisecond representations. Note that invalid dates with millisecond representations
+        // of `NaN` are not equivalent.
+        return +a === +b;
+    }
+
+    var areArrays = className === '[object Array]';
+    if (!areArrays) {
+      if (typeof a != 'object' || typeof b != 'object') return false;
+
+      // Objects with different constructors are not equivalent, but `Object`s or `Array`s
+      // from different frames are.
+      var aCtor = a.constructor, bCtor = b.constructor;
+      if (aCtor !== bCtor && !(_.isFunction(aCtor) && aCtor instanceof aCtor &&
+                               _.isFunction(bCtor) && bCtor instanceof bCtor)
+                          && ('constructor' in a && 'constructor' in b)) {
+        return false;
+      }
+    }
+    // Assume equality for cyclic structures. The algorithm for detecting cyclic
+    // structures is adapted from ES 5.1 section 15.12.3, abstract operation `JO`.
+
+    // Initializing stack of traversed objects.
+    // It's done here since we only need them for objects and arrays comparison.
+    aStack = aStack || [];
+    bStack = bStack || [];
+    var length = aStack.length;
+    while (length--) {
+      // Linear search. Performance is inversely proportional to the number of
+      // unique nested structures.
+      if (aStack[length] === a) return bStack[length] === b;
+    }
+
+    // Add the first object to the stack of traversed objects.
+    aStack.push(a);
+    bStack.push(b);
+
+    // Recursively compare objects and arrays.
+    if (areArrays) {
+      // Compare array lengths to determine if a deep comparison is necessary.
+      length = a.length;
+      if (length !== b.length) return false;
+      // Deep compare the contents, ignoring non-numeric properties.
+      while (length--) {
+        if (!eq(a[length], b[length], aStack, bStack)) return false;
+      }
+    } else {
+      // Deep compare objects.
+      var keys = _.keys(a), key;
+      length = keys.length;
+      // Ensure that both objects contain the same number of properties before comparing deep equality.
+      if (_.keys(b).length !== length) return false;
+      while (length--) {
+        // Deep compare each member
+        key = keys[length];
+        if (!(_.has(b, key) && eq(a[key], b[key], aStack, bStack))) return false;
+      }
+    }
+    // Remove the first object from the stack of traversed objects.
+    aStack.pop();
+    bStack.pop();
+    return true;
+  };
+
+  // Perform a deep comparison to check if two objects are equal.
+  _.isEqual = function(a, b) {
+    return eq(a, b);
+  };
+
+  // Is a given array, string, or object empty?
+  // An "empty" object has no enumerable own-properties.
+  _.isEmpty = function(obj) {
+    if (obj == null) return true;
+    if (isArrayLike(obj) && (_.isArray(obj) || _.isString(obj) || _.isArguments(obj))) return obj.length === 0;
+    return _.keys(obj).length === 0;
+  };
+
+  // Is a given value a DOM element?
+  _.isElement = function(obj) {
+    return !!(obj && obj.nodeType === 1);
+  };
+
+  // Is a given value an array?
+  // Delegates to ECMA5's native Array.isArray
+  _.isArray = nativeIsArray || function(obj) {
+    return toString.call(obj) === '[object Array]';
+  };
+
+  // Is a given variable an object?
+  _.isObject = function(obj) {
+    var type = typeof obj;
+    return type === 'function' || type === 'object' && !!obj;
+  };
+
+  // Add some isType methods: isArguments, isFunction, isString, isNumber, isDate, isRegExp, isError.
+  _.each(['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp', 'Error'], function(name) {
+    _['is' + name] = function(obj) {
+      return toString.call(obj) === '[object ' + name + ']';
+    };
+  });
+
+  // Define a fallback version of the method in browsers (ahem, IE < 9), where
+  // there isn't any inspectable "Arguments" type.
+  if (!_.isArguments(arguments)) {
+    _.isArguments = function(obj) {
+      return _.has(obj, 'callee');
+    };
+  }
+
+  // Optimize `isFunction` if appropriate. Work around some typeof bugs in old v8,
+  // IE 11 (#1621), and in Safari 8 (#1929).
+  if (typeof /./ != 'function' && typeof Int8Array != 'object') {
+    _.isFunction = function(obj) {
+      return typeof obj == 'function' || false;
+    };
+  }
+
+  // Is a given object a finite number?
+  _.isFinite = function(obj) {
+    return isFinite(obj) && !isNaN(parseFloat(obj));
+  };
+
+  // Is the given value `NaN`? (NaN is the only number which does not equal itself).
+  _.isNaN = function(obj) {
+    return _.isNumber(obj) && obj !== +obj;
+  };
+
+  // Is a given value a boolean?
+  _.isBoolean = function(obj) {
+    return obj === true || obj === false || toString.call(obj) === '[object Boolean]';
+  };
+
+  // Is a given value equal to null?
+  _.isNull = function(obj) {
+    return obj === null;
+  };
+
+  // Is a given variable undefined?
+  _.isUndefined = function(obj) {
+    return obj === void 0;
+  };
+
+  // Shortcut function for checking if an object has a given property directly
+  // on itself (in other words, not on a prototype).
+  _.has = function(obj, key) {
+    return obj != null && hasOwnProperty.call(obj, key);
+  };
+
+  // Utility Functions
+  // -----------------
+
+  // Run Underscore.js in *noConflict* mode, returning the `_` variable to its
+  // previous owner. Returns a reference to the Underscore object.
+  _.noConflict = function() {
+    root._ = previousUnderscore;
+    return this;
+  };
+
+  // Keep the identity function around for default iteratees.
+  _.identity = function(value) {
+    return value;
+  };
+
+  // Predicate-generating functions. Often useful outside of Underscore.
+  _.constant = function(value) {
+    return function() {
+      return value;
+    };
+  };
+
+  _.noop = function(){};
+
+  _.property = property;
+
+  // Generates a function for a given object that returns a given property.
+  _.propertyOf = function(obj) {
+    return obj == null ? function(){} : function(key) {
+      return obj[key];
+    };
+  };
+
+  // Returns a predicate for checking whether an object has a given set of
+  // `key:value` pairs.
+  _.matcher = _.matches = function(attrs) {
+    attrs = _.extendOwn({}, attrs);
+    return function(obj) {
+      return _.isMatch(obj, attrs);
+    };
+  };
+
+  // Run a function **n** times.
+  _.times = function(n, iteratee, context) {
+    var accum = Array(Math.max(0, n));
+    iteratee = optimizeCb(iteratee, context, 1);
+    for (var i = 0; i < n; i++) accum[i] = iteratee(i);
+    return accum;
+  };
+
+  // Return a random integer between min and max (inclusive).
+  _.random = function(min, max) {
+    if (max == null) {
+      max = min;
+      min = 0;
+    }
+    return min + Math.floor(Math.random() * (max - min + 1));
+  };
+
+  // A (possibly faster) way to get the current timestamp as an integer.
+  _.now = Date.now || function() {
+    return new Date().getTime();
+  };
+
+   // List of HTML entities for escaping.
+  var escapeMap = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#x27;',
+    '`': '&#x60;'
+  };
+  var unescapeMap = _.invert(escapeMap);
+
+  // Functions for escaping and unescaping strings to/from HTML interpolation.
+  var createEscaper = function(map) {
+    var escaper = function(match) {
+      return map[match];
+    };
+    // Regexes for identifying a key that needs to be escaped
+    var source = '(?:' + _.keys(map).join('|') + ')';
+    var testRegexp = RegExp(source);
+    var replaceRegexp = RegExp(source, 'g');
+    return function(string) {
+      string = string == null ? '' : '' + string;
+      return testRegexp.test(string) ? string.replace(replaceRegexp, escaper) : string;
+    };
+  };
+  _.escape = createEscaper(escapeMap);
+  _.unescape = createEscaper(unescapeMap);
+
+  // If the value of the named `property` is a function then invoke it with the
+  // `object` as context; otherwise, return it.
+  _.result = function(object, property, fallback) {
+    var value = object == null ? void 0 : object[property];
+    if (value === void 0) {
+      value = fallback;
+    }
+    return _.isFunction(value) ? value.call(object) : value;
+  };
+
+  // Generate a unique integer id (unique within the entire client session).
+  // Useful for temporary DOM ids.
+  var idCounter = 0;
+  _.uniqueId = function(prefix) {
+    var id = ++idCounter + '';
+    return prefix ? prefix + id : id;
+  };
+
+  // By default, Underscore uses ERB-style template delimiters, change the
+  // following template settings to use alternative delimiters.
+  _.templateSettings = {
+    evaluate    : /<%([\s\S]+?)%>/g,
+    interpolate : /<%=([\s\S]+?)%>/g,
+    escape      : /<%-([\s\S]+?)%>/g
+  };
+
+  // When customizing `templateSettings`, if you don't want to define an
+  // interpolation, evaluation or escaping regex, we need one that is
+  // guaranteed not to match.
+  var noMatch = /(.)^/;
+
+  // Certain characters need to be escaped so that they can be put into a
+  // string literal.
+  var escapes = {
+    "'":      "'",
+    '\\':     '\\',
+    '\r':     'r',
+    '\n':     'n',
+    '\u2028': 'u2028',
+    '\u2029': 'u2029'
+  };
+
+  var escaper = /\\|'|\r|\n|\u2028|\u2029/g;
+
+  var escapeChar = function(match) {
+    return '\\' + escapes[match];
+  };
+
+  // JavaScript micro-templating, similar to John Resig's implementation.
+  // Underscore templating handles arbitrary delimiters, preserves whitespace,
+  // and correctly escapes quotes within interpolated code.
+  // NB: `oldSettings` only exists for backwards compatibility.
+  _.template = function(text, settings, oldSettings) {
+    if (!settings && oldSettings) settings = oldSettings;
+    settings = _.defaults({}, settings, _.templateSettings);
+
+    // Combine delimiters into one regular expression via alternation.
+    var matcher = RegExp([
+      (settings.escape || noMatch).source,
+      (settings.interpolate || noMatch).source,
+      (settings.evaluate || noMatch).source
+    ].join('|') + '|$', 'g');
+
+    // Compile the template source, escaping string literals appropriately.
+    var index = 0;
+    var source = "__p+='";
+    text.replace(matcher, function(match, escape, interpolate, evaluate, offset) {
+      source += text.slice(index, offset).replace(escaper, escapeChar);
+      index = offset + match.length;
+
+      if (escape) {
+        source += "'+\n((__t=(" + escape + "))==null?'':_.escape(__t))+\n'";
+      } else if (interpolate) {
+        source += "'+\n((__t=(" + interpolate + "))==null?'':__t)+\n'";
+      } else if (evaluate) {
+        source += "';\n" + evaluate + "\n__p+='";
+      }
+
+      // Adobe VMs need the match returned to produce the correct offest.
+      return match;
+    });
+    source += "';\n";
+
+    // If a variable is not specified, place data values in local scope.
+    if (!settings.variable) source = 'with(obj||{}){\n' + source + '}\n';
+
+    source = "var __t,__p='',__j=Array.prototype.join," +
+      "print=function(){__p+=__j.call(arguments,'');};\n" +
+      source + 'return __p;\n';
+
+    try {
+      var render = new Function(settings.variable || 'obj', '_', source);
+    } catch (e) {
+      e.source = source;
+      throw e;
+    }
+
+    var template = function(data) {
+      return render.call(this, data, _);
+    };
+
+    // Provide the compiled source as a convenience for precompilation.
+    var argument = settings.variable || 'obj';
+    template.source = 'function(' + argument + '){\n' + source + '}';
+
+    return template;
+  };
+
+  // Add a "chain" function. Start chaining a wrapped Underscore object.
+  _.chain = function(obj) {
+    var instance = _(obj);
+    instance._chain = true;
+    return instance;
+  };
+
+  // OOP
+  // ---------------
+  // If Underscore is called as a function, it returns a wrapped object that
+  // can be used OO-style. This wrapper holds altered versions of all the
+  // underscore functions. Wrapped objects may be chained.
+
+  // Helper function to continue chaining intermediate results.
+  var result = function(instance, obj) {
+    return instance._chain ? _(obj).chain() : obj;
+  };
+
+  // Add your own custom functions to the Underscore object.
+  _.mixin = function(obj) {
+    _.each(_.functions(obj), function(name) {
+      var func = _[name] = obj[name];
+      _.prototype[name] = function() {
+        var args = [this._wrapped];
+        push.apply(args, arguments);
+        return result(this, func.apply(_, args));
+      };
+    });
+  };
+
+  // Add all of the Underscore functions to the wrapper object.
+  _.mixin(_);
+
+  // Add all mutator Array functions to the wrapper.
+  _.each(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(name) {
+    var method = ArrayProto[name];
+    _.prototype[name] = function() {
+      var obj = this._wrapped;
+      method.apply(obj, arguments);
+      if ((name === 'shift' || name === 'splice') && obj.length === 0) delete obj[0];
+      return result(this, obj);
+    };
+  });
+
+  // Add all accessor Array functions to the wrapper.
+  _.each(['concat', 'join', 'slice'], function(name) {
+    var method = ArrayProto[name];
+    _.prototype[name] = function() {
+      return result(this, method.apply(this._wrapped, arguments));
+    };
+  });
+
+  // Extracts the result from a wrapped and chained object.
+  _.prototype.value = function() {
+    return this._wrapped;
+  };
+
+  // Provide unwrapping proxy for some methods used in engine operations
+  // such as arithmetic and JSON stringification.
+  _.prototype.valueOf = _.prototype.toJSON = _.prototype.value;
+
+  _.prototype.toString = function() {
+    return '' + this._wrapped;
+  };
+
+  // AMD registration happens at the end for compatibility with AMD loaders
+  // that may not enforce next-turn semantics on modules. Even though general
+  // practice for AMD registration is to be anonymous, underscore registers
+  // as a named module because, like jQuery, it is a base library that is
+  // popular enough to be bundled in a third party lib, but not be part of
+  // an AMD load request. Those cases could generate an error when an
+  // anonymous define() is called outside of a loader request.
+  if (typeof define === 'function' && define.amd) {
+    define('underscore', [], function() {
+      return _;
+    });
+  }
+}.call(this));
+
+},{}]},{},[3]);
