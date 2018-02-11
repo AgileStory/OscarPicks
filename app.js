@@ -1,6 +1,8 @@
 'use strict';
 /*eslint node: true, nomen: true */
 
+require('dotenv').config();
+
 var app = require('./configure-express');
 var http = require('http');
 

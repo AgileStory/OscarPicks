@@ -7,7 +7,7 @@ module.exports = function (req, res, next) {
 
     res = res || {};
 
-    req.userId = 'Jared (local dev)';
+    req.userId = process.env.USER_OVERRIDE || 'Jared (local dev)';
 
     if (req.header('x-ms-client-principal-name') !== undefined) {
         req.userId = req.header('x-ms-client-principal-name');

@@ -12,9 +12,5 @@ module.exports = Backbone.Model.extend({
     displayTime: function (attributeName) {
 
         return moment(this.get(attributeName)).format();
-    },
-
-    isAdmin: function () {
-        return this.has('is_admin') && this.get('is_admin');
     }
 });

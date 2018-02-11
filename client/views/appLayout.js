@@ -11,5 +11,11 @@ module.exports = Marionette.View.extend({
     regions: {
         "Header" : "#header",
         "Main" : "#main"
+    },
+
+    triggers: {
+        "click .nav-picks": "show:picks",
+        "click .nav-results": "show:results",
+        "click .nav-users": "show:users"
     }
 });

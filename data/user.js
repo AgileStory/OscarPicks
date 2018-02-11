@@ -8,8 +8,9 @@ var mongoUrl = process.env.MONGO_URL || 'mongodb://localhost/oscarPicks';
 mongoose.connect(mongoUrl);
 
 var UserSchema = new mongoose.Schema({
-    is_admin: Boolean,
+    is_admin: { type: Boolean, default: false },
     last_accessed: { type: Date, default: Date.now },
+    score: Number,
     user_id: String,
 });
 
@@ -33,7 +34,7 @@ module.exports = {
     list: function (callback) {
 
         var self, users;
-        
+
         self = this;
 
         User.find(function (err, usersData) {
@@ -43,9 +44,9 @@ module.exports = {
 
                 users = new UserCollection(usersData);
 
-                if (users.length === 1 && !users.at(0).get('is_admin')) {
-                    self.makeAdmin(users.at(0), function (err, userModel) {
-                        callback(undefined, users);
+                if (users.length === 1 && !users.at(0).isAdmin()) {
+                    self.makeAdmin(users.at(0), function (makeAdminErr) {
+                        callback(makeAdminErr, users);
                     });
                 } else {
                     callback(undefined, users);
@@ -80,7 +81,7 @@ module.exports = {
             } else {
                 if (data === null) {
                     self._createUserRecord(userModel.get('user_id'), function (createErr, createData) {
-                        callback(undefined, new UserModel(createData));
+                        callback(createErr, new UserModel(createData));
                     });
                 } else {
                     callback(undefined, new UserModel(data));
@@ -111,7 +112,7 @@ module.exports = {
 
     _createUserRecord: function (userId, callback) {
 
-        var userModel = new UserModel({ user_id: userId, last_accessed: Date.now() });
+        var userModel = new UserModel({ user_id: userId, is_admin: false, score: 0, last_accessed: Date.now() });
 
         User.create(userModel.toJSON(), function (err, data) {
             if (err) {

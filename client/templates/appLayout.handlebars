@@ -5,9 +5,17 @@
 
     <div class="navbar-nav-scroll">
         <ul class="navbar-nav bd-navbar-nav flex-row">
-            <li class="nav-item">
-                <a class="nav-link " href="/">Home</a>
+            <li class="nav-item nav-picks">
+                <a class="nav-link " href="#">Picks</a>
             </li>
+            <li class="nav-item nav-results">
+                <a class="nav-link " href="#">Results</a>
+            </li>
+            {{#if this.is_admin}}
+            <li class="nav-item nav-users">
+                <a class="nav-link " href="#">Users</a>
+            </li>
+            {{/if}}
         </ul>
     </div>
 </header>

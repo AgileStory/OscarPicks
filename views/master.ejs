@@ -14,7 +14,7 @@
         
         <footer class="page-footer text-white center-on-small-only bg-dark">
             <div class="footer-copyright">
-                <div class="container-fluid"><%= userModel.get('user_id') %><code class="float-right"><%= userModel.displayTime('last_accessed') %></code></div>
+                <div class="container-fluid"><%= userModel.get('user_id') %><code class="float-right">Last accessed: <%= userModel.displayTime('last_accessed') %></code></div>
             </div>
         </footer>
 
