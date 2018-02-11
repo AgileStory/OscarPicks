@@ -8,11 +8,13 @@ var mongoUrl = process.env.MONGO_URL || 'mongodb://localhost/oscarPicks';
 mongoose.connect(mongoUrl);
 
 var UserSchema = new mongoose.Schema({
-    user_id: String,
+    is_admin: Boolean,
     last_accessed: { type: Date, default: Date.now },
+    user_id: String,
 });
 
 var User = mongoose.model('User', UserSchema);
+var UserCollection = require('../collections/users');
 var UserModel = require('../models/user');
 
 module.exports = {
@@ -30,11 +32,24 @@ module.exports = {
 
     list: function (callback) {
 
-        User.find(function (err, users) {
+        var self, users;
+        
+        self = this;
+
+        User.find(function (err, usersData) {
             if (err) {
                 callback(err, undefined);
             } else {
-                callback(undefined, users);
+
+                users = new UserCollection(usersData);
+
+                if (users.length === 1 && !users.at(0).get('is_admin')) {
+                    self.makeAdmin(users.at(0), function (err, userModel) {
+                        callback(undefined, users);
+                    });
+                } else {
+                    callback(undefined, users);
+                }
             }
         });
     },
@@ -50,6 +65,25 @@ module.exports = {
 
                 if (data === null) {
                     self._createUserRecord(userModel.get('user_id'));
+                }
+            }
+        });
+    },
+
+    makeAdmin: function (userModel, callback) {
+
+        var self = this;
+
+        User.findOneAndUpdate({ user_id: userModel.get('user_id') }, { is_admin: true }, function (err, data) {
+            if (err) {
+                callback(err, new UserModel(data));
+            } else {
+                if (data === null) {
+                    self._createUserRecord(userModel.get('user_id'), function (createErr, createData) {
+                        callback(undefined, new UserModel(createData));
+                    });
+                } else {
+                    callback(undefined, new UserModel(data));
                 }
             }
         });
