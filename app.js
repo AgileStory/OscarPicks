@@ -8,6 +8,7 @@ var http = require('http');
 
 // routes
 require('./routes/user')(app);
+require('./routes/category')(app);
 
 // api endpoinds
 //require('./source/api/auth')(app);

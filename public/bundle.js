@@ -5,7 +5,10 @@
 
 var AppLayoutView = require('./views/appLayout');
 var Backbone = require('backbone');
+var CategoriesCollection = require('../collections/categories');
+var CategoryController = require('./controllers/category');
 var Marionette = require('backbone.marionette');
+var PickController = require('./controllers/pick');
 var ResultController = require('./controllers/result');
 var UserController = require('./controllers/user');
 var UserModel = require('../models/user');
@@ -13,6 +16,7 @@ var UserModel = require('../models/user');
 module.exports = Marionette.Application.extend({
 
     initialize: function () {
+
         this.router = new Marionette.AppRouter({ controller: this.controller });
     },
 
@@ -24,12 +28,22 @@ module.exports = Marionette.Application.extend({
 
         this.userModel.fetch({
             success: function () {
-                self.layout = new AppLayoutView({ model: self.userModel });
-                //self.listenTo(self.layout, "all", function (eventName) { console.log(eventName); });
-                self.listenTo(self.layout, "show:results", function () { self.showResultsMainView(); });
-                self.listenTo(self.layout, "show:users", function () { self.showUserMainView(); });
-                self.listenTo(self.layout, "render", function () { self.showDefaultMainView(); });
-                self.layout.render();
+
+                self.categories = new CategoriesCollection();
+
+                self.categories.fetch({
+                    success: function () {
+
+                        self.layout = new AppLayoutView({ model: self.userModel });
+                        //self.listenTo(self.layout, "all", function (eventName) { console.log(eventName); });
+                        self.listenTo(self.layout, "show:categories", function () { self.showCategoriesMainView(); });
+                        self.listenTo(self.layout, "show:picks", function () { self.showPicksMainView(); });
+                        self.listenTo(self.layout, "show:results", function () { self.showResultsMainView(); });
+                        self.listenTo(self.layout, "show:users", function () { self.showUserMainView(); });
+                        self.listenTo(self.layout, "render", function () { self.showDefaultMainView(); });
+                        self.layout.render();
+                    }
+                });
             }
         });
     },
@@ -38,8 +52,18 @@ module.exports = Marionette.Application.extend({
         Backbone.history.start({ pushState: true });
     },
 
+    showCategoriesMainView: function () {
+        this.controller = new CategoryController({ application: this });
+        this.controller.list();
+    },
+
     showDefaultMainView: function () {
         this.showResultsMainView();
+    },
+
+    showPicksMainView: function () {
+        this.controller = new PickController({ application: this });
+        this.controller.list();
     },
 
     showResultsMainView: function () {
@@ -53,7 +77,120 @@ module.exports = Marionette.Application.extend({
     }
 });
 
-},{"../models/user":18,"./controllers/result":2,"./controllers/user":3,"./views/appLayout":10,"backbone":21,"backbone.marionette":19}],2:[function(require,module,exports){
+},{"../collections/categories":22,"../models/user":29,"./controllers/category":2,"./controllers/pick":3,"./controllers/result":4,"./controllers/user":5,"./views/appLayout":14,"backbone":32,"backbone.marionette":30}],2:[function(require,module,exports){
+'use strict';
+
+/*jslint nomen: true */
+
+var Categories = require('../../collections/categories');
+var Category = require('../../models/category');
+var ListView = require('../views/categories');
+var Marionette = require('backbone.marionette');
+
+module.exports = Marionette.Object.extend({
+
+    initialize: function (options) {
+        this.application = options.application;
+    },
+
+    list: function () {
+
+        var self, view;
+
+        self = this;
+
+        self.application.categories.sort();
+
+        view = new ListView({ collection: self.application.categories });
+
+        //self.listenTo(view, "all", function (eventName) { console.log(eventName); });
+        self.listenTo(view, "add:category", function (child, e) { self._addCategory(child, e); });
+        self.listenTo(view, "childview:childview:delete:category", function (child, e) { self._deleteCategory(child, e); });
+
+        self._showMainView(view);
+    },
+
+    _addCategory: function (childView) {
+
+        var category, self;
+        
+        self = this;
+
+        category = new Category({ name: childView.$('input[name=category-name]').val(), sort_order: self.application.categories.length });
+
+        category.save(null, {
+            success: function (model, response) {
+                self.application.categories.add(new Category(response));
+                self.list();
+            }
+        });
+    },
+
+    _deleteCategory: function (childView) {
+
+        var self = this;
+
+        childView.model.destroy({
+            success: function () {
+                self.application.categories.remove(childView.model);
+                self.list();
+            }
+        });
+    },
+
+    _showMainView: function (view) {
+        this.application.layout.showChildView("Main", view);
+    },
+
+    _updateUrl: function (url) {
+        this.application.router.navigate(url);
+    }
+});
+
+},{"../../collections/categories":22,"../../models/category":26,"../views/categories":15,"backbone.marionette":30}],3:[function(require,module,exports){
+'use strict';
+
+/*jslint nomen: true */
+
+var ListView = require('../views/picks');
+var Marionette = require('backbone.marionette');
+var Picks = require('../../collections/picks');
+
+module.exports = Marionette.Object.extend({
+
+    initialize: function (options) {
+        this.application = options.application;
+    },
+
+    list: function () {
+
+        var self, picks, view;
+
+        self = this;
+
+        picks = new Picks();
+
+        picks.fetch({
+            success: function (collection) {
+
+                view = new ListView({ collection: collection });
+
+                self._showMainView(view);
+                // self._updateUrl("/users");
+            }
+        });
+    },
+
+    _showMainView: function (view) {
+        this.application.layout.showChildView("Main", view);
+    },
+
+    _updateUrl: function (url) {
+        this.application.router.navigate(url);
+    }
+});
+
+},{"../../collections/picks":23,"../views/picks":17,"backbone.marionette":30}],4:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -96,7 +233,7 @@ module.exports = Marionette.Object.extend({
     }
 });
 
-},{"../../collections/results":15,"../views/results":12,"backbone.marionette":19}],3:[function(require,module,exports){
+},{"../../collections/results":24,"../views/results":19,"backbone.marionette":30}],5:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -139,7 +276,7 @@ module.exports = Marionette.Object.extend({
     }
 });
 
-},{"../../collections/users":16,"../views/users":14,"backbone.marionette":19}],4:[function(require,module,exports){
+},{"../../collections/users":25,"../views/users":21,"backbone.marionette":30}],6:[function(require,module,exports){
 'use strict';
 
 /*jslint browser: true, nomen: true */
@@ -158,9 +295,9 @@ window.$(document).ready(function () {
     app.start();
 });
 
-},{"./app.js":1,"bootstrap":22,"jquery":42,"popper.js":44,"underscore":45}],5:[function(require,module,exports){
+},{"./app.js":1,"bootstrap":33,"jquery":53,"popper.js":55,"underscore":56}],7:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"1":function(container,depth0,helpers,partials,data) {
-    return "            <li class=\"nav-item nav-users\">\n                <a class=\"nav-link \" href=\"#\">Users</a>\n            </li>\n";
+    return "            <li class=\"nav-item nav-users\">\n                <a class=\"nav-link \" href=\"#\">Users</a>\n            </li>\n            <li class=\"nav-item nav-categories\">\n                <a class=\"nav-link \" href=\"#\">Categories</a>\n            </li>\n";
 },"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     var stack1;
 
@@ -168,7 +305,21 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + ((stack1 = helpers["if"].call(depth0 != null ? depth0 : (container.nullContext || {}),(depth0 != null ? depth0.is_admin : depth0),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
     + "        </ul>\n    </div>\n</header>\n\n<div id=\"main\" class=\"container\">\n</div>\n\n";
 },"useData":true});
-},{"handlebars/runtime":41}],6:[function(require,module,exports){
+},{"handlebars/runtime":52}],8:[function(require,module,exports){
+var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
+    return "\n<div id=\"category-list\"></div>\n<div id=\"new-entry\" class=\"mt-3\">\n\n    <form id=\"add-category\">\n        <div class=\"form-row align-items-center\">\n            <div class=\"col-auto\">\n                <label class=\"sr-only\" for=\"category-name\">Name</label>\n                <input type=\"text\" class=\"form-control mb-2\" id=\"category-name\" name=\"category-name\" placeholder=\"Category Name\">\n            </div>\n            <div class=\"col-auto\">\n                <button type=\"submit\" class=\"btn btn-primary mb-2\">Add Category</button>\n            </div>\n        </div>\n    </form>\n\n</div>\n";
+},"useData":true});
+},{"handlebars/runtime":52}],9:[function(require,module,exports){
+var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
+    var alias1=container.lambda, alias2=container.escapeExpression;
+
+  return "<div class=\"card-body\">\n    <h5 class=\"card-title\">"
+    + alias2(alias1((depth0 != null ? depth0.name : depth0), depth0))
+    + "</h5>\n    <p class=\"card-text\">"
+    + alias2(alias1((depth0 != null ? depth0.sort_order : depth0), depth0))
+    + " Some quick example text to build on the card title and make up the bulk of the card's content.</p>\n    <a href=\"#\" class=\"delete-category btn btn-danger float-right\">Delete</a>\n</div>\n";
+},"useData":true});
+},{"handlebars/runtime":52}],10:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     var alias1=container.lambda, alias2=container.escapeExpression;
 
@@ -178,11 +329,11 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + alias2(alias1((depth0 != null ? depth0.score : depth0), depth0))
     + "</td>\n";
 },"useData":true});
-},{"handlebars/runtime":41}],7:[function(require,module,exports){
+},{"handlebars/runtime":52}],11:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     return "<thead>\n    <th scope=\"col\">User Id</th>\n    <th scope=\"col\">Score</th>\n</thead>\n<tbody></tbody>\n";
 },"useData":true});
-},{"handlebars/runtime":41}],8:[function(require,module,exports){
+},{"handlebars/runtime":52}],12:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     var alias1=container.lambda, alias2=container.escapeExpression;
 
@@ -192,11 +343,11 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + alias2(alias1((depth0 != null ? depth0.is_admin : depth0), depth0))
     + "</td>\n";
 },"useData":true});
-},{"handlebars/runtime":41}],9:[function(require,module,exports){
+},{"handlebars/runtime":52}],13:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     return "<thead>\n    <th scope=\"col\">User Id</th>\n    <th scope=\"col\">Admin</th>\n</thead>\n<tbody></tbody>\n";
 },"useData":true});
-},{"handlebars/runtime":41}],10:[function(require,module,exports){
+},{"handlebars/runtime":52}],14:[function(require,module,exports){
 
 var Marionette = require('backbone.marionette');
 var Template = require('../templates/appLayout.handlebars');
@@ -213,27 +364,74 @@ module.exports = Marionette.View.extend({
     },
 
     triggers: {
+        "click .nav-categories": "show:categories",
         "click .nav-picks": "show:picks",
         "click .nav-results": "show:results",
         "click .nav-users": "show:users"
     }
 });
 
-},{"../templates/appLayout.handlebars":5,"backbone.marionette":19}],11:[function(require,module,exports){
+},{"../templates/appLayout.handlebars":7,"backbone.marionette":30}],15:[function(require,module,exports){
 'use strict';
 
+var CategoryRowView = require('../views/categoryRow');
 var Marionette = require('backbone.marionette');
-var Template = require('../templates/resultRow.handlebars');
+var Template = require('../templates/categories.handlebars');
+
+var TableBody = Marionette.CollectionView.extend({
+    childView: CategoryRowView,
+    tagName: 'div'
+});
 
 module.exports = Marionette.View.extend({
 
-    tagName: 'tr',
 
-    template: Template
+    className: 'categories',
 
+    tagName: 'div',
+
+    template: Template,
+
+    regions: {
+        list: {
+            el: '#category-list'
+        },
+        newEntry: {
+            el: '#new-entry'
+        }
+    },
+
+    triggers: {
+        "submit #add-category": "add:category"
+    },
+
+    onRender: function () {
+        this.showChildView('list', new TableBody({
+            collection: this.collection
+        }));
+    }
 });
 
-},{"../templates/resultRow.handlebars":6,"backbone.marionette":19}],12:[function(require,module,exports){
+},{"../templates/categories.handlebars":8,"../views/categoryRow":16,"backbone.marionette":30}],16:[function(require,module,exports){
+'use strict';
+
+var Marionette = require('backbone.marionette');
+var Template = require('../templates/categoryRow.handlebars');
+
+module.exports = Marionette.View.extend({
+
+    className: 'card mt-3',
+
+    tagName: 'div',
+
+    template: Template,
+
+    triggers: {
+        "click .delete-category": "delete:category"
+    }
+});
+
+},{"../templates/categoryRow.handlebars":9,"backbone.marionette":30}],17:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -267,7 +465,23 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/results.handlebars":7,"../views/resultRow":11,"backbone.marionette":19}],13:[function(require,module,exports){
+},{"../templates/results.handlebars":11,"../views/resultRow":18,"backbone.marionette":30}],18:[function(require,module,exports){
+'use strict';
+
+var Marionette = require('backbone.marionette');
+var Template = require('../templates/resultRow.handlebars');
+
+module.exports = Marionette.View.extend({
+
+    tagName: 'tr',
+
+    template: Template
+
+});
+
+},{"../templates/resultRow.handlebars":10,"backbone.marionette":30}],19:[function(require,module,exports){
+arguments[4][17][0].apply(exports,arguments)
+},{"../templates/results.handlebars":11,"../views/resultRow":18,"backbone.marionette":30,"dup":17}],20:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -281,7 +495,7 @@ module.exports = Marionette.View.extend({
 
 });
 
-},{"../templates/userRow.handlebars":8,"backbone.marionette":19}],14:[function(require,module,exports){
+},{"../templates/userRow.handlebars":12,"backbone.marionette":30}],21:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -315,7 +529,39 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/users.handlebars":9,"../views/userRow":13,"backbone.marionette":19}],15:[function(require,module,exports){
+},{"../templates/users.handlebars":13,"../views/userRow":20,"backbone.marionette":30}],22:[function(require,module,exports){
+'use strict';
+
+var Backbone = require('backbone');
+var Category = require('../models/category');
+
+module.exports = Backbone.Collection.extend({
+
+    model:  Category,
+
+    sort_key: 'sort_order', 
+
+    url: "/categories",
+
+    comparator: function(model) {
+        return model.get(this.sort_key);
+    }
+});
+
+},{"../models/category":26,"backbone":32}],23:[function(require,module,exports){
+'use strict';
+
+var Backbone = require('backbone');
+var Pick = require('../models/pick');
+
+module.exports = Backbone.Collection.extend({
+
+    model:  Pick,
+
+    url: "/users"
+});
+
+},{"../models/pick":27,"backbone":32}],24:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -328,7 +574,7 @@ module.exports = Backbone.Collection.extend({
     url: "/users"
 });
 
-},{"../models/result":17,"backbone":21}],16:[function(require,module,exports){
+},{"../models/result":28,"backbone":32}],25:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -341,7 +587,25 @@ module.exports = Backbone.Collection.extend({
     url: "/users"
 });
 
-},{"../models/user":18,"backbone":21}],17:[function(require,module,exports){
+},{"../models/user":29,"backbone":32}],26:[function(require,module,exports){
+'use strict';
+
+var Backbone = require('backbone');
+var moment = require('moment');
+
+module.exports = Backbone.Model.extend({
+
+    idAttribute: "_id",
+
+    urlRoot: "/categories",
+
+    initialize: function (options) {
+
+        options = options || {};
+    }
+});
+
+},{"backbone":32,"moment":54}],27:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -359,7 +623,9 @@ module.exports = Backbone.Model.extend({
     }
 });
 
-},{"backbone":21,"moment":43}],18:[function(require,module,exports){
+},{"backbone":32,"moment":54}],28:[function(require,module,exports){
+arguments[4][27][0].apply(exports,arguments)
+},{"backbone":32,"dup":27,"moment":54}],29:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -376,12 +642,22 @@ module.exports = Backbone.Model.extend({
         return moment(this.get(attributeName)).format();
     },
 
+    initialize: function (options) {
+
+        options = options || {};
+
+//        console.log(this.toJSON());
+
+
+
+    },
+
     isAdmin: function () {
         return this.has('is_admin') && this.get('is_admin');
     }
 });
 
-},{"backbone":21,"moment":43}],19:[function(require,module,exports){
+},{"backbone":32,"moment":54}],30:[function(require,module,exports){
 /**
 * @license
 * MarionetteJS (Backbone.Marionette)
@@ -5041,7 +5317,7 @@ return Marionette;
 this && this.Marionette && (this.Mn = this.Marionette);
 
 
-},{"backbone":21,"backbone.radio":20,"underscore":45}],20:[function(require,module,exports){
+},{"backbone":32,"backbone.radio":31,"underscore":56}],31:[function(require,module,exports){
 // Backbone.Radio v2.0.0
 
 (function (global, factory) {
@@ -5392,7 +5668,7 @@ this && this.Marionette && (this.Mn = this.Marionette);
 
 }));
 
-},{"backbone":21,"underscore":45}],21:[function(require,module,exports){
+},{"backbone":32,"underscore":56}],32:[function(require,module,exports){
 (function (global){
 //     Backbone.js 1.3.3
 
@@ -7316,7 +7592,7 @@ this && this.Marionette && (this.Mn = this.Marionette);
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"jquery":42,"underscore":45}],22:[function(require,module,exports){
+},{"jquery":53,"underscore":56}],33:[function(require,module,exports){
 /*!
   * Bootstrap v4.0.0 (https://getbootstrap.com)
   * Copyright 2011-2018 The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)
@@ -11212,7 +11488,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 })));
 
 
-},{"jquery":42,"popper.js":44}],23:[function(require,module,exports){
+},{"jquery":53,"popper.js":55}],34:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -11280,7 +11556,7 @@ exports['default'] = inst;
 module.exports = exports['default'];
 
 
-},{"./handlebars/base":24,"./handlebars/exception":27,"./handlebars/no-conflict":37,"./handlebars/runtime":38,"./handlebars/safe-string":39,"./handlebars/utils":40}],24:[function(require,module,exports){
+},{"./handlebars/base":35,"./handlebars/exception":38,"./handlebars/no-conflict":48,"./handlebars/runtime":49,"./handlebars/safe-string":50,"./handlebars/utils":51}],35:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -11386,7 +11662,7 @@ exports.createFrame = _utils.createFrame;
 exports.logger = _logger2['default'];
 
 
-},{"./decorators":25,"./exception":27,"./helpers":28,"./logger":36,"./utils":40}],25:[function(require,module,exports){
+},{"./decorators":36,"./exception":38,"./helpers":39,"./logger":47,"./utils":51}],36:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -11404,7 +11680,7 @@ function registerDefaultDecorators(instance) {
 }
 
 
-},{"./decorators/inline":26}],26:[function(require,module,exports){
+},{"./decorators/inline":37}],37:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -11435,7 +11711,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":40}],27:[function(require,module,exports){
+},{"../utils":51}],38:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -11491,7 +11767,7 @@ exports['default'] = Exception;
 module.exports = exports['default'];
 
 
-},{}],28:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -11539,7 +11815,7 @@ function registerDefaultHelpers(instance) {
 }
 
 
-},{"./helpers/block-helper-missing":29,"./helpers/each":30,"./helpers/helper-missing":31,"./helpers/if":32,"./helpers/log":33,"./helpers/lookup":34,"./helpers/with":35}],29:[function(require,module,exports){
+},{"./helpers/block-helper-missing":40,"./helpers/each":41,"./helpers/helper-missing":42,"./helpers/if":43,"./helpers/log":44,"./helpers/lookup":45,"./helpers/with":46}],40:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -11580,7 +11856,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":40}],30:[function(require,module,exports){
+},{"../utils":51}],41:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -11676,7 +11952,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../exception":27,"../utils":40}],31:[function(require,module,exports){
+},{"../exception":38,"../utils":51}],42:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -11703,7 +11979,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../exception":27}],32:[function(require,module,exports){
+},{"../exception":38}],43:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -11734,7 +12010,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":40}],33:[function(require,module,exports){
+},{"../utils":51}],44:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -11762,7 +12038,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{}],34:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -11776,7 +12052,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{}],35:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -11811,7 +12087,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":40}],36:[function(require,module,exports){
+},{"../utils":51}],47:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -11860,7 +12136,7 @@ exports['default'] = logger;
 module.exports = exports['default'];
 
 
-},{"./utils":40}],37:[function(require,module,exports){
+},{"./utils":51}],48:[function(require,module,exports){
 (function (global){
 /* global window */
 'use strict';
@@ -11884,7 +12160,7 @@ module.exports = exports['default'];
 
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],38:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12193,7 +12469,7 @@ function executeDecorators(fn, prog, container, depths, data, blockParams) {
 }
 
 
-},{"./base":24,"./exception":27,"./utils":40}],39:[function(require,module,exports){
+},{"./base":35,"./exception":38,"./utils":51}],50:[function(require,module,exports){
 // Build out our basic SafeString type
 'use strict';
 
@@ -12210,7 +12486,7 @@ exports['default'] = SafeString;
 module.exports = exports['default'];
 
 
-},{}],40:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12336,12 +12612,12 @@ function appendContextPath(contextPath, id) {
 }
 
 
-},{}],41:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 // Create a simple path alias to allow browserify to resolve
 // the runtime on a supported path.
 module.exports = require('./dist/cjs/handlebars.runtime')['default'];
 
-},{"./dist/cjs/handlebars.runtime":23}],42:[function(require,module,exports){
+},{"./dist/cjs/handlebars.runtime":34}],53:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v3.3.1
  * https://jquery.com/
@@ -22707,7 +22983,7 @@ if ( !noGlobal ) {
 return jQuery;
 } );
 
-},{}],43:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 //! moment.js
 //! version : 2.20.1
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
@@ -27244,7 +27520,7 @@ return hooks;
 
 })));
 
-},{}],44:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 (function (global){
 /**!
  * @fileOverview Kickass library to create and place poppers near their reference elements.
@@ -29693,7 +29969,7 @@ return Popper;
 
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],45:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 //     Underscore.js 1.8.3
 //     http://underscorejs.org
 //     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -31243,4 +31519,4 @@ return Popper;
   }
 }.call(this));
 
-},{}]},{},[4]);
+},{}]},{},[6]);

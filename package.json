@@ -12,7 +12,7 @@
     "bundle-debug": "browserify --debug -t browserify-handlebars -t lessify client/main.js -o public/bundle.debug.js",
     "minify": "browserify -g uglifyify public/bundle.js > public/bundle.min.js",
     "start": "npm run build && node app",
-    "test": "clear && jslint --color=true app.js configure-express.js client/*.js client/*/*.js collections/*.js controllers/*.js data/*.js middleware/*.js models/*.js routes/*.js"
+    "test": "clear && jslint --color=true app.js configure-express.js client/*.js client/*/*.js collections/*.js controllers/*.js data/*.js middleware/*.js models/*.js routes/*.js | sed '/^\\s*$/d'"
   },
   "repository": {
     "type": "git",

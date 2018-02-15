@@ -4,7 +4,7 @@
 var _ = require('underscore');
 
 function skipMaster(req) {
-    return _.any(['/api', '/components', '/css', '/js', '/build', '/users'], function (url) {
+    return _.any(['/api', '/categories', '/components', '/css', '/js', '/build', '/users'], function (url) {
         return req.url.substr(0, url.length) === url;
     });
 }
