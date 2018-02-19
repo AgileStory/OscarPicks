@@ -1,15 +1,15 @@
 'use strict';
 
 var Backbone = require('backbone');
-var Category = require('../models/category');
+var Entry = require('../models/entry');
 
 module.exports = Backbone.Collection.extend({
 
-    model:  Category,
+    model:  Entry,
 
     sort_key: 'sort_order',
 
-    url: "/categories",
+    url: "/entries",
 
     comparator: function (model) {
         return model.get(this.sort_key);

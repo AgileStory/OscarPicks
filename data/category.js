@@ -9,6 +9,7 @@ mongoose.connect(mongoUrl);
 
 var EntrySchema = new mongoose.Schema({
     name: String,
+    description: String,
     sort_order: Number,
 });
 
@@ -38,7 +39,7 @@ module.exports = {
 
     delete: function (categoryId, callback) {
 
-        Category.findByIdAndRemove(categoryId, (err, data) => {  
+        Category.findByIdAndRemove(categoryId, function (err, data) {
             if (err) {
                 callback(err, undefined);
             } else {
@@ -72,5 +73,29 @@ module.exports = {
                 callback(undefined, categories);
             }
         });
+    },
+
+    update: function (categoryModel, callback) {
+
+        var category = new Category(categoryModel.toJSON());
+
+        category.entries = [];
+
+        categoryModel.getEntries().each(function (entryModel) {
+            category.entries.push(new Entry(entryModel.toJSON()));
+        });
+
+        Category.findByIdAndUpdate(
+            categoryModel.get('_id'),
+            category,
+            { upsert: true, new: true },
+            function (err, savedCategory) {
+                if (err) {
+                    callback(err, undefined);
+                } else {
+                    callback(undefined, new CategoryModel(savedCategory));
+                }
+            }
+        );
     }
 };

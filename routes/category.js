@@ -6,9 +6,10 @@ var categoryController = require('../controllers/category');
 
 module.exports = function (app) {
 
+    router.delete('/:id', categoryController.deleteCategory);
     router.get('/', categoryController.list);
     router.post('/', categoryController.createCategory);
-    router.delete('/:id', categoryController.deleteCategory);
+    router.put('/:id', categoryController.updateCategory);
 
     app.use('/categories', router);
 };

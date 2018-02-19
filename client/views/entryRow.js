@@ -1,7 +1,7 @@
 'use strict';
 
 var Marionette = require('backbone.marionette');
-var Template = require('../templates/categoryRow.handlebars');
+var Template = require('../templates/entryRow.handlebars');
 
 module.exports = Marionette.View.extend({
 
@@ -12,7 +12,6 @@ module.exports = Marionette.View.extend({
     template: Template,
 
     triggers: {
-        "click ": "edit:category",
-        "click .delete-category": "delete:category"
+        "click .delete-entry": "delete:entry"
     }
 });
