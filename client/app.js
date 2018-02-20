@@ -57,7 +57,7 @@ module.exports = Marionette.Application.extend({
     },
 
     showDefaultMainView: function () {
-        this.showResultsMainView();
+        this.showPicksMainView();
     },
 
     showPicksMainView: function () {

@@ -1,31 +1,30 @@
 'use strict';
 
 var Marionette = require('backbone.marionette');
-var Template = require('../templates/results.handlebars');
-var ResultRowView = require('../views/resultRow');
+var PickRowView = require('../views/pickRow');
+var Template = require('../templates/picks.handlebars');
 
 var TableBody = Marionette.CollectionView.extend({
-    childView: ResultRowView,
-    tagName: 'tbody'
+    childView: PickRowView,
+    tagName: 'div'
 });
 
 module.exports = Marionette.View.extend({
 
-    className: 'table',
+    className: 'picks',
 
-    tagName: 'table',
+    tagName: 'div',
 
     template: Template,
 
     regions: {
-        body: {
-            el: 'tbody',
-            replaceElement: true
+        list: {
+            el: '#pick-list'
         }
     },
 
     onRender: function () {
-        this.showChildView('body', new TableBody({
+        this.showChildView('list', new TableBody({
             collection: this.collection
         }));
     }

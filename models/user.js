@@ -2,6 +2,7 @@
 
 var Backbone = require('backbone');
 var moment = require('moment');
+var PicksCollection = require('../collections/picks');
 
 module.exports = Backbone.Model.extend({
 
@@ -14,14 +15,29 @@ module.exports = Backbone.Model.extend({
         return moment(this.get(attributeName)).format();
     },
 
+    getPicks: function (categoriesCollection) {
+
+        var picks;
+
+        if (!this.has('picks') || this.get('picks') === undefined) {
+
+            picks = new PicksCollection();
+
+            picks.populateCategories(categoriesCollection);
+
+            this.set('picks', picks);
+        }
+
+        if (this.get('picks').models === undefined) {
+            this.set('picks', new PicksCollection(this.get('picks')));
+        }
+
+        return this.get('picks');
+    },
+
     initialize: function (options) {
 
         options = options || {};
-
-//        console.log(this.toJSON());
-
-
-
     },
 
     isAdmin: function () {

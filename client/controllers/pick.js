@@ -14,21 +14,14 @@ module.exports = Marionette.Object.extend({
 
     list: function () {
 
-        var self, picks, view;
+        var self, view;
 
         self = this;
 
-        picks = new Picks();
+        view = new ListView({ collection: this.application.userModel.getPicks(self.application.categories) });
 
-        picks.fetch({
-            success: function (collection) {
-
-                view = new ListView({ collection: collection });
-
-                self._showMainView(view);
-                // self._updateUrl("/users");
-            }
-        });
+        self._showMainView(view);
+        // self._updateUrl("/users");
     },
 
     _showMainView: function (view) {
