@@ -8,6 +8,7 @@ module.exports = function (app) {
 
     router.get('/', userController.list);
     router.get('/:id', userController.getUser);
+    router.put('/:id', userController.update);
 
     app.use('/users', router);
 };

@@ -28,6 +28,8 @@ module.exports = Backbone.Collection.extend({
                 pick = new Pick({ _id: category.id, name: category.get('name') });
 
                 self.add(pick);
+            } else if (self.get(category.id).get('name') !== category.get('name')) {
+                pick.set('name', category.get('name'));
             }
         });
     }

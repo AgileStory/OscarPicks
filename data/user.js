@@ -7,13 +7,21 @@ var mongoUrl = process.env.MONGO_URL || 'mongodb://localhost/oscarPicks';
 
 mongoose.connect(mongoUrl);
 
+var PickSchema = new mongoose.Schema({
+    name: String,
+    first_pick_id: String,
+    second_pick_id: String,
+});
+
 var UserSchema = new mongoose.Schema({
     is_admin: { type: Boolean, default: false },
     last_accessed: { type: Date, default: Date.now },
+    picks: [PickSchema],
     score: Number,
     user_id: String,
 });
 
+var Pick = mongoose.model('Pick', PickSchema);
 var User = mongoose.model('User', UserSchema);
 var UserCollection = require('../collections/users');
 var UserModel = require('../models/user');
@@ -88,6 +96,30 @@ module.exports = {
                 }
             }
         });
+    },
+
+    update: function (userModel, callback) {
+
+        var user = new User(userModel.toJSON());
+
+        user.picks = [];
+
+        userModel.getPicks().each(function (pickModel) {
+            user.picks.push(new Pick(pickModel.toJSON()));
+        });
+
+        User.findByIdAndUpdate(
+            userModel.get('_id'),
+            user,
+            { upsert: true, new: true },
+            function (err, savedUser) {
+                if (err) {
+                    callback(err, undefined);
+                } else {
+                    callback(undefined, new UserModel(savedUser));
+                }
+            }
+        );
     },
 
     withUserModel: function (userId, callback) {

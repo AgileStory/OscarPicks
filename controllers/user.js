@@ -2,6 +2,7 @@
 /*jslint node: true, nomen: true */
 
 var userDataRepository = require('../data/user');
+var UserModel = require('../models/user');
 
 module.exports = {
 
@@ -37,5 +38,31 @@ module.exports = {
                 next();
             }
         });
+    },
+
+    update: function (req, res, next) {
+
+        var user = new UserModel(req.body);
+
+        if (req.userModel.get('_id').toString() === user.get('_id').toString()) {
+
+            req.userModel.set('picks', user.getPicks());
+
+            userDataRepository.update(req.userModel, function (err, userModel) {
+
+                if (err) {
+                    console.error(err);
+                    next();
+                } else {
+                    res.status(201).json(userModel.toJSON());
+                    next();
+                }
+            });
+
+        } else {
+            console.error('user id did not match authorized user');
+            res.status(403).send('Users can only edit their own information');
+            next();
+        }
     }
 };
