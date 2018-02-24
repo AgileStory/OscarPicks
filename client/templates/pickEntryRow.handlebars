@@ -2,8 +2,8 @@
     
     <div class="row">
         <div class="col-3">
-            <button type="button" class="btn btn-outline-primary px-0 text-center w-100 first-pick">3 pts</button>
-            <button type="button" class="btn btn-outline-primary px-0 text-center w-100 mt-1 second-pick">1 pt</button>
+            <button type="button" class="btn {{#if this.is_first_pick}}btn-primary{{else}}btn-outline-primary{{/if}} px-0 text-center w-100 first-pick">3 pts</button>
+                <button type="button" class="btn {{#if this.is_second_pick}}btn-primary{{else}}btn-outline-primary{{/if}} px-0 text-center w-100 mt-1 second-pick">1 pt</button>
         </div>
         <div class="col-9 pt-1">
             <h6 class="card-title font-weight-bold">{{this.name}}</h6>

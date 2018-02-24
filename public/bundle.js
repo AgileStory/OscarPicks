@@ -267,7 +267,7 @@ module.exports = Marionette.Object.extend({
 
         this.application.userModel.save(null, {
             success: function () {
-                self._editPick(pickModel);
+                self._editPick(self.application.userModel.getPicks(self.application.categories).get(pickModel.id));
             }
         });
     },
@@ -433,13 +433,21 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + "</p>\n    <a href=\"#\" class=\"delete-entry btn btn-danger float-right\">Delete</a>\n</div>\n";
 },"useData":true});
 },{"handlebars/runtime":65}],13:[function(require,module,exports){
-var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
-    var alias1=container.lambda, alias2=container.escapeExpression;
+var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"1":function(container,depth0,helpers,partials,data) {
+    return "btn-primary";
+},"3":function(container,depth0,helpers,partials,data) {
+    return "btn-outline-primary";
+},"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=container.lambda, alias3=container.escapeExpression;
 
-  return "<div class=\"card-body container p-1 bg-light\">\n    \n    <div class=\"row\">\n        <div class=\"col-3\">\n            <button type=\"button\" class=\"btn btn-outline-primary px-0 text-center w-100 first-pick\">3 pts</button>\n            <button type=\"button\" class=\"btn btn-outline-primary px-0 text-center w-100 mt-1 second-pick\">1 pt</button>\n        </div>\n        <div class=\"col-9 pt-1\">\n            <h6 class=\"card-title font-weight-bold\">"
-    + alias2(alias1((depth0 != null ? depth0.name : depth0), depth0))
+  return "<div class=\"card-body container p-1 bg-light\">\n    \n    <div class=\"row\">\n        <div class=\"col-3\">\n            <button type=\"button\" class=\"btn "
+    + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.is_first_pick : depth0),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.program(3, data, 0),"data":data})) != null ? stack1 : "")
+    + " px-0 text-center w-100 first-pick\">3 pts</button>\n                <button type=\"button\" class=\"btn "
+    + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.is_second_pick : depth0),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.program(3, data, 0),"data":data})) != null ? stack1 : "")
+    + " px-0 text-center w-100 mt-1 second-pick\">1 pt</button>\n        </div>\n        <div class=\"col-9 pt-1\">\n            <h6 class=\"card-title font-weight-bold\">"
+    + alias3(alias2((depth0 != null ? depth0.name : depth0), depth0))
     + "</h6>\n            <p class=\"card-text\">"
-    + alias2(alias1((depth0 != null ? depth0.description : depth0), depth0))
+    + alias3(alias2((depth0 != null ? depth0.description : depth0), depth0))
     + "</p>\n        </div>\n    </div>\n</div>\n";
 },"useData":true});
 },{"handlebars/runtime":65}],14:[function(require,module,exports){

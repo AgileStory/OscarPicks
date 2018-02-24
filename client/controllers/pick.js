@@ -48,7 +48,7 @@ module.exports = Marionette.Object.extend({
 
         this.application.userModel.save(null, {
             success: function () {
-                self._editPick(pickModel);
+                self._editPick(self.application.userModel.getPicks(self.application.categories).get(pickModel.id));
             }
         });
     },
