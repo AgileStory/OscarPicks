@@ -67,10 +67,6 @@ module.exports = Marionette.Application.extend({
         });
     },
 
-    onStart: function () {
-
-    },
-
     showCategoriesMainView: function () {
         this.CategoryController.list();
     },
@@ -113,6 +109,13 @@ module.exports = Marionette.Object.extend({
 
     initialize: function (options) {
         this.application = options.application;
+    },
+
+    edit: function (id) {
+
+        var model = this.application.categories.get(id);
+
+        this._editCategory(model);
     },
 
     list: function () {
@@ -225,6 +228,7 @@ module.exports = Marionette.Object.extend({
         self.listenTo(view, "childview:childview:delete:entry", function (child) { self._deleteEntry(child.model, categoryModel); });
 
         self._showMainView(view);
+        self._updateUrl('/category/' + categoryModel.id);
     },
 
     _showMainView: function (view) {
@@ -424,7 +428,8 @@ var Marionette = require('backbone.marionette');
 module.exports = Marionette.AppRouter.extend({
 
     appRoutes: {
-        'categories': 'list'
+        'categories': 'list',
+        'category/:id': 'edit'
     },
 
     initialize: function (options) {

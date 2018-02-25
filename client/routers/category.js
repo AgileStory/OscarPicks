@@ -7,7 +7,8 @@ var Marionette = require('backbone.marionette');
 module.exports = Marionette.AppRouter.extend({
 
     appRoutes: {
-        'categories': 'list'
+        'categories': 'list',
+        'category/:id': 'edit'
     },
 
     initialize: function (options) {

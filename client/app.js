@@ -66,10 +66,6 @@ module.exports = Marionette.Application.extend({
         });
     },
 
-    onStart: function () {
-
-    },
-
     showCategoriesMainView: function () {
         this.CategoryController.list();
     },

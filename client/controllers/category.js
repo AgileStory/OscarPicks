@@ -16,6 +16,13 @@ module.exports = Marionette.Object.extend({
         this.application = options.application;
     },
 
+    edit: function (id) {
+
+        var model = this.application.categories.get(id);
+
+        this._editCategory(model);
+    },
+
     list: function () {
 
         var self, view;
@@ -126,6 +133,7 @@ module.exports = Marionette.Object.extend({
         self.listenTo(view, "childview:childview:delete:entry", function (child) { self._deleteEntry(child.model, categoryModel); });
 
         self._showMainView(view);
+        self._updateUrl('/category/' + categoryModel.id);
     },
 
     _showMainView: function (view) {

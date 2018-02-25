@@ -5,13 +5,17 @@ var _ = require('underscore');
 
 function shouldSkipMaster(req) {
 
+    var shouldSkip = false;
+
     if (req.xhr) {
-        return true;
+        shouldSkip = true;
     } else {
-        return _.any(['/css', '/js', '/build'], function (url) {
+        shouldSkip = _.any(['/css', '/js', '/build'], function (url) {
             return req.url.substr(0, url.length) === url;
         });
     }
+
+    return shouldSkip;
 }
 
 function handler(title, appJavascriptPath) {
