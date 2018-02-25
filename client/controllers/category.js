@@ -32,6 +32,7 @@ module.exports = Marionette.Object.extend({
         self.listenTo(view, "childview:childview:edit:category", function (child, e) { self._editCategory(child.model, e); });
 
         self._showMainView(view);
+        self._updateUrl('/categories');
     },
 
     _addCategory: function (childView) {
@@ -128,10 +129,10 @@ module.exports = Marionette.Object.extend({
     },
 
     _showMainView: function (view) {
-        this.application.layout.showChildView("Main", view);
+        this.application.showMainView(view);
     },
 
     _updateUrl: function (url) {
-        this.application.router.navigate(url);
+        this.application.CategoryRouter.navigate(url);
     }
 });

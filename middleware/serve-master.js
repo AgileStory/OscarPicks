@@ -3,17 +3,22 @@
 
 var _ = require('underscore');
 
-function skipMaster(req) {
-    return _.any(['/api', '/categories', '/components', '/css', '/js', '/build', '/users'], function (url) {
-        return req.url.substr(0, url.length) === url;
-    });
+function shouldSkipMaster(req) {
+
+    if (req.xhr) {
+        return true;
+    } else {
+        return _.any(['/css', '/js', '/build'], function (url) {
+            return req.url.substr(0, url.length) === url;
+        });
+    }
 }
 
 function handler(title, appJavascriptPath) {
 
     return function (req, res, next) {
 
-        if (skipMaster(req)) {
+        if (shouldSkipMaster(req)) {
             return next();
         }
 
@@ -24,10 +29,10 @@ function handler(title, appJavascriptPath) {
 module.exports = {
 
     development: function () {
-        return handler('Oscar Picks | Development', 'bundle.debug.js');
+        return handler('Oscar Picks | Development', '/bundle.debug.js');
     },
 
     production: function () {
-        return handler('Oscar Picks', 'bundle.min.js');
+        return handler('Oscar Picks', '/bundle.min.js');
     }
 };

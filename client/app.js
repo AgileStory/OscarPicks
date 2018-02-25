@@ -6,17 +6,31 @@ var AppLayoutView = require('./views/appLayout');
 var Backbone = require('backbone');
 var CategoriesCollection = require('../collections/categories');
 var CategoryController = require('./controllers/category');
+var CategoryRouter = require('./routers/category');
 var Marionette = require('backbone.marionette');
 var PickController = require('./controllers/pick');
+var PickRouter = require('./routers/pick');
 var ResultController = require('./controllers/result');
+var ResultRouter = require('./routers/result');
 var UserController = require('./controllers/user');
+var UserRouter = require('./routers/user');
 var UserModel = require('../models/user');
 
 module.exports = Marionette.Application.extend({
 
     initialize: function () {
 
-        this.router = new Marionette.AppRouter({ controller: this.controller });
+        this.CategoryController = new CategoryController({ application: this });
+        this.CategoryRouter = new CategoryRouter({ controller: this.CategoryController });
+
+        this.PickController = new PickController({ application: this });
+        this.PickRouter = new PickRouter({ controller: this.PickController });
+
+        this.ResultController = new ResultController({ application: this });
+        this.ResultRouter = new ResultRouter({ controller: this.ResultController });
+
+        this.UserController = new UserController({ application: this });
+        this.UserRouter = new UserRouter({ controller: this.UserController });
     },
 
     onBeforeStart: function () {
@@ -39,7 +53,12 @@ module.exports = Marionette.Application.extend({
                         self.listenTo(self.layout, "show:picks", function () { self.showPicksMainView(); });
                         self.listenTo(self.layout, "show:results", function () { self.showResultsMainView(); });
                         self.listenTo(self.layout, "show:users", function () { self.showUserMainView(); });
-                        self.listenTo(self.layout, "render", function () { self.showDefaultMainView(); });
+                        self.listenTo(self.layout, "render", function () {
+
+                            self.layoutRendered = true;
+
+                            Backbone.history.start({ pushState: true });
+                        });
                         self.layout.render();
                     }
                 });
@@ -48,30 +67,30 @@ module.exports = Marionette.Application.extend({
     },
 
     onStart: function () {
-        Backbone.history.start({ pushState: true });
+
     },
 
     showCategoriesMainView: function () {
-        this.controller = new CategoryController({ application: this });
-        this.controller.list();
+        this.CategoryController.list();
     },
 
     showDefaultMainView: function () {
         this.showPicksMainView();
     },
 
+    showMainView: function (view) {
+        this.layout.showChildView("Main", view);
+    },
+
     showPicksMainView: function () {
-        this.controller = new PickController({ application: this });
-        this.controller.list();
+        this.PickController.list();
     },
 
     showResultsMainView: function () {
-        this.controller = new ResultController({ application: this });
-        this.controller.list();
+        this.ResultController.list();
     },
 
     showUserMainView: function () {
-        this.controller = new UserController({ application: this });
-        this.controller.list();
+        this.UserController.list();
     }
 });

@@ -26,16 +26,16 @@ module.exports = Marionette.Object.extend({
                 view = new ListView({ collection: collection });
 
                 self._showMainView(view);
-                // self._updateUrl("/users");
+                self._updateUrl('/results');
             }
         });
     },
 
     _showMainView: function (view) {
-        this.application.layout.showChildView("Main", view);
+        this.application.showMainView(view);
     },
 
     _updateUrl: function (url) {
-        this.application.router.navigate(url);
+        this.application.ResultRouter.navigate(url);
     }
 });

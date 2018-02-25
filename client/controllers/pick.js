@@ -13,17 +13,24 @@ module.exports = Marionette.Object.extend({
         this.application = options.application;
     },
 
+    edit: function (id) {
+
+        var model = this.application.userModel.getPicks(this.application.categories).get(id);
+
+        this._editPick(model);
+    },
+
     list: function () {
 
         var self, view;
 
         self = this;
 
-        view = new ListView({ collection: this.application.userModel.getPicks(self.application.categories) });
+        view = new ListView({ collection: self.application.userModel.getPicks(self.application.categories) });
         self.listenTo(view, "childview:childview:edit:pick", function (child, e) { self._editPick(child.model, e); });
 
         self._showMainView(view);
-        // self._updateUrl("/users");
+        self._updateUrl('/picks');
     },
 
     _editPick: function (model) {
@@ -38,6 +45,7 @@ module.exports = Marionette.Object.extend({
         self.listenTo(view, "childview:childview:pick:second", function (child) { self._pick(child.model, 'second', model); });
 
         self._showMainView(view);
+        self._updateUrl('/pick/' + model.id);
     },
 
     _pick: function (entryModel, pickType, pickModel) {
@@ -54,10 +62,10 @@ module.exports = Marionette.Object.extend({
     },
 
     _showMainView: function (view) {
-        this.application.layout.showChildView("Main", view);
+        this.application.showMainView(view);
     },
 
     _updateUrl: function (url) {
-        this.application.router.navigate(url);
+        this.application.PickRouter.navigate(url);
     }
 });
