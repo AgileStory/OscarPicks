@@ -18,6 +18,10 @@ var UserModel = require('../models/user');
 
 module.exports = Marionette.Application.extend({
 
+    getEntryNameById: function (id) {
+        return this.entryNamesMap[id];
+    },
+
     initialize: function () {
 
         this.CategoryController = new CategoryController({ application: this });
@@ -46,6 +50,8 @@ module.exports = Marionette.Application.extend({
 
                 self.categories.fetch({
                     success: function () {
+
+                        self.categories.populateEntryNamesMap(self);
 
                         self.layout = new AppLayoutView({ model: self.userModel });
                         //self.listenTo(self.layout, "all", function (eventName) { console.log(eventName); });

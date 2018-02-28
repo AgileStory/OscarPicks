@@ -26,7 +26,7 @@ module.exports = Marionette.Object.extend({
 
         self = this;
 
-        view = new ListView({ collection: self.application.userModel.getPicks(self.application.categories) });
+        view = new ListView({ collection: self.application.userModel.getPicks(self.application.categories), application: self.application });
         self.listenTo(view, "childview:childview:edit:pick", function (child, e) { self._editPick(child.model, e); });
 
         self._showMainView(view);

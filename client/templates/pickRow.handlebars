@@ -1,4 +1,15 @@
 <div class="card-body">
-    <h6 class="card-title">{{this.name}}</h6>
-    <!--<p class="card-text">{{this.sort_order}} card's content.</p>-->
+    <h6 class="card-title font-weight-bold">{{this.name}}</h6>
+
+    <p class="card-text">
+        {{#if this.combined_pick_name}}
+            <span class="badge badge-primary text-center">4</span><span class="pl-1 pt-1">{{this.combined_pick_name}}</span><br/>
+        {{/if}}
+        {{#if this.first_pick_name}}
+            <span class="badge badge-primary text-center">3</span><span class="pl-1 pt-1">{{this.first_pick_name}}</span><br/>
+        {{/if}}
+        {{#if this.second_pick_name}}
+            <span class="badge badge-primary text-center">1</span><span class="pl-1 pt-1">{{this.second_pick_name}}</span><br/>
+        {{/if}}
+    </p>
 </div>

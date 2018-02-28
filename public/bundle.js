@@ -19,6 +19,10 @@ var UserModel = require('../models/user');
 
 module.exports = Marionette.Application.extend({
 
+    getEntryNameById: function (id) {
+        return this.entryNamesMap[id];
+    },
+
     initialize: function () {
 
         this.CategoryController = new CategoryController({ application: this });
@@ -47,6 +51,8 @@ module.exports = Marionette.Application.extend({
 
                 self.categories.fetch({
                     success: function () {
+
+                        self.categories.populateEntryNamesMap(self);
 
                         self.layout = new AppLayoutView({ model: self.userModel });
                         //self.listenTo(self.layout, "all", function (eventName) { console.log(eventName); });
@@ -269,7 +275,7 @@ module.exports = Marionette.Object.extend({
 
         self = this;
 
-        view = new ListView({ collection: self.application.userModel.getPicks(self.application.categories) });
+        view = new ListView({ collection: self.application.userModel.getPicks(self.application.categories), application: self.application });
         self.listenTo(view, "childview:childview:edit:pick", function (child, e) { self._editPick(child.model, e); });
 
         self._showMainView(view);
@@ -558,14 +564,28 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + "</p>\n        </div>\n    </div>\n</div>\n";
 },"useData":true});
 },{"handlebars/runtime":69}],18:[function(require,module,exports){
-var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
-    var alias1=container.lambda, alias2=container.escapeExpression;
+var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"1":function(container,depth0,helpers,partials,data) {
+    return "            <span class=\"badge badge-primary text-center\">4</span><span class=\"pl-1 pt-1\">"
+    + container.escapeExpression(container.lambda((depth0 != null ? depth0.combined_pick_name : depth0), depth0))
+    + "</span><br/>\n";
+},"3":function(container,depth0,helpers,partials,data) {
+    return "            <span class=\"badge badge-primary text-center\">3</span><span class=\"pl-1 pt-1\">"
+    + container.escapeExpression(container.lambda((depth0 != null ? depth0.first_pick_name : depth0), depth0))
+    + "</span><br/>\n";
+},"5":function(container,depth0,helpers,partials,data) {
+    return "            <span class=\"badge badge-primary text-center\">1</span><span class=\"pl-1 pt-1\">"
+    + container.escapeExpression(container.lambda((depth0 != null ? depth0.second_pick_name : depth0), depth0))
+    + "</span><br/>\n";
+},"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {});
 
-  return "<div class=\"card-body\">\n    <h6 class=\"card-title\">"
-    + alias2(alias1((depth0 != null ? depth0.name : depth0), depth0))
-    + "</h6>\n    <!--<p class=\"card-text\">"
-    + alias2(alias1((depth0 != null ? depth0.sort_order : depth0), depth0))
-    + " card's content.</p>-->\n</div>\n";
+  return "<div class=\"card-body\">\n    <h6 class=\"card-title font-weight-bold\">"
+    + container.escapeExpression(container.lambda((depth0 != null ? depth0.name : depth0), depth0))
+    + "</h6>\n\n    <p class=\"card-text\">\n"
+    + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.combined_pick_name : depth0),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.first_pick_name : depth0),{"name":"if","hash":{},"fn":container.program(3, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.second_pick_name : depth0),{"name":"if","hash":{},"fn":container.program(5, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + "    </p>\n</div>\n";
 },"useData":true});
 },{"handlebars/runtime":69}],19:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
@@ -821,6 +841,28 @@ module.exports = Marionette.View.extend({
 
     triggers: {
         "click ": "edit:pick"
+    },
+
+    initialize: function (options) {
+        this.application = options.application;
+    },
+
+    templateContext: function () {
+
+        var context = {};
+
+        if (this.model.has('first_pick_id') && this.model.has('second_pick_id') && this.model.get('first_pick_id') === this.model.get('second_pick_id')) {
+            context.combined_pick_name = this.application.getEntryNameById(this.model.get('first_pick_id'));
+        } else {
+            if (this.model.has('first_pick_id')) {
+                context.first_pick_name = this.application.getEntryNameById(this.model.get('first_pick_id'));
+            }
+            if (this.model.has('second_pick_id')) {
+                context.second_pick_name = this.application.getEntryNameById(this.model.get('second_pick_id'));
+            }
+        }
+
+        return context;
     }
 });
 
@@ -832,8 +874,23 @@ var PickRowView = require('../views/pickRow');
 var Template = require('../templates/picks.handlebars');
 
 var TableBody = Marionette.CollectionView.extend({
+  
     childView: PickRowView,
-    tagName: 'div'
+    
+    tagName: 'div',
+    
+    childViewOptions: function(model, index) {
+       
+        var self = this;
+
+        return {
+            application: self.application
+        }
+    },
+
+    initialize: function (options) {
+        this.application = options.application;
+    }
 });
 
 module.exports = Marionette.View.extend({
@@ -850,8 +907,13 @@ module.exports = Marionette.View.extend({
         }
     },
 
+    initialize: function (options) {
+        this.application = options.application;
+    },
+    
     onRender: function () {
         this.showChildView('list', new TableBody({
+            application: this.application,
             collection: this.collection
         }));
     }
@@ -969,6 +1031,17 @@ module.exports = Backbone.Collection.extend({
 
     comparator: function (model) {
         return model.get(this.sort_key);
+    },
+
+    populateEntryNamesMap: function (application) {
+
+        application.entryNamesMap = {};
+
+        this.each(function (category) {
+            category.getEntries().each(function (entry) {
+                application.entryNamesMap[entry.id] = entry.get('name');
+            });
+        });
     }
 });
 
