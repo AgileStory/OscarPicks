@@ -7,8 +7,8 @@ var Marionette = require('backbone.marionette');
 module.exports = Marionette.AppRouter.extend({
 
     appRoutes: {
-        '': 'default',
         'home': 'home',
+        '*path': 'default',
     },
 
     initialize: function (options) {
