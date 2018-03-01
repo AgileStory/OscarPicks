@@ -1,2 +1,6 @@
-<td>{{ this.user_id }}</td>
+{{#if this.display_name}} 
+    <td>{{ this.display_name }}</td>
+{{else}}
+    <td>{{ this.user_id }}</td>
+{{/if}}
 <td>{{ this.score }}</td>

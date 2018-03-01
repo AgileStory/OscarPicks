@@ -8,6 +8,8 @@ var Backbone = require('backbone');
 var CategoriesCollection = require('../collections/categories');
 var CategoryController = require('./controllers/category');
 var CategoryRouter = require('./routers/category');
+var HomeController = require('./controllers/home');
+var HomeRouter = require('./routers/home');
 var Marionette = require('backbone.marionette');
 var PickController = require('./controllers/pick');
 var PickRouter = require('./routers/pick');
@@ -27,6 +29,9 @@ module.exports = Marionette.Application.extend({
 
         this.CategoryController = new CategoryController({ application: this });
         this.CategoryRouter = new CategoryRouter({ controller: this.CategoryController });
+
+        this.HomeController = new HomeController({ application: this });
+        this.HomeRouter = new HomeRouter({ controller: this.HomeController });
 
         this.PickController = new PickController({ application: this });
         this.PickRouter = new PickRouter({ controller: this.PickController });
@@ -57,6 +62,7 @@ module.exports = Marionette.Application.extend({
                         self.layout = new AppLayoutView({ model: self.userModel });
                         //self.listenTo(self.layout, "all", function (eventName) { console.log(eventName); });
                         self.listenTo(self.layout, "show:categories", function () { self.showCategoriesMainView(); });
+                        self.listenTo(self.layout, "show:home", function () { self.showHomeMainView(); });
                         self.listenTo(self.layout, "show:picks", function () { self.showPicksMainView(); });
                         self.listenTo(self.layout, "show:results", function () { self.showResultsMainView(); });
                         self.listenTo(self.layout, "show:users", function () { self.showUserMainView(); });
@@ -81,6 +87,10 @@ module.exports = Marionette.Application.extend({
         this.showPicksMainView();
     },
 
+    showHomeMainView: function () {
+        this.HomeController.home();
+    },
+
     showMainView: function (view) {
         this.layout.showChildView("Main", view);
     },
@@ -98,7 +108,7 @@ module.exports = Marionette.Application.extend({
     }
 });
 
-},{"../collections/categories":37,"../models/user":46,"./controllers/category":2,"./controllers/pick":3,"./controllers/result":4,"./controllers/user":5,"./routers/category":7,"./routers/pick":8,"./routers/result":9,"./routers/user":10,"./views/appLayout":24,"backbone":49,"backbone.marionette":47}],2:[function(require,module,exports){
+},{"../collections/categories":41,"../models/user":50,"./controllers/category":2,"./controllers/home":3,"./controllers/pick":4,"./controllers/result":5,"./controllers/user":6,"./routers/category":8,"./routers/home":9,"./routers/pick":10,"./routers/result":11,"./routers/user":12,"./views/appLayout":27,"backbone":53,"backbone.marionette":51}],2:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -246,7 +256,73 @@ module.exports = Marionette.Object.extend({
     }
 });
 
-},{"../../collections/categories":37,"../../models/category":42,"../../models/entry":43,"../views/categories":25,"../views/editCategory":27,"backbone.marionette":47,"underscore":73}],3:[function(require,module,exports){
+},{"../../collections/categories":41,"../../models/category":46,"../../models/entry":47,"../views/categories":28,"../views/editCategory":30,"backbone.marionette":51,"underscore":78}],3:[function(require,module,exports){
+'use strict';
+
+/*jslint nomen: true */
+
+var Cookies = require('js-cookie');
+var HomeView = require('../views/home');
+var Marionette = require('backbone.marionette');
+
+module.exports = Marionette.Object.extend({
+
+    initialize: function (options) {
+        this.application = options.application;
+    },
+
+    default: function () {
+
+        if (Cookies.get('skip-home') === 'true') {
+            this.application.PickController.list();
+        } else {
+            this.home();
+        }
+    },
+
+    home: function () {
+
+        var self, view;
+
+        self = this;
+
+        view = new HomeView({ model: self.application.userModel, application: self.application });
+        //self.listenTo(view, "all", function (eventName) { console.log(eventName); });
+        self.listenTo(view, "skip:home", function () { self._skipHome(); });
+        self.listenTo(view, "update:displayname", function (child, e) { self._updateDisplayName(child, e); });
+
+        self._showMainView(view);
+        self._updateUrl('/home');
+    },
+
+    _showMainView: function (view) {
+        this.application.showMainView(view);
+    },
+
+    _skipHome: function () {
+        Cookies.set('skip-home', 'true');
+        this.default();
+    },
+
+    _updateDisplayName: function (childView) {
+
+        var self = this;
+
+        this.application.userModel.set('display_name', childView.$('input[name=display-name]').val());
+
+        this.application.userModel.save(null, {
+            success: function () {
+                self.home();
+            }
+        });
+    },
+
+    _updateUrl: function (url) {
+        this.application.HomeRouter.navigate(url);
+    }
+});
+
+},{"../views/home":33,"backbone.marionette":51,"js-cookie":75}],4:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -319,7 +395,7 @@ module.exports = Marionette.Object.extend({
     }
 });
 
-},{"../../collections/picks":39,"../views/editPick":28,"../views/picks":32,"backbone.marionette":47}],4:[function(require,module,exports){
+},{"../../collections/picks":43,"../views/editPick":31,"../views/picks":36,"backbone.marionette":51}],5:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -362,7 +438,7 @@ module.exports = Marionette.Object.extend({
     }
 });
 
-},{"../../collections/results":40,"../views/results":34,"backbone.marionette":47}],5:[function(require,module,exports){
+},{"../../collections/results":44,"../views/results":38,"backbone.marionette":51}],6:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -405,7 +481,7 @@ module.exports = Marionette.Object.extend({
     }
 });
 
-},{"../../collections/users":41,"../views/users":36,"backbone.marionette":47}],6:[function(require,module,exports){
+},{"../../collections/users":45,"../views/users":40,"backbone.marionette":51}],7:[function(require,module,exports){
 'use strict';
 
 /*jslint browser: true, nomen: true */
@@ -424,7 +500,7 @@ window.$(document).ready(function () {
     app.start();
 });
 
-},{"./app.js":1,"bootstrap":50,"jquery":70,"popper.js":72,"underscore":73}],7:[function(require,module,exports){
+},{"./app.js":1,"bootstrap":54,"jquery":74,"popper.js":77,"underscore":78}],8:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -443,7 +519,7 @@ module.exports = Marionette.AppRouter.extend({
     }
 });
 
-},{"backbone.marionette":47}],8:[function(require,module,exports){
+},{"backbone.marionette":51}],9:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -453,7 +529,25 @@ var Marionette = require('backbone.marionette');
 module.exports = Marionette.AppRouter.extend({
 
     appRoutes: {
-        '': 'list',
+        '': 'default',
+        'home': 'home',
+    },
+
+    initialize: function (options) {
+        this.controller = options.controller;
+    }
+});
+
+},{"backbone.marionette":51}],10:[function(require,module,exports){
+'use strict';
+
+/*jslint nomen: true */
+
+var Marionette = require('backbone.marionette');
+
+module.exports = Marionette.AppRouter.extend({
+
+    appRoutes: {
         'picks': 'list',
         'pick/:id': 'edit'
     },
@@ -463,7 +557,7 @@ module.exports = Marionette.AppRouter.extend({
     }
 });
 
-},{"backbone.marionette":47}],9:[function(require,module,exports){
+},{"backbone.marionette":51}],11:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -481,7 +575,7 @@ module.exports = Marionette.AppRouter.extend({
     }
 });
 
-},{"backbone.marionette":47}],10:[function(require,module,exports){
+},{"backbone.marionette":51}],12:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -499,7 +593,7 @@ module.exports = Marionette.AppRouter.extend({
     }
 });
 
-},{"backbone.marionette":47}],11:[function(require,module,exports){
+},{"backbone.marionette":51}],13:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"1":function(container,depth0,helpers,partials,data) {
     return "            <li class=\"nav-item nav-users\">\n                <a class=\"nav-link \" href=\"#\">Users</a>\n            </li>\n            <li class=\"nav-item nav-categories\">\n                <a class=\"nav-link \" href=\"#\">Categories</a>\n            </li>\n";
 },"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
@@ -509,11 +603,11 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + ((stack1 = helpers["if"].call(depth0 != null ? depth0 : (container.nullContext || {}),(depth0 != null ? depth0.is_admin : depth0),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
     + "        </ul>\n    </div>\n</header>\n\n<div id=\"main\" class=\"container\">\n</div>\n\n";
 },"useData":true});
-},{"handlebars/runtime":69}],12:[function(require,module,exports){
+},{"handlebars/runtime":73}],14:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     return "\n<div id=\"category-list\"></div>\n<div id=\"new-entry\" class=\"mt-3\">\n\n    <form id=\"add-category\">\n        <div class=\"form-row align-items-center\">\n            <div class=\"col-auto\">\n                <label class=\"sr-only\" for=\"category-name\">Name</label>\n                <input type=\"text\" class=\"form-control mb-2\" id=\"category-name\" name=\"category-name\" placeholder=\"Category Name\">\n            </div>\n            <div class=\"col-auto\">\n                <button type=\"submit\" class=\"btn btn-primary mb-2\">Add Category</button>\n            </div>\n        </div>\n    </form>\n\n</div>\n";
 },"useData":true});
-},{"handlebars/runtime":69}],13:[function(require,module,exports){
+},{"handlebars/runtime":73}],15:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     var alias1=container.lambda, alias2=container.escapeExpression;
 
@@ -523,19 +617,19 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + alias2(alias1((depth0 != null ? depth0.sort_order : depth0), depth0))
     + " card's content.</p>-->\n    <a href=\"#\" class=\"delete-category btn btn-danger float-right\">Delete</a>\n</div>\n";
 },"useData":true});
-},{"handlebars/runtime":69}],14:[function(require,module,exports){
+},{"handlebars/runtime":73}],16:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     return "<h5 class=\"mt-3\">"
     + container.escapeExpression(container.lambda((depth0 != null ? depth0.name : depth0), depth0))
     + "</h5>\n<div id=\"entry-list\"></div>\n<div id=\"new-entry\" class=\"mt-3\">\n\n    <form id=\"add-entry\">\n        <div class=\"form-row align-items-center\">\n            <div class=\"col-auto\">\n                <label class=\"sr-only\" for=\"entry-name\">Name</label>\n                <input type=\"text\" class=\"form-control mb-2\" id=\"entry-name\" name=\"entry-name\" placeholder=\"Entry Name\">\n            </div>\n            <div class=\"col-auto\">\n                <label class=\"sr-only\" for=\"entry-description\">Description</label>\n                <input type=\"text\" class=\"form-control mb-2\" id=\"entry-description\" name=\"entry-description\" placeholder=\"Description\">\n            </div>\n            <div class=\"col-auto\">\n                <button type=\"submit\" class=\"btn btn-primary mb-2\">Add Entry</button>\n            </div>\n        </div>\n    </form>\n\n</div>\n";
 },"useData":true});
-},{"handlebars/runtime":69}],15:[function(require,module,exports){
+},{"handlebars/runtime":73}],17:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     return "<h5 class=\"mt-3\">"
     + container.escapeExpression(container.lambda((depth0 != null ? depth0.name : depth0), depth0))
     + "</h5>\n<div id=\"entry-list\" class=\"mb-3\"></div>\n";
 },"useData":true});
-},{"handlebars/runtime":69}],16:[function(require,module,exports){
+},{"handlebars/runtime":73}],18:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     var alias1=container.lambda, alias2=container.escapeExpression;
 
@@ -545,7 +639,23 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + alias2(alias1((depth0 != null ? depth0.description : depth0), depth0))
     + "</p>\n    <a href=\"#\" class=\"delete-entry btn btn-danger float-right\">Delete</a>\n</div>\n";
 },"useData":true});
-},{"handlebars/runtime":69}],17:[function(require,module,exports){
+},{"handlebars/runtime":73}],19:[function(require,module,exports){
+var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"1":function(container,depth0,helpers,partials,data) {
+    return "                    <input type=\"text\" class=\"form-control mb-2\" id=\"display-name\" name=\"display-name\" value=\""
+    + container.escapeExpression(container.lambda((depth0 != null ? depth0.display_name : depth0), depth0))
+    + "\">\n";
+},"3":function(container,depth0,helpers,partials,data) {
+    return "                    <input type=\"text\" class=\"form-control mb-2\" id=\"display-name\" name=\"display-name\" placeholder=\""
+    + container.escapeExpression(container.lambda((depth0 != null ? depth0.user_id : depth0), depth0))
+    + "\">\n";
+},"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
+    var stack1;
+
+  return "<div class=\"card my-3\"><div class=\"card-body\">\n\n    <form id=\"update-displayname\">\n        <div class=\"form-row align-items-end\">\n            <div class=\"col-auto\">\n                <label for=\"display-name\">Name to show</label>\n"
+    + ((stack1 = helpers["if"].call(depth0 != null ? depth0 : (container.nullContext || {}),(depth0 != null ? depth0.display_name : depth0),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.program(3, data, 0),"data":data})) != null ? stack1 : "")
+    + "            </div>\n            <div class=\"col-auto\">\n                <button type=\"submit\" class=\"update-display-name btn btn-primary mb-2\">Update</button>\n            </div>\n        </div>\n    </form>\n    <hr/>\n    <p class=\"card-text\">For each category, you can make a primary pick (worth <span class=\"badge badge-primary\">3</span> points) and a secondary pick (worth <span class=\"badge badge-primary\">1</span> point).</p>\n    <p class=\"card-text\">If you are feeling extra confident, you can put both picks on one entry and get <span class=\"badge badge-primary\">4</span> points if it wins, but you risk not having a backup pick for that category if you're wrong.</p>\n    </p>\n    <hr/>\n    <button id=\"skip-home\" type=\"button\" class=\"btn btn-primary mb-2\">Skip this screen on future logins</button>\n</div>\n";
+},"useData":true});
+},{"handlebars/runtime":73}],20:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"1":function(container,depth0,helpers,partials,data) {
     return "btn-primary";
 },"3":function(container,depth0,helpers,partials,data) {
@@ -563,7 +673,7 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + alias3(alias2((depth0 != null ? depth0.description : depth0), depth0))
     + "</p>\n        </div>\n    </div>\n</div>\n";
 },"useData":true});
-},{"handlebars/runtime":69}],18:[function(require,module,exports){
+},{"handlebars/runtime":73}],21:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"1":function(container,depth0,helpers,partials,data) {
     return "            <span class=\"badge badge-primary text-center\">4</span><span class=\"pl-1 pt-1\">"
     + container.escapeExpression(container.lambda((depth0 != null ? depth0.combined_pick_name : depth0), depth0))
@@ -587,25 +697,32 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.second_pick_name : depth0),{"name":"if","hash":{},"fn":container.program(5, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
     + "    </p>\n</div>\n";
 },"useData":true});
-},{"handlebars/runtime":69}],19:[function(require,module,exports){
+},{"handlebars/runtime":73}],22:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     return "\n<div id=\"pick-list\"></div>\n";
 },"useData":true});
-},{"handlebars/runtime":69}],20:[function(require,module,exports){
-var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
-    var alias1=container.lambda, alias2=container.escapeExpression;
+},{"handlebars/runtime":73}],23:[function(require,module,exports){
+var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"1":function(container,depth0,helpers,partials,data) {
+    return "    <td>"
+    + container.escapeExpression(container.lambda((depth0 != null ? depth0.display_name : depth0), depth0))
+    + "</td>\n";
+},"3":function(container,depth0,helpers,partials,data) {
+    return "    <td>"
+    + container.escapeExpression(container.lambda((depth0 != null ? depth0.user_id : depth0), depth0))
+    + "</td>\n";
+},"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
+    var stack1;
 
-  return "<td>"
-    + alias2(alias1((depth0 != null ? depth0.user_id : depth0), depth0))
-    + "</td>\n<td>"
-    + alias2(alias1((depth0 != null ? depth0.score : depth0), depth0))
+  return ((stack1 = helpers["if"].call(depth0 != null ? depth0 : (container.nullContext || {}),(depth0 != null ? depth0.display_name : depth0),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.program(3, data, 0),"data":data})) != null ? stack1 : "")
+    + "<td>"
+    + container.escapeExpression(container.lambda((depth0 != null ? depth0.score : depth0), depth0))
     + "</td>\n";
 },"useData":true});
-},{"handlebars/runtime":69}],21:[function(require,module,exports){
+},{"handlebars/runtime":73}],24:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     return "<thead>\n    <th scope=\"col\">User Id</th>\n    <th scope=\"col\">Score</th>\n</thead>\n<tbody></tbody>\n";
 },"useData":true});
-},{"handlebars/runtime":69}],22:[function(require,module,exports){
+},{"handlebars/runtime":73}],25:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     var alias1=container.lambda, alias2=container.escapeExpression;
 
@@ -615,11 +732,11 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + alias2(alias1((depth0 != null ? depth0.is_admin : depth0), depth0))
     + "</td>\n";
 },"useData":true});
-},{"handlebars/runtime":69}],23:[function(require,module,exports){
+},{"handlebars/runtime":73}],26:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     return "<thead>\n    <th scope=\"col\">User Id</th>\n    <th scope=\"col\">Admin</th>\n</thead>\n<tbody></tbody>\n";
 },"useData":true});
-},{"handlebars/runtime":69}],24:[function(require,module,exports){
+},{"handlebars/runtime":73}],27:[function(require,module,exports){
 
 var Marionette = require('backbone.marionette');
 var Template = require('../templates/appLayout.handlebars');
@@ -639,11 +756,12 @@ module.exports = Marionette.View.extend({
         "click .nav-categories": "show:categories",
         "click .nav-picks": "show:picks",
         "click .nav-results": "show:results",
-        "click .nav-users": "show:users"
+        "click .nav-users": "show:users",
+        "click .navbar-brand": "show:home"
     }
 });
 
-},{"../templates/appLayout.handlebars":11,"backbone.marionette":47}],25:[function(require,module,exports){
+},{"../templates/appLayout.handlebars":13,"backbone.marionette":51}],28:[function(require,module,exports){
 'use strict';
 
 var CategoryRowView = require('../views/categoryRow');
@@ -684,7 +802,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/categories.handlebars":12,"../views/categoryRow":26,"backbone.marionette":47}],26:[function(require,module,exports){
+},{"../templates/categories.handlebars":14,"../views/categoryRow":29,"backbone.marionette":51}],29:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -704,7 +822,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/categoryRow.handlebars":13,"backbone.marionette":47}],27:[function(require,module,exports){
+},{"../templates/categoryRow.handlebars":15,"backbone.marionette":51}],30:[function(require,module,exports){
 'use strict';
 
 var EntryRowView = require('../views/entryRow');
@@ -745,7 +863,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/editCategory.handlebars":14,"../views/entryRow":29,"backbone.marionette":47}],28:[function(require,module,exports){
+},{"../templates/editCategory.handlebars":16,"../views/entryRow":32,"backbone.marionette":51}],31:[function(require,module,exports){
 'use strict';
 
 var EntryRowView = require('../views/pickEntryRow');
@@ -786,7 +904,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/editPick.handlebars":15,"../views/pickEntryRow":30,"backbone.marionette":47}],29:[function(require,module,exports){
+},{"../templates/editPick.handlebars":17,"../views/pickEntryRow":34,"backbone.marionette":51}],32:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -805,7 +923,31 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/entryRow.handlebars":16,"backbone.marionette":47}],30:[function(require,module,exports){
+},{"../templates/entryRow.handlebars":18,"backbone.marionette":51}],33:[function(require,module,exports){
+'use strict';
+
+var Marionette = require('backbone.marionette');
+var Template = require('../templates/home.handlebars');
+
+module.exports = Marionette.View.extend({
+
+    className: 'picks',
+
+    tagName: 'div',
+
+    template: Template,
+
+    triggers: {
+        "submit #update-displayname": "update:displayname",
+        "click #skip-home": "skip:home"
+    },
+
+    initialize: function (options) {
+        this.application = options.application;
+    }
+});
+
+},{"../templates/home.handlebars":19,"backbone.marionette":51}],34:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -825,7 +967,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/pickEntryRow.handlebars":17,"backbone.marionette":47}],31:[function(require,module,exports){
+},{"../templates/pickEntryRow.handlebars":20,"backbone.marionette":51}],35:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -866,7 +1008,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/pickRow.handlebars":18,"backbone.marionette":47}],32:[function(require,module,exports){
+},{"../templates/pickRow.handlebars":21,"backbone.marionette":51}],36:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -874,18 +1016,18 @@ var PickRowView = require('../views/pickRow');
 var Template = require('../templates/picks.handlebars');
 
 var TableBody = Marionette.CollectionView.extend({
-  
+
     childView: PickRowView,
-    
+
     tagName: 'div',
-    
-    childViewOptions: function(model, index) {
-       
+
+    childViewOptions: function () {
+
         var self = this;
 
         return {
             application: self.application
-        }
+        };
     },
 
     initialize: function (options) {
@@ -910,7 +1052,7 @@ module.exports = Marionette.View.extend({
     initialize: function (options) {
         this.application = options.application;
     },
-    
+
     onRender: function () {
         this.showChildView('list', new TableBody({
             application: this.application,
@@ -919,7 +1061,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/picks.handlebars":19,"../views/pickRow":31,"backbone.marionette":47}],33:[function(require,module,exports){
+},{"../templates/picks.handlebars":22,"../views/pickRow":35,"backbone.marionette":51}],37:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -933,7 +1075,7 @@ module.exports = Marionette.View.extend({
 
 });
 
-},{"../templates/resultRow.handlebars":20,"backbone.marionette":47}],34:[function(require,module,exports){
+},{"../templates/resultRow.handlebars":23,"backbone.marionette":51}],38:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -967,7 +1109,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/results.handlebars":21,"../views/resultRow":33,"backbone.marionette":47}],35:[function(require,module,exports){
+},{"../templates/results.handlebars":24,"../views/resultRow":37,"backbone.marionette":51}],39:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -981,7 +1123,7 @@ module.exports = Marionette.View.extend({
 
 });
 
-},{"../templates/userRow.handlebars":22,"backbone.marionette":47}],36:[function(require,module,exports){
+},{"../templates/userRow.handlebars":25,"backbone.marionette":51}],40:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -1015,7 +1157,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/users.handlebars":23,"../views/userRow":35,"backbone.marionette":47}],37:[function(require,module,exports){
+},{"../templates/users.handlebars":26,"../views/userRow":39,"backbone.marionette":51}],41:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -1045,7 +1187,7 @@ module.exports = Backbone.Collection.extend({
     }
 });
 
-},{"../models/category":42,"backbone":49}],38:[function(require,module,exports){
+},{"../models/category":46,"backbone":53}],42:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -1064,7 +1206,7 @@ module.exports = Backbone.Collection.extend({
     }
 });
 
-},{"../models/entry":43,"backbone":49}],39:[function(require,module,exports){
+},{"../models/entry":47,"backbone":53}],43:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -1102,7 +1244,7 @@ module.exports = Backbone.Collection.extend({
     }
 });
 
-},{"../models/pick":44,"backbone":49}],40:[function(require,module,exports){
+},{"../models/pick":48,"backbone":53}],44:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -1115,7 +1257,7 @@ module.exports = Backbone.Collection.extend({
     url: "/users"
 });
 
-},{"../models/result":45,"backbone":49}],41:[function(require,module,exports){
+},{"../models/result":49,"backbone":53}],45:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -1128,7 +1270,7 @@ module.exports = Backbone.Collection.extend({
     url: "/users"
 });
 
-},{"../models/user":46,"backbone":49}],42:[function(require,module,exports){
+},{"../models/user":50,"backbone":53}],46:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -1164,7 +1306,7 @@ module.exports = Backbone.Model.extend({
     }
 });
 
-},{"../collections/entries":38,"backbone":49,"moment":71}],43:[function(require,module,exports){
+},{"../collections/entries":42,"backbone":53,"moment":76}],47:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -1181,7 +1323,7 @@ module.exports = Backbone.Model.extend({
     }
 });
 
-},{"backbone":49}],44:[function(require,module,exports){
+},{"backbone":53}],48:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -1222,7 +1364,7 @@ module.exports = Backbone.Model.extend({
     }
 });
 
-},{"../collections/entries":38,"backbone":49,"moment":71}],45:[function(require,module,exports){
+},{"../collections/entries":42,"backbone":53,"moment":76}],49:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -1240,7 +1382,7 @@ module.exports = Backbone.Model.extend({
     }
 });
 
-},{"backbone":49,"moment":71}],46:[function(require,module,exports){
+},{"backbone":53,"moment":76}],50:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -1305,7 +1447,7 @@ module.exports = Backbone.Model.extend({
     }
 });
 
-},{"../collections/picks":39,"../models/pick":44,"backbone":49,"moment":71}],47:[function(require,module,exports){
+},{"../collections/picks":43,"../models/pick":48,"backbone":53,"moment":76}],51:[function(require,module,exports){
 /**
 * @license
 * MarionetteJS (Backbone.Marionette)
@@ -5965,7 +6107,7 @@ return Marionette;
 this && this.Marionette && (this.Mn = this.Marionette);
 
 
-},{"backbone":49,"backbone.radio":48,"underscore":73}],48:[function(require,module,exports){
+},{"backbone":53,"backbone.radio":52,"underscore":78}],52:[function(require,module,exports){
 // Backbone.Radio v2.0.0
 
 (function (global, factory) {
@@ -6316,7 +6458,7 @@ this && this.Marionette && (this.Mn = this.Marionette);
 
 }));
 
-},{"backbone":49,"underscore":73}],49:[function(require,module,exports){
+},{"backbone":53,"underscore":78}],53:[function(require,module,exports){
 (function (global){
 //     Backbone.js 1.3.3
 
@@ -8240,7 +8382,7 @@ this && this.Marionette && (this.Mn = this.Marionette);
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"jquery":70,"underscore":73}],50:[function(require,module,exports){
+},{"jquery":74,"underscore":78}],54:[function(require,module,exports){
 /*!
   * Bootstrap v4.0.0 (https://getbootstrap.com)
   * Copyright 2011-2018 The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)
@@ -12136,7 +12278,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 })));
 
 
-},{"jquery":70,"popper.js":72}],51:[function(require,module,exports){
+},{"jquery":74,"popper.js":77}],55:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12204,7 +12346,7 @@ exports['default'] = inst;
 module.exports = exports['default'];
 
 
-},{"./handlebars/base":52,"./handlebars/exception":55,"./handlebars/no-conflict":65,"./handlebars/runtime":66,"./handlebars/safe-string":67,"./handlebars/utils":68}],52:[function(require,module,exports){
+},{"./handlebars/base":56,"./handlebars/exception":59,"./handlebars/no-conflict":69,"./handlebars/runtime":70,"./handlebars/safe-string":71,"./handlebars/utils":72}],56:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12310,7 +12452,7 @@ exports.createFrame = _utils.createFrame;
 exports.logger = _logger2['default'];
 
 
-},{"./decorators":53,"./exception":55,"./helpers":56,"./logger":64,"./utils":68}],53:[function(require,module,exports){
+},{"./decorators":57,"./exception":59,"./helpers":60,"./logger":68,"./utils":72}],57:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12328,7 +12470,7 @@ function registerDefaultDecorators(instance) {
 }
 
 
-},{"./decorators/inline":54}],54:[function(require,module,exports){
+},{"./decorators/inline":58}],58:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12359,7 +12501,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":68}],55:[function(require,module,exports){
+},{"../utils":72}],59:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12415,7 +12557,7 @@ exports['default'] = Exception;
 module.exports = exports['default'];
 
 
-},{}],56:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12463,7 +12605,7 @@ function registerDefaultHelpers(instance) {
 }
 
 
-},{"./helpers/block-helper-missing":57,"./helpers/each":58,"./helpers/helper-missing":59,"./helpers/if":60,"./helpers/log":61,"./helpers/lookup":62,"./helpers/with":63}],57:[function(require,module,exports){
+},{"./helpers/block-helper-missing":61,"./helpers/each":62,"./helpers/helper-missing":63,"./helpers/if":64,"./helpers/log":65,"./helpers/lookup":66,"./helpers/with":67}],61:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12504,7 +12646,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":68}],58:[function(require,module,exports){
+},{"../utils":72}],62:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12600,7 +12742,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../exception":55,"../utils":68}],59:[function(require,module,exports){
+},{"../exception":59,"../utils":72}],63:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12627,7 +12769,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../exception":55}],60:[function(require,module,exports){
+},{"../exception":59}],64:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12658,7 +12800,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":68}],61:[function(require,module,exports){
+},{"../utils":72}],65:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12686,7 +12828,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{}],62:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12700,7 +12842,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{}],63:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12735,7 +12877,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":68}],64:[function(require,module,exports){
+},{"../utils":72}],68:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12784,7 +12926,7 @@ exports['default'] = logger;
 module.exports = exports['default'];
 
 
-},{"./utils":68}],65:[function(require,module,exports){
+},{"./utils":72}],69:[function(require,module,exports){
 (function (global){
 /* global window */
 'use strict';
@@ -12808,7 +12950,7 @@ module.exports = exports['default'];
 
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],66:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -13117,7 +13259,7 @@ function executeDecorators(fn, prog, container, depths, data, blockParams) {
 }
 
 
-},{"./base":52,"./exception":55,"./utils":68}],67:[function(require,module,exports){
+},{"./base":56,"./exception":59,"./utils":72}],71:[function(require,module,exports){
 // Build out our basic SafeString type
 'use strict';
 
@@ -13134,7 +13276,7 @@ exports['default'] = SafeString;
 module.exports = exports['default'];
 
 
-},{}],68:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -13260,12 +13402,12 @@ function appendContextPath(contextPath, id) {
 }
 
 
-},{}],69:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 // Create a simple path alias to allow browserify to resolve
 // the runtime on a supported path.
 module.exports = require('./dist/cjs/handlebars.runtime')['default'];
 
-},{"./dist/cjs/handlebars.runtime":51}],70:[function(require,module,exports){
+},{"./dist/cjs/handlebars.runtime":55}],74:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v3.3.1
  * https://jquery.com/
@@ -23631,7 +23773,174 @@ if ( !noGlobal ) {
 return jQuery;
 } );
 
-},{}],71:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
+/*!
+ * JavaScript Cookie v2.2.0
+ * https://github.com/js-cookie/js-cookie
+ *
+ * Copyright 2006, 2015 Klaus Hartl & Fagner Brack
+ * Released under the MIT license
+ */
+;(function (factory) {
+	var registeredInModuleLoader = false;
+	if (typeof define === 'function' && define.amd) {
+		define(factory);
+		registeredInModuleLoader = true;
+	}
+	if (typeof exports === 'object') {
+		module.exports = factory();
+		registeredInModuleLoader = true;
+	}
+	if (!registeredInModuleLoader) {
+		var OldCookies = window.Cookies;
+		var api = window.Cookies = factory();
+		api.noConflict = function () {
+			window.Cookies = OldCookies;
+			return api;
+		};
+	}
+}(function () {
+	function extend () {
+		var i = 0;
+		var result = {};
+		for (; i < arguments.length; i++) {
+			var attributes = arguments[ i ];
+			for (var key in attributes) {
+				result[key] = attributes[key];
+			}
+		}
+		return result;
+	}
+
+	function init (converter) {
+		function api (key, value, attributes) {
+			var result;
+			if (typeof document === 'undefined') {
+				return;
+			}
+
+			// Write
+
+			if (arguments.length > 1) {
+				attributes = extend({
+					path: '/'
+				}, api.defaults, attributes);
+
+				if (typeof attributes.expires === 'number') {
+					var expires = new Date();
+					expires.setMilliseconds(expires.getMilliseconds() + attributes.expires * 864e+5);
+					attributes.expires = expires;
+				}
+
+				// We're using "expires" because "max-age" is not supported by IE
+				attributes.expires = attributes.expires ? attributes.expires.toUTCString() : '';
+
+				try {
+					result = JSON.stringify(value);
+					if (/^[\{\[]/.test(result)) {
+						value = result;
+					}
+				} catch (e) {}
+
+				if (!converter.write) {
+					value = encodeURIComponent(String(value))
+						.replace(/%(23|24|26|2B|3A|3C|3E|3D|2F|3F|40|5B|5D|5E|60|7B|7D|7C)/g, decodeURIComponent);
+				} else {
+					value = converter.write(value, key);
+				}
+
+				key = encodeURIComponent(String(key));
+				key = key.replace(/%(23|24|26|2B|5E|60|7C)/g, decodeURIComponent);
+				key = key.replace(/[\(\)]/g, escape);
+
+				var stringifiedAttributes = '';
+
+				for (var attributeName in attributes) {
+					if (!attributes[attributeName]) {
+						continue;
+					}
+					stringifiedAttributes += '; ' + attributeName;
+					if (attributes[attributeName] === true) {
+						continue;
+					}
+					stringifiedAttributes += '=' + attributes[attributeName];
+				}
+				return (document.cookie = key + '=' + value + stringifiedAttributes);
+			}
+
+			// Read
+
+			if (!key) {
+				result = {};
+			}
+
+			// To prevent the for loop in the first place assign an empty array
+			// in case there are no cookies at all. Also prevents odd result when
+			// calling "get()"
+			var cookies = document.cookie ? document.cookie.split('; ') : [];
+			var rdecode = /(%[0-9A-Z]{2})+/g;
+			var i = 0;
+
+			for (; i < cookies.length; i++) {
+				var parts = cookies[i].split('=');
+				var cookie = parts.slice(1).join('=');
+
+				if (!this.json && cookie.charAt(0) === '"') {
+					cookie = cookie.slice(1, -1);
+				}
+
+				try {
+					var name = parts[0].replace(rdecode, decodeURIComponent);
+					cookie = converter.read ?
+						converter.read(cookie, name) : converter(cookie, name) ||
+						cookie.replace(rdecode, decodeURIComponent);
+
+					if (this.json) {
+						try {
+							cookie = JSON.parse(cookie);
+						} catch (e) {}
+					}
+
+					if (key === name) {
+						result = cookie;
+						break;
+					}
+
+					if (!key) {
+						result[name] = cookie;
+					}
+				} catch (e) {}
+			}
+
+			return result;
+		}
+
+		api.set = api;
+		api.get = function (key) {
+			return api.call(api, key);
+		};
+		api.getJSON = function () {
+			return api.apply({
+				json: true
+			}, [].slice.call(arguments));
+		};
+		api.defaults = {};
+
+		api.remove = function (key, attributes) {
+			api(key, '', extend(attributes, {
+				expires: -1
+			}));
+		};
+
+		api.withConverter = init;
+
+		return api;
+	}
+
+	return init(function () {});
+}));
+
+},{}],76:[function(require,module,exports){
 //! moment.js
 //! version : 2.20.1
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
@@ -28168,7 +28477,7 @@ return hooks;
 
 })));
 
-},{}],72:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 (function (global){
 /**!
  * @fileOverview Kickass library to create and place poppers near their reference elements.
@@ -30617,7 +30926,7 @@ return Popper;
 
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],73:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 //     Underscore.js 1.8.3
 //     http://underscorejs.org
 //     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -32167,4 +32476,4 @@ return Popper;
   }
 }.call(this));
 
-},{}]},{},[6]);
+},{}]},{},[7]);

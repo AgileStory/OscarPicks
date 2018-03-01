@@ -5,18 +5,18 @@ var PickRowView = require('../views/pickRow');
 var Template = require('../templates/picks.handlebars');
 
 var TableBody = Marionette.CollectionView.extend({
-  
+
     childView: PickRowView,
-    
+
     tagName: 'div',
-    
-    childViewOptions: function(model, index) {
-       
+
+    childViewOptions: function () {
+
         var self = this;
 
         return {
             application: self.application
-        }
+        };
     },
 
     initialize: function (options) {
@@ -41,7 +41,7 @@ module.exports = Marionette.View.extend({
     initialize: function (options) {
         this.application = options.application;
     },
-    
+
     onRender: function () {
         this.showChildView('list', new TableBody({
             application: this.application,

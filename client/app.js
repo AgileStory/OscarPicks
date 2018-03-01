@@ -7,6 +7,8 @@ var Backbone = require('backbone');
 var CategoriesCollection = require('../collections/categories');
 var CategoryController = require('./controllers/category');
 var CategoryRouter = require('./routers/category');
+var HomeController = require('./controllers/home');
+var HomeRouter = require('./routers/home');
 var Marionette = require('backbone.marionette');
 var PickController = require('./controllers/pick');
 var PickRouter = require('./routers/pick');
@@ -26,6 +28,9 @@ module.exports = Marionette.Application.extend({
 
         this.CategoryController = new CategoryController({ application: this });
         this.CategoryRouter = new CategoryRouter({ controller: this.CategoryController });
+
+        this.HomeController = new HomeController({ application: this });
+        this.HomeRouter = new HomeRouter({ controller: this.HomeController });
 
         this.PickController = new PickController({ application: this });
         this.PickRouter = new PickRouter({ controller: this.PickController });
@@ -56,6 +61,7 @@ module.exports = Marionette.Application.extend({
                         self.layout = new AppLayoutView({ model: self.userModel });
                         //self.listenTo(self.layout, "all", function (eventName) { console.log(eventName); });
                         self.listenTo(self.layout, "show:categories", function () { self.showCategoriesMainView(); });
+                        self.listenTo(self.layout, "show:home", function () { self.showHomeMainView(); });
                         self.listenTo(self.layout, "show:picks", function () { self.showPicksMainView(); });
                         self.listenTo(self.layout, "show:results", function () { self.showResultsMainView(); });
                         self.listenTo(self.layout, "show:users", function () { self.showUserMainView(); });
@@ -78,6 +84,10 @@ module.exports = Marionette.Application.extend({
 
     showDefaultMainView: function () {
         this.showPicksMainView();
+    },
+
+    showHomeMainView: function () {
+        this.HomeController.home();
     },
 
     showMainView: function (view) {

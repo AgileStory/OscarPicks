@@ -17,6 +17,7 @@ module.exports = Marionette.View.extend({
         "click .nav-categories": "show:categories",
         "click .nav-picks": "show:picks",
         "click .nav-results": "show:results",
-        "click .nav-users": "show:users"
+        "click .nav-users": "show:users",
+        "click .navbar-brand": "show:home"
     }
 });

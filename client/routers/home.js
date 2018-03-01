@@ -7,8 +7,8 @@ var Marionette = require('backbone.marionette');
 module.exports = Marionette.AppRouter.extend({
 
     appRoutes: {
-        'picks': 'list',
-        'pick/:id': 'edit'
+        '': 'default',
+        'home': 'home',
     },
 
     initialize: function (options) {

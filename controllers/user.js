@@ -46,6 +46,10 @@ module.exports = {
 
         if (req.userModel.get('_id').toString() === user.get('_id').toString()) {
 
+            if (user.has('display_name') && user.get('display_name') !== undefined) {
+                req.userModel.set('display_name', user.get('display_name'));
+            }
+
             req.userModel.set('picks', user.getPicks());
 
             userDataRepository.update(req.userModel, function (err, userModel) {

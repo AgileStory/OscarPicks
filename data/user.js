@@ -14,6 +14,7 @@ var PickSchema = new mongoose.Schema({
 });
 
 var UserSchema = new mongoose.Schema({
+    display_name: String,
     is_admin: { type: Boolean, default: false },
     last_accessed: { type: Date, default: Date.now },
     picks: [PickSchema],
