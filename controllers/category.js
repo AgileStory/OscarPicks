@@ -3,13 +3,14 @@
 
 var Category = require('../models/category');
 var repository = require('../data/category');
+var scoresController = require('../controllers/score');
 
 module.exports = {
 
     createCategory: function (req, res, next) {
 
         if (req.userModel.isAdmin() && !req.appIsLocked) {
-        
+
             var category = new Category(req.body);
 
             repository.create(category, function (err, categoryModel) {
@@ -84,8 +85,15 @@ module.exports = {
                 if (err) {
                     console.error(err);
                 } else {
-                    res.status(201).json(categoryModel.toJSON());
-                    next();
+
+                    scoresController.updateScores(function (updateError) {
+                        if (updateError) {
+                            console.error(updateError);
+                        } else {
+                            res.status(201).json(categoryModel.toJSON());
+                            next();
+                        }
+                    });
                 }
             });
         } else {

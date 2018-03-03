@@ -6,6 +6,7 @@ var Backbone = require('backbone');
 var moment = require('moment');
 var Pick = require('../models/pick');
 var PicksCollection = require('../collections/picks');
+var Score = require('../models/score');
 
 module.exports = Backbone.Model.extend({
 
@@ -38,6 +39,21 @@ module.exports = Backbone.Model.extend({
         }
 
         return this.get('picks');
+    },
+
+    getScore: function (categoriesCollection) {
+
+        var score = new Score();
+
+        if (this.has('display_name') && this.get('display_name') !== '') {
+            score.set('user_name', this.get('display_name'));
+        } else {
+            score.set('user_name', this.get('user_id'));
+        }
+
+        score.updateScore(this.getPicks(categoriesCollection), categoriesCollection);
+
+        return score;
     },
 
     initialize: function (options) {

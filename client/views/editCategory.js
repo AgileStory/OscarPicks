@@ -5,9 +5,9 @@ var Marionette = require('backbone.marionette');
 var Template = require('../templates/editCategory.handlebars');
 
 var TableBody = Marionette.CollectionView.extend({
-    
+
     childView: EntryRowView,
-    
+
     tagName: 'div',
 
     childViewOptions: function () {

@@ -15,6 +15,13 @@ module.exports = Backbone.Collection.extend({
         return model.get(this.sort_key);
     },
 
+    getWinningEntry: function (categoryId) {
+
+        var category = this.get(categoryId);
+
+        return category.getEntries().findWhere({ is_winner: true });
+    },
+
     populateEntryNamesMap: function (application) {
 
         application.entryNamesMap = {};

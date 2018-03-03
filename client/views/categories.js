@@ -7,7 +7,7 @@ var Template = require('../templates/categories.handlebars');
 var TableBody = Marionette.CollectionView.extend({
 
     childView: CategoryRowView,
-   
+
     tagName: 'div',
 
     initialize: function (options) {

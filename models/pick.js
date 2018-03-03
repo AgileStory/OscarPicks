@@ -35,5 +35,25 @@ module.exports = Backbone.Model.extend({
         });
 
         return entries;
+    },
+
+    getScore: function (categoriesCollection) {
+
+        var score, winningEntry;
+
+        winningEntry = categoriesCollection.getWinningEntry(this.id);
+
+        score = 0;
+
+        if (winningEntry !== undefined) {
+            if (winningEntry.id.toString() === this.get('first_pick_id')) {
+                score = score + 3;
+            }
+            if (winningEntry.id.toString() === this.get('second_pick_id')) {
+                score = score + 1;
+            }
+        }
+
+        return score;
     }
 });
