@@ -7,6 +7,7 @@ var app = require('./configure-express');
 var http = require('http');
 
 // routes
+require('./routes/application')(app);
 require('./routes/user')(app);
 require('./routes/category')(app);
 

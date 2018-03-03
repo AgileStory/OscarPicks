@@ -19,6 +19,6 @@
         </footer>
 
         <script src="<%= appJavascriptPath %>"></script>
-        <script type="text/javascript">window.userId = "<%= userModel.get('_id') %>";</script>
+        <script type="text/javascript">window.appIsLocked = <%= isLocked %>; window.userId = "<%= userModel.get('_id') %>";</script>
     </body>
 </html>

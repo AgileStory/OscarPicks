@@ -21,4 +21,13 @@
     </p>
     <hr/>
     <button id="skip-home" type="button" class="btn btn-primary mb-2">Skip this screen on future logins</button>
+    {{#if this.is_admin}}
+        {{#if this.is_locked}}
+            <hr/>
+            <button id="unlock" type="button" class="btn btn-primary mb-2">Unlock</button>
+        {{else}}
+            <hr/>
+            <button id="lock" type="button" class="btn btn-primary mb-2">Lock</button>
+        {{/if}}
+    {{/if}}
 </div>

@@ -26,7 +26,7 @@ function handler(title, appJavascriptPath) {
             return next();
         }
 
-        res.render('master', { title: title, userModel: req.userModel, appJavascriptPath: appJavascriptPath });
+        res.render('master', { title: title, isLocked: req.appIsLocked, userModel: req.userModel, appJavascriptPath: appJavascriptPath });
     };
 }
 

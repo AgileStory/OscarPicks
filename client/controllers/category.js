@@ -31,7 +31,7 @@ module.exports = Marionette.Object.extend({
 
         self.application.categories.sort();
 
-        view = new ListView({ collection: self.application.categories });
+        view = new ListView({ collection: self.application.categories, application: self.application });
 
         //self.listenTo(view, "all", function (eventName) { console.log(eventName); });
         self.listenTo(view, "add:category", function (child, e) { self._addCategory(child, e); });
@@ -127,13 +127,30 @@ module.exports = Marionette.Object.extend({
 
         self = this;
 
-        view = new EditView({ model: categoryModel });
+        view = new EditView({ model: categoryModel, application: self.application });
         //self.listenTo(view, "all", function (eventName) { console.log(eventName); });
         self.listenTo(view, "add:entry", function (child, e) { self._addEntry(child, e); });
         self.listenTo(view, "childview:childview:delete:entry", function (child) { self._deleteEntry(child.model, categoryModel); });
+        self.listenTo(view, "childview:childview:mark:winner", function (child) { self._markWinner(child.model, categoryModel); });
 
         self._showMainView(view);
         self._updateUrl('/category/' + categoryModel.id);
+    },
+
+    _markWinner: function (entryModel, categoryModel) {
+
+        var self = this;
+
+        categoryModel.getEntries().each(function (entry) {
+            entry.set('is_winner', entry.id === entryModel.id);
+        });
+
+        categoryModel.save(null, {
+            success: function (model) {
+                model = model || {};
+                self._editCategory(categoryModel);
+            }
+        });
     },
 
     _showMainView: function (view) {

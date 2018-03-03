@@ -1,3 +1,4 @@
+'use strict';
 
 var Marionette = require('backbone.marionette');
 var Template = require('../templates/appLayout.handlebars');
@@ -19,5 +20,18 @@ module.exports = Marionette.View.extend({
         "click .nav-results": "show:results",
         "click .nav-users": "show:users",
         "click .navbar-brand": "show:home"
+    },
+
+    initialize: function (options) {
+        this.application = options.application;
+    },
+
+    templateContext: function () {
+
+        var context = {};
+
+        context.is_locked = this.application.IsLocked;
+
+        return context;
     }
 });

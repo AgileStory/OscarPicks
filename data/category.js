@@ -10,6 +10,7 @@ mongoose.connect(mongoUrl);
 var EntrySchema = new mongoose.Schema({
     name: String,
     description: String,
+    is_winner: Boolean,
     sort_order: Number,
 });
 

@@ -1,6 +1,7 @@
 'use strict';
 /*jslint node: true, nomen: true */
 
+var applicationState = require('./middleware/application');
 var bodyParser = require('body-parser');
 var express = require('express');
 var favicon = require('serve-favicon');
@@ -27,6 +28,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 //app.use(express.methodOverride());
 
+app.use(applicationState);
 app.use(user);
 app.use(logging);
 

@@ -26,11 +26,10 @@ module.exports = Marionette.Application.extend({
 
     initialize: function () {
 
+        this.IsLocked = window.appIsLocked;
+
         this.CategoryController = new CategoryController({ application: this });
         this.CategoryRouter = new CategoryRouter({ controller: this.CategoryController });
-
-        this.HomeController = new HomeController({ application: this });
-        this.HomeRouter = new HomeRouter({ controller: this.HomeController });
 
         this.PickController = new PickController({ application: this });
         this.PickRouter = new PickRouter({ controller: this.PickController });
@@ -40,6 +39,9 @@ module.exports = Marionette.Application.extend({
 
         this.UserController = new UserController({ application: this });
         this.UserRouter = new UserRouter({ controller: this.UserController });
+
+        this.HomeController = new HomeController({ application: this });
+        this.HomeRouter = new HomeRouter({ controller: this.HomeController });
     },
 
     onBeforeStart: function () {
@@ -58,7 +60,7 @@ module.exports = Marionette.Application.extend({
 
                         self.categories.populateEntryNamesMap(self);
 
-                        self.layout = new AppLayoutView({ model: self.userModel });
+                        self.layout = new AppLayoutView({ model: self.userModel, application: self });
                         //self.listenTo(self.layout, "all", function (eventName) { console.log(eventName); });
                         self.listenTo(self.layout, "show:categories", function () { self.showCategoriesMainView(); });
                         self.listenTo(self.layout, "show:home", function () { self.showHomeMainView(); });

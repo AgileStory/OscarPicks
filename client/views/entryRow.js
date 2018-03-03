@@ -12,6 +12,20 @@ module.exports = Marionette.View.extend({
     template: Template,
 
     triggers: {
-        "click .delete-entry": "delete:entry"
+        "click .delete-entry": "delete:entry",
+        "click .mark-winner": "mark:winner"
+    },
+
+    initialize: function (options) {
+        this.application = options.application;
+    },
+
+    templateContext: function () {
+
+        var context = {};
+
+        context.is_locked = this.application.IsLocked;
+
+        return context;
     }
 });

@@ -13,10 +13,21 @@ module.exports = Marionette.View.extend({
 
     triggers: {
         "submit #update-displayname": "update:displayname",
-        "click #skip-home": "skip:home"
+        "click #skip-home": "skip:home",
+        "click #lock": "lock",
+        "click #unlock": "unlock"
     },
 
     initialize: function (options) {
         this.application = options.application;
+    },
+
+    templateContext: function () {
+
+        var context = {};
+
+        context.is_locked = this.application.IsLocked;
+
+        return context;
     }
 });

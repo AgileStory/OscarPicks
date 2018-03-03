@@ -1,5 +1,12 @@
 <div class="card-body">
     <h5 class="card-title">{{this.name}}</h5>
     <p class="card-text">{{this.description}}</p>
-    <a href="#" class="delete-entry btn btn-danger float-right">Delete</a>
+    {{#if this.is_winner}} 
+        <p class="card-text">Winner</p>
+    {{/if}}
+    {{#if this.is_locked}} 
+        <a href="#" class="mark-winner btn btn-danger float-right">Mark Winner</a>
+    {{else}}
+        <a href="#" class="delete-entry btn btn-danger float-right">Delete</a>
+    {{/if}}
 </div>
