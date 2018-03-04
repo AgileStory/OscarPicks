@@ -39,13 +39,16 @@ module.exports = Marionette.Object.extend({
 
         self = this;
 
-        view = new EditView({ model: model, application: self.application });
-        //self.listenTo(view, "all", function (eventName) { console.log(eventName); });
-        self.listenTo(view, "childview:childview:pick:first", function (child) { self._pick(child.model, 'first', model); });
-        self.listenTo(view, "childview:childview:pick:second", function (child) { self._pick(child.model, 'second', model); });
+        if (!self.application.IsLocked) {
 
-        self._showMainView(view);
-        self._updateUrl('/pick/' + model.id);
+            view = new EditView({ model: model, application: self.application });
+            //self.listenTo(view, "all", function (eventName) { console.log(eventName); });
+            self.listenTo(view, "childview:childview:pick:first", function (child) { self._pick(child.model, 'first', model); });
+            self.listenTo(view, "childview:childview:pick:second", function (child) { self._pick(child.model, 'second', model); });
+
+            self._showMainView(view);
+            self._updateUrl('/pick/' + model.id);
+        }
     },
 
     _pick: function (entryModel, pickType, pickModel) {

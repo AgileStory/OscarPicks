@@ -7,7 +7,7 @@ var Marionette = require('backbone.marionette');
 module.exports = Marionette.AppRouter.extend({
 
     appRoutes: {
-        'results': 'list'
+        'scores': 'list'
     },
 
     initialize: function (options) {

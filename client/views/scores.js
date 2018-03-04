@@ -1,11 +1,11 @@
 'use strict';
 
 var Marionette = require('backbone.marionette');
-var Template = require('../templates/results.handlebars');
-var ResultRowView = require('../views/resultRow');
+var ScoreRowView = require('../views/scoreRow');
+var Template = require('../templates/scores.handlebars');
 
 var TableBody = Marionette.CollectionView.extend({
-    childView: ResultRowView,
+    childView: ScoreRowView,
     tagName: 'tbody'
 });
 

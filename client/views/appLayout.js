@@ -17,7 +17,7 @@ module.exports = Marionette.View.extend({
     triggers: {
         "click .nav-categories": "show:categories",
         "click .nav-picks": "show:picks",
-        "click .nav-results": "show:results",
+        "click .nav-scores": "show:scores",
         "click .nav-users": "show:users",
         "click .navbar-brand": "show:home"
     },

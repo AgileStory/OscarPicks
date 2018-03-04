@@ -57,22 +57,17 @@ module.exports = {
 
         req = req || {};
 
-        if (req.userModel.isAdmin()) {
-            repository.list(function (err, categories) {
+        repository.list(function (err, categories) {
 
-                if (err) {
-                    console.error(err);
-                } else {
+            if (err) {
+                console.error(err);
+            } else {
 
-                    res.json(categories);
+                res.json(categories);
 
-                    next();
-                }
-            });
-        } else {
-            res.status(403).send('Only admins can manage categories');
-            next();
-        }
+                next();
+            }
+        });
     },
 
     updateCategory: function (req, res, next) {

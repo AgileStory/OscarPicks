@@ -44,28 +44,33 @@ module.exports = {
 
         var user = new UserModel(req.body);
 
-        if (req.userModel.get('_id').toString() === user.get('_id').toString()) {
+        if (!req.appIsLocked) {
+            if (req.userModel.get('_id').toString() === user.get('_id').toString()) {
 
-            if (user.has('display_name') && user.get('display_name') !== undefined) {
-                req.userModel.set('display_name', user.get('display_name'));
-            }
-
-            req.userModel.set('picks', user.getPicks());
-
-            userDataRepository.update(req.userModel, function (err, userModel) {
-
-                if (err) {
-                    console.error(err);
-                    next();
-                } else {
-                    res.status(201).json(userModel.toJSON());
-                    next();
+                if (user.has('display_name') && user.get('display_name') !== undefined) {
+                    req.userModel.set('display_name', user.get('display_name'));
                 }
-            });
 
+                req.userModel.set('picks', user.getPicks());
+
+                userDataRepository.update(req.userModel, function (err, userModel) {
+
+                    if (err) {
+                        console.error(err);
+                        next();
+                    } else {
+                        res.status(201).json(userModel.toJSON());
+                        next();
+                    }
+                });
+
+            } else {
+                console.error('user id did not match authorized user');
+                res.status(403).send('Users can only edit their own information');
+                next();
+            }
         } else {
-            console.error('user id did not match authorized user');
-            res.status(403).send('Users can only edit their own information');
+            res.status(403).send('Users cannot update picks while app is locked');
             next();
         }
     }

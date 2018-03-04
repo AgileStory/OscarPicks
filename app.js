@@ -10,6 +10,7 @@ var http = require('http');
 require('./routes/application')(app);
 require('./routes/user')(app);
 require('./routes/category')(app);
+require('./routes/score')(app);
 
 // api endpoinds
 //require('./source/api/auth')(app);

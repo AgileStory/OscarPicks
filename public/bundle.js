@@ -13,8 +13,8 @@ var HomeRouter = require('./routers/home');
 var Marionette = require('backbone.marionette');
 var PickController = require('./controllers/pick');
 var PickRouter = require('./routers/pick');
-var ResultController = require('./controllers/result');
-var ResultRouter = require('./routers/result');
+var ScoreController = require('./controllers/score');
+var ScoreRouter = require('./routers/score');
 var UserController = require('./controllers/user');
 var UserRouter = require('./routers/user');
 var UserModel = require('../models/user');
@@ -35,8 +35,8 @@ module.exports = Marionette.Application.extend({
         this.PickController = new PickController({ application: this });
         this.PickRouter = new PickRouter({ controller: this.PickController });
 
-        this.ResultController = new ResultController({ application: this });
-        this.ResultRouter = new ResultRouter({ controller: this.ResultController });
+        this.ScoreController = new ScoreController({ application: this });
+        this.ScoreRouter = new ScoreRouter({ controller: this.ScoreController });
 
         this.UserController = new UserController({ application: this });
         this.UserRouter = new UserRouter({ controller: this.UserController });
@@ -66,7 +66,7 @@ module.exports = Marionette.Application.extend({
                         self.listenTo(self.layout, "show:categories", function () { self.showCategoriesMainView(); });
                         self.listenTo(self.layout, "show:home", function () { self.showHomeMainView(); });
                         self.listenTo(self.layout, "show:picks", function () { self.showPicksMainView(); });
-                        self.listenTo(self.layout, "show:results", function () { self.showResultsMainView(); });
+                        self.listenTo(self.layout, "show:scores", function () { self.showScoresMainView(); });
                         self.listenTo(self.layout, "show:users", function () { self.showUserMainView(); });
                         self.listenTo(self.layout, "render", function () {
 
@@ -101,8 +101,8 @@ module.exports = Marionette.Application.extend({
         this.PickController.list();
     },
 
-    showResultsMainView: function () {
-        this.ResultController.list();
+    showScoresMainView: function () {
+        this.ScoreController.list();
     },
 
     showUserMainView: function () {
@@ -110,7 +110,7 @@ module.exports = Marionette.Application.extend({
     }
 });
 
-},{"../collections/categories":41,"../models/user":52,"./controllers/category":2,"./controllers/home":3,"./controllers/pick":4,"./controllers/result":5,"./controllers/user":6,"./routers/category":8,"./routers/home":9,"./routers/pick":10,"./routers/result":11,"./routers/user":12,"./views/appLayout":27,"backbone":55,"backbone.marionette":53}],2:[function(require,module,exports){
+},{"../collections/categories":41,"../models/user":51,"./controllers/category":2,"./controllers/home":3,"./controllers/pick":4,"./controllers/score":5,"./controllers/user":6,"./routers/category":8,"./routers/home":9,"./routers/pick":10,"./routers/score":11,"./routers/user":12,"./views/appLayout":27,"backbone":54,"backbone.marionette":52}],2:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -275,7 +275,7 @@ module.exports = Marionette.Object.extend({
     }
 });
 
-},{"../../collections/categories":41,"../../models/category":47,"../../models/entry":48,"../views/categories":28,"../views/editCategory":30,"backbone.marionette":53,"underscore":80}],3:[function(require,module,exports){
+},{"../../collections/categories":41,"../../models/category":47,"../../models/entry":48,"../views/categories":28,"../views/editCategory":30,"backbone.marionette":52,"underscore":79}],3:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -364,7 +364,7 @@ module.exports = Marionette.Object.extend({
     }
 });
 
-},{"../../models/application":46,"../views/home":33,"backbone.marionette":53,"js-cookie":77}],4:[function(require,module,exports){
+},{"../../models/application":46,"../views/home":33,"backbone.marionette":52,"js-cookie":76}],4:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -406,13 +406,16 @@ module.exports = Marionette.Object.extend({
 
         self = this;
 
-        view = new EditView({ model: model, application: self.application });
-        //self.listenTo(view, "all", function (eventName) { console.log(eventName); });
-        self.listenTo(view, "childview:childview:pick:first", function (child) { self._pick(child.model, 'first', model); });
-        self.listenTo(view, "childview:childview:pick:second", function (child) { self._pick(child.model, 'second', model); });
+        if (!self.application.IsLocked) {
 
-        self._showMainView(view);
-        self._updateUrl('/pick/' + model.id);
+            view = new EditView({ model: model, application: self.application });
+            //self.listenTo(view, "all", function (eventName) { console.log(eventName); });
+            self.listenTo(view, "childview:childview:pick:first", function (child) { self._pick(child.model, 'first', model); });
+            self.listenTo(view, "childview:childview:pick:second", function (child) { self._pick(child.model, 'second', model); });
+
+            self._showMainView(view);
+            self._updateUrl('/pick/' + model.id);
+        }
     },
 
     _pick: function (entryModel, pickType, pickModel) {
@@ -437,14 +440,14 @@ module.exports = Marionette.Object.extend({
     }
 });
 
-},{"../../collections/picks":43,"../views/editPick":31,"../views/picks":36,"backbone.marionette":53}],5:[function(require,module,exports){
+},{"../../collections/picks":43,"../views/editPick":31,"../views/picks":36,"backbone.marionette":52}],5:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
 
-var ListView = require('../views/results');
+var ListView = require('../views/scores');
 var Marionette = require('backbone.marionette');
-var Results = require('../../collections/results');
+var Scores = require('../../collections/scores');
 
 module.exports = Marionette.Object.extend({
 
@@ -454,19 +457,19 @@ module.exports = Marionette.Object.extend({
 
     list: function () {
 
-        var self, results, view;
+        var self, scores, view;
 
         self = this;
 
-        results = new Results();
+        scores = new Scores();
 
-        results.fetch({
+        scores.fetch({
             success: function (collection) {
 
                 view = new ListView({ collection: collection });
 
                 self._showMainView(view);
-                self._updateUrl('/results');
+                self._updateUrl('/scores');
             }
         });
     },
@@ -476,11 +479,11 @@ module.exports = Marionette.Object.extend({
     },
 
     _updateUrl: function (url) {
-        this.application.ResultRouter.navigate(url);
+        this.application.ScoreRouter.navigate(url);
     }
 });
 
-},{"../../collections/results":44,"../views/results":38,"backbone.marionette":53}],6:[function(require,module,exports){
+},{"../../collections/scores":44,"../views/scores":38,"backbone.marionette":52}],6:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -523,7 +526,7 @@ module.exports = Marionette.Object.extend({
     }
 });
 
-},{"../../collections/users":45,"../views/users":40,"backbone.marionette":53}],7:[function(require,module,exports){
+},{"../../collections/users":45,"../views/users":40,"backbone.marionette":52}],7:[function(require,module,exports){
 'use strict';
 
 /*jslint browser: true, nomen: true */
@@ -542,7 +545,7 @@ window.$(document).ready(function () {
     app.start();
 });
 
-},{"./app.js":1,"bootstrap":56,"jquery":76,"popper.js":79,"underscore":80}],8:[function(require,module,exports){
+},{"./app.js":1,"bootstrap":55,"jquery":75,"popper.js":78,"underscore":79}],8:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -561,7 +564,7 @@ module.exports = Marionette.AppRouter.extend({
     }
 });
 
-},{"backbone.marionette":53}],9:[function(require,module,exports){
+},{"backbone.marionette":52}],9:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -580,7 +583,7 @@ module.exports = Marionette.AppRouter.extend({
     }
 });
 
-},{"backbone.marionette":53}],10:[function(require,module,exports){
+},{"backbone.marionette":52}],10:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -599,7 +602,7 @@ module.exports = Marionette.AppRouter.extend({
     }
 });
 
-},{"backbone.marionette":53}],11:[function(require,module,exports){
+},{"backbone.marionette":52}],11:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -609,7 +612,7 @@ var Marionette = require('backbone.marionette');
 module.exports = Marionette.AppRouter.extend({
 
     appRoutes: {
-        'results': 'list'
+        'scores': 'list'
     },
 
     initialize: function (options) {
@@ -617,7 +620,7 @@ module.exports = Marionette.AppRouter.extend({
     }
 });
 
-},{"backbone.marionette":53}],12:[function(require,module,exports){
+},{"backbone.marionette":52}],12:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -635,26 +638,21 @@ module.exports = Marionette.AppRouter.extend({
     }
 });
 
-},{"backbone.marionette":53}],13:[function(require,module,exports){
+},{"backbone.marionette":52}],13:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"1":function(container,depth0,helpers,partials,data) {
-    var stack1;
-
-  return ((stack1 = helpers["if"].call(depth0 != null ? depth0 : (container.nullContext || {}),(depth0 != null ? depth0.is_locked : depth0),{"name":"if","hash":{},"fn":container.program(2, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
-    + "                <li class=\"nav-item nav-categories\">\n                    <a class=\"nav-link \" href=\"#\">Categories</a>\n                </li>\n";
-},"2":function(container,depth0,helpers,partials,data) {
-    return "                    <li class=\"nav-item nav-answers\">\n                        <a class=\"nav-link \" href=\"#\">Answers</a>\n                    </li>\n";
+    return "                <li class=\"nav-item nav-categories\">\n                    <a class=\"nav-link \" href=\"#\">Categories</a>\n                </li>\n";
 },"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     var stack1;
 
-  return "\n<header id=\"header\" class=\"navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar bg-dark\">\n\n    <a class=\"navbar-brand mr-0 mr-md-2\" href=\"/\" aria-label=\"Oscar Picks\">Oscar Picks</a>\n\n    <div class=\"navbar-nav-scroll\">\n        <ul class=\"navbar-nav bd-navbar-nav flex-row\">\n            <li class=\"nav-item nav-picks\">\n                <a class=\"nav-link \" href=\"#\">Picks</a>\n            </li>\n            <li class=\"nav-item nav-results\">\n                <a class=\"nav-link \" href=\"#\">Results</a>\n            </li>\n"
+  return "\n<header id=\"header\" class=\"navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar bg-dark\">\n\n    <a class=\"navbar-brand mr-0 mr-md-2\" href=\"/\" aria-label=\"Oscar Picks\">Oscar Picks</a>\n\n    <div class=\"navbar-nav-scroll\">\n        <ul class=\"navbar-nav bd-navbar-nav flex-row\">\n            <li class=\"nav-item nav-picks\">\n                <a class=\"nav-link \" href=\"#\">Picks</a>\n            </li>\n            <li class=\"nav-item nav-scores\">\n                <a class=\"nav-link \" href=\"#\">Scores</a>\n            </li>\n"
     + ((stack1 = helpers["if"].call(depth0 != null ? depth0 : (container.nullContext || {}),(depth0 != null ? depth0.is_admin : depth0),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
     + "        </ul>\n    </div>\n</header>\n\n<div id=\"main\" class=\"container\">\n</div>\n\n";
 },"useData":true});
-},{"handlebars/runtime":75}],14:[function(require,module,exports){
+},{"handlebars/runtime":74}],14:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     return "\n<div id=\"category-list\"></div>\n<div id=\"new-entry\" class=\"mt-3\">\n\n    <form id=\"add-category\">\n        <div class=\"form-row align-items-center\">\n            <div class=\"col-auto\">\n                <label class=\"sr-only\" for=\"category-name\">Name</label>\n                <input type=\"text\" class=\"form-control mb-2\" id=\"category-name\" name=\"category-name\" placeholder=\"Category Name\">\n            </div>\n            <div class=\"col-auto\">\n                <button type=\"submit\" class=\"btn btn-primary mb-2\">Add Category</button>\n            </div>\n        </div>\n    </form>\n\n</div>\n";
 },"useData":true});
-},{"handlebars/runtime":75}],15:[function(require,module,exports){
+},{"handlebars/runtime":74}],15:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     var alias1=container.lambda, alias2=container.escapeExpression;
 
@@ -664,19 +662,19 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + alias2(alias1((depth0 != null ? depth0.sort_order : depth0), depth0))
     + " card's content.</p>-->\n    <a href=\"#\" class=\"delete-category btn btn-danger float-right\">Delete</a>\n</div>\n";
 },"useData":true});
-},{"handlebars/runtime":75}],16:[function(require,module,exports){
+},{"handlebars/runtime":74}],16:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     return "<h5 class=\"mt-3\">"
     + container.escapeExpression(container.lambda((depth0 != null ? depth0.name : depth0), depth0))
     + "</h5>\n<div id=\"entry-list\"></div>\n<div id=\"new-entry\" class=\"mt-3\">\n\n    <form id=\"add-entry\">\n        <div class=\"form-row align-items-center\">\n            <div class=\"col-auto\">\n                <label class=\"sr-only\" for=\"entry-name\">Name</label>\n                <input type=\"text\" class=\"form-control mb-2\" id=\"entry-name\" name=\"entry-name\" placeholder=\"Entry Name\">\n            </div>\n            <div class=\"col-auto\">\n                <label class=\"sr-only\" for=\"entry-description\">Description</label>\n                <input type=\"text\" class=\"form-control mb-2\" id=\"entry-description\" name=\"entry-description\" placeholder=\"Description\">\n            </div>\n            <div class=\"col-auto\">\n                <button type=\"submit\" class=\"btn btn-primary mb-2\">Add Entry</button>\n            </div>\n        </div>\n    </form>\n\n</div>\n";
 },"useData":true});
-},{"handlebars/runtime":75}],17:[function(require,module,exports){
+},{"handlebars/runtime":74}],17:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     return "<h5 class=\"mt-3\">"
     + container.escapeExpression(container.lambda((depth0 != null ? depth0.name : depth0), depth0))
     + "</h5>\n<div id=\"entry-list\" class=\"mb-3\"></div>\n";
 },"useData":true});
-},{"handlebars/runtime":75}],18:[function(require,module,exports){
+},{"handlebars/runtime":74}],18:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"1":function(container,depth0,helpers,partials,data) {
     return "        <p class=\"card-text\">Winner</p>\n";
 },"3":function(container,depth0,helpers,partials,data) {
@@ -695,7 +693,7 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + ((stack1 = helpers["if"].call(alias3,(depth0 != null ? depth0.is_locked : depth0),{"name":"if","hash":{},"fn":container.program(3, data, 0),"inverse":container.program(5, data, 0),"data":data})) != null ? stack1 : "")
     + "</div>\n";
 },"useData":true});
-},{"handlebars/runtime":75}],19:[function(require,module,exports){
+},{"handlebars/runtime":74}],19:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"1":function(container,depth0,helpers,partials,data) {
     return "                    <input type=\"text\" class=\"form-control mb-2\" id=\"display-name\" name=\"display-name\" value=\""
     + container.escapeExpression(container.lambda((depth0 != null ? depth0.display_name : depth0), depth0))
@@ -721,7 +719,7 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.is_admin : depth0),{"name":"if","hash":{},"fn":container.program(5, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
     + "</div>\n";
 },"useData":true});
-},{"handlebars/runtime":75}],20:[function(require,module,exports){
+},{"handlebars/runtime":74}],20:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"1":function(container,depth0,helpers,partials,data) {
     return "btn-primary";
 },"3":function(container,depth0,helpers,partials,data) {
@@ -739,7 +737,7 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + alias3(alias2((depth0 != null ? depth0.description : depth0), depth0))
     + "</p>\n        </div>\n    </div>\n</div>\n";
 },"useData":true});
-},{"handlebars/runtime":75}],21:[function(require,module,exports){
+},{"handlebars/runtime":74}],21:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"1":function(container,depth0,helpers,partials,data) {
     return "            <span class=\"badge badge-primary text-center\">4</span><span class=\"pl-1 pt-1\">"
     + container.escapeExpression(container.lambda((depth0 != null ? depth0.combined_pick_name : depth0), depth0))
@@ -763,32 +761,25 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.second_pick_name : depth0),{"name":"if","hash":{},"fn":container.program(5, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
     + "    </p>\n</div>\n";
 },"useData":true});
-},{"handlebars/runtime":75}],22:[function(require,module,exports){
+},{"handlebars/runtime":74}],22:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     return "\n<div id=\"pick-list\"></div>\n";
 },"useData":true});
-},{"handlebars/runtime":75}],23:[function(require,module,exports){
-var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"1":function(container,depth0,helpers,partials,data) {
-    return "    <td>"
-    + container.escapeExpression(container.lambda((depth0 != null ? depth0.display_name : depth0), depth0))
-    + "</td>\n";
-},"3":function(container,depth0,helpers,partials,data) {
-    return "    <td>"
-    + container.escapeExpression(container.lambda((depth0 != null ? depth0.user_id : depth0), depth0))
-    + "</td>\n";
-},"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
-    var stack1;
-
-  return ((stack1 = helpers["if"].call(depth0 != null ? depth0 : (container.nullContext || {}),(depth0 != null ? depth0.display_name : depth0),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.program(3, data, 0),"data":data})) != null ? stack1 : "")
-    + "<td>"
-    + container.escapeExpression(container.lambda((depth0 != null ? depth0.score : depth0), depth0))
-    + "</td>\n";
-},"useData":true});
-},{"handlebars/runtime":75}],24:[function(require,module,exports){
+},{"handlebars/runtime":74}],23:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
-    return "<thead>\n    <th scope=\"col\">User Id</th>\n    <th scope=\"col\">Score</th>\n</thead>\n<tbody></tbody>\n";
+    var alias1=container.lambda, alias2=container.escapeExpression;
+
+  return "<td>"
+    + alias2(alias1((depth0 != null ? depth0.user_name : depth0), depth0))
+    + "</td>\n<td>"
+    + alias2(alias1((depth0 != null ? depth0.score : depth0), depth0))
+    + "</td>\n";
 },"useData":true});
-},{"handlebars/runtime":75}],25:[function(require,module,exports){
+},{"handlebars/runtime":74}],24:[function(require,module,exports){
+var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
+    return "<thead>\n    <th scope=\"col\">User</th>\n    <th scope=\"col\">Score</th>\n</thead>\n<tbody></tbody>\n";
+},"useData":true});
+},{"handlebars/runtime":74}],25:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     var alias1=container.lambda, alias2=container.escapeExpression;
 
@@ -798,11 +789,11 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + alias2(alias1((depth0 != null ? depth0.is_admin : depth0), depth0))
     + "</td>\n";
 },"useData":true});
-},{"handlebars/runtime":75}],26:[function(require,module,exports){
+},{"handlebars/runtime":74}],26:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     return "<thead>\n    <th scope=\"col\">User Id</th>\n    <th scope=\"col\">Admin</th>\n</thead>\n<tbody></tbody>\n";
 },"useData":true});
-},{"handlebars/runtime":75}],27:[function(require,module,exports){
+},{"handlebars/runtime":74}],27:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -822,7 +813,7 @@ module.exports = Marionette.View.extend({
     triggers: {
         "click .nav-categories": "show:categories",
         "click .nav-picks": "show:picks",
-        "click .nav-results": "show:results",
+        "click .nav-scores": "show:scores",
         "click .nav-users": "show:users",
         "click .navbar-brand": "show:home"
     },
@@ -841,7 +832,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/appLayout.handlebars":13,"backbone.marionette":53}],28:[function(require,module,exports){
+},{"../templates/appLayout.handlebars":13,"backbone.marionette":52}],28:[function(require,module,exports){
 'use strict';
 
 var CategoryRowView = require('../views/categoryRow');
@@ -902,7 +893,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/categories.handlebars":14,"../views/categoryRow":29,"backbone.marionette":53}],29:[function(require,module,exports){
+},{"../templates/categories.handlebars":14,"../views/categoryRow":29,"backbone.marionette":52}],29:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -922,7 +913,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/categoryRow.handlebars":15,"backbone.marionette":53}],30:[function(require,module,exports){
+},{"../templates/categoryRow.handlebars":15,"backbone.marionette":52}],30:[function(require,module,exports){
 'use strict';
 
 var EntryRowView = require('../views/entryRow');
@@ -992,7 +983,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/editCategory.handlebars":16,"../views/entryRow":32,"backbone.marionette":53}],31:[function(require,module,exports){
+},{"../templates/editCategory.handlebars":16,"../views/entryRow":32,"backbone.marionette":52}],31:[function(require,module,exports){
 'use strict';
 
 var EntryRowView = require('../views/pickEntryRow');
@@ -1033,7 +1024,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/editPick.handlebars":17,"../views/pickEntryRow":34,"backbone.marionette":53}],32:[function(require,module,exports){
+},{"../templates/editPick.handlebars":17,"../views/pickEntryRow":34,"backbone.marionette":52}],32:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -1066,7 +1057,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/entryRow.handlebars":18,"backbone.marionette":53}],33:[function(require,module,exports){
+},{"../templates/entryRow.handlebars":18,"backbone.marionette":52}],33:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -1101,7 +1092,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/home.handlebars":19,"backbone.marionette":53}],34:[function(require,module,exports){
+},{"../templates/home.handlebars":19,"backbone.marionette":52}],34:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -1121,7 +1112,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/pickEntryRow.handlebars":20,"backbone.marionette":53}],35:[function(require,module,exports){
+},{"../templates/pickEntryRow.handlebars":20,"backbone.marionette":52}],35:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -1162,7 +1153,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/pickRow.handlebars":21,"backbone.marionette":53}],36:[function(require,module,exports){
+},{"../templates/pickRow.handlebars":21,"backbone.marionette":52}],36:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -1215,11 +1206,11 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/picks.handlebars":22,"../views/pickRow":35,"backbone.marionette":53}],37:[function(require,module,exports){
+},{"../templates/picks.handlebars":22,"../views/pickRow":35,"backbone.marionette":52}],37:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
-var Template = require('../templates/resultRow.handlebars');
+var Template = require('../templates/scoreRow.handlebars');
 
 module.exports = Marionette.View.extend({
 
@@ -1229,15 +1220,15 @@ module.exports = Marionette.View.extend({
 
 });
 
-},{"../templates/resultRow.handlebars":23,"backbone.marionette":53}],38:[function(require,module,exports){
+},{"../templates/scoreRow.handlebars":23,"backbone.marionette":52}],38:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
-var Template = require('../templates/results.handlebars');
-var ResultRowView = require('../views/resultRow');
+var ScoreRowView = require('../views/scoreRow');
+var Template = require('../templates/scores.handlebars');
 
 var TableBody = Marionette.CollectionView.extend({
-    childView: ResultRowView,
+    childView: ScoreRowView,
     tagName: 'tbody'
 });
 
@@ -1263,7 +1254,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/results.handlebars":24,"../views/resultRow":37,"backbone.marionette":53}],39:[function(require,module,exports){
+},{"../templates/scores.handlebars":24,"../views/scoreRow":37,"backbone.marionette":52}],39:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -1277,7 +1268,7 @@ module.exports = Marionette.View.extend({
 
 });
 
-},{"../templates/userRow.handlebars":25,"backbone.marionette":53}],40:[function(require,module,exports){
+},{"../templates/userRow.handlebars":25,"backbone.marionette":52}],40:[function(require,module,exports){
 'use strict';
 
 var Marionette = require('backbone.marionette');
@@ -1311,7 +1302,7 @@ module.exports = Marionette.View.extend({
     }
 });
 
-},{"../templates/users.handlebars":26,"../views/userRow":39,"backbone.marionette":53}],41:[function(require,module,exports){
+},{"../templates/users.handlebars":26,"../views/userRow":39,"backbone.marionette":52}],41:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -1348,7 +1339,7 @@ module.exports = Backbone.Collection.extend({
     }
 });
 
-},{"../models/category":47,"backbone":55}],42:[function(require,module,exports){
+},{"../models/category":47,"backbone":54}],42:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -1367,7 +1358,7 @@ module.exports = Backbone.Collection.extend({
     }
 });
 
-},{"../models/entry":48,"backbone":55}],43:[function(require,module,exports){
+},{"../models/entry":48,"backbone":54}],43:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -1405,20 +1396,26 @@ module.exports = Backbone.Collection.extend({
     }
 });
 
-},{"../models/pick":49,"backbone":55}],44:[function(require,module,exports){
+},{"../models/pick":49,"backbone":54}],44:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
-var Result = require('../models/result');
+var Score = require('../models/score');
 
 module.exports = Backbone.Collection.extend({
 
-    model:  Result,
+    model:  Score,
 
-    url: "/users"
+    sort_key: 'score',
+
+    url: "/scores",
+
+    comparator: function (model) {
+        return -1 * model.get(this.sort_key);
+    }
 });
 
-},{"../models/result":50,"backbone":55}],45:[function(require,module,exports){
+},{"../models/score":50,"backbone":54}],45:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -1431,7 +1428,7 @@ module.exports = Backbone.Collection.extend({
     url: "/users"
 });
 
-},{"../models/user":52,"backbone":55}],46:[function(require,module,exports){
+},{"../models/user":51,"backbone":54}],46:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -1465,7 +1462,7 @@ module.exports = Backbone.Model.extend({
     }
 });
 
-},{"backbone":55}],47:[function(require,module,exports){
+},{"backbone":54}],47:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -1501,7 +1498,7 @@ module.exports = Backbone.Model.extend({
     }
 });
 
-},{"../collections/entries":42,"backbone":55,"moment":78}],48:[function(require,module,exports){
+},{"../collections/entries":42,"backbone":54,"moment":77}],48:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -1518,7 +1515,7 @@ module.exports = Backbone.Model.extend({
     }
 });
 
-},{"backbone":55}],49:[function(require,module,exports){
+},{"backbone":54}],49:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -1579,25 +1576,7 @@ module.exports = Backbone.Model.extend({
     }
 });
 
-},{"../collections/entries":42,"backbone":55,"moment":78}],50:[function(require,module,exports){
-'use strict';
-
-var Backbone = require('backbone');
-var moment = require('moment');
-
-module.exports = Backbone.Model.extend({
-
-    idAttribute: "_id",
-
-    urlRoot: "/users",
-
-    displayTime: function (attributeName) {
-
-        return moment(this.get(attributeName)).format();
-    }
-});
-
-},{"backbone":55,"moment":78}],51:[function(require,module,exports){
+},{"../collections/entries":42,"backbone":54,"moment":77}],50:[function(require,module,exports){
 'use strict';
 
 var Backbone = require('backbone');
@@ -1625,7 +1604,7 @@ module.exports = Backbone.Model.extend({
     }
 });
 
-},{"backbone":55}],52:[function(require,module,exports){
+},{"backbone":54}],51:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -1706,7 +1685,7 @@ module.exports = Backbone.Model.extend({
     }
 });
 
-},{"../collections/picks":43,"../models/pick":49,"../models/score":51,"backbone":55,"moment":78}],53:[function(require,module,exports){
+},{"../collections/picks":43,"../models/pick":49,"../models/score":50,"backbone":54,"moment":77}],52:[function(require,module,exports){
 /**
 * @license
 * MarionetteJS (Backbone.Marionette)
@@ -6366,7 +6345,7 @@ return Marionette;
 this && this.Marionette && (this.Mn = this.Marionette);
 
 
-},{"backbone":55,"backbone.radio":54,"underscore":80}],54:[function(require,module,exports){
+},{"backbone":54,"backbone.radio":53,"underscore":79}],53:[function(require,module,exports){
 // Backbone.Radio v2.0.0
 
 (function (global, factory) {
@@ -6717,7 +6696,7 @@ this && this.Marionette && (this.Mn = this.Marionette);
 
 }));
 
-},{"backbone":55,"underscore":80}],55:[function(require,module,exports){
+},{"backbone":54,"underscore":79}],54:[function(require,module,exports){
 (function (global){
 //     Backbone.js 1.3.3
 
@@ -8641,7 +8620,7 @@ this && this.Marionette && (this.Mn = this.Marionette);
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"jquery":76,"underscore":80}],56:[function(require,module,exports){
+},{"jquery":75,"underscore":79}],55:[function(require,module,exports){
 /*!
   * Bootstrap v4.0.0 (https://getbootstrap.com)
   * Copyright 2011-2018 The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)
@@ -12537,7 +12516,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 })));
 
 
-},{"jquery":76,"popper.js":79}],57:[function(require,module,exports){
+},{"jquery":75,"popper.js":78}],56:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12605,7 +12584,7 @@ exports['default'] = inst;
 module.exports = exports['default'];
 
 
-},{"./handlebars/base":58,"./handlebars/exception":61,"./handlebars/no-conflict":71,"./handlebars/runtime":72,"./handlebars/safe-string":73,"./handlebars/utils":74}],58:[function(require,module,exports){
+},{"./handlebars/base":57,"./handlebars/exception":60,"./handlebars/no-conflict":70,"./handlebars/runtime":71,"./handlebars/safe-string":72,"./handlebars/utils":73}],57:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12711,7 +12690,7 @@ exports.createFrame = _utils.createFrame;
 exports.logger = _logger2['default'];
 
 
-},{"./decorators":59,"./exception":61,"./helpers":62,"./logger":70,"./utils":74}],59:[function(require,module,exports){
+},{"./decorators":58,"./exception":60,"./helpers":61,"./logger":69,"./utils":73}],58:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12729,7 +12708,7 @@ function registerDefaultDecorators(instance) {
 }
 
 
-},{"./decorators/inline":60}],60:[function(require,module,exports){
+},{"./decorators/inline":59}],59:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12760,7 +12739,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":74}],61:[function(require,module,exports){
+},{"../utils":73}],60:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12816,7 +12795,7 @@ exports['default'] = Exception;
 module.exports = exports['default'];
 
 
-},{}],62:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12864,7 +12843,7 @@ function registerDefaultHelpers(instance) {
 }
 
 
-},{"./helpers/block-helper-missing":63,"./helpers/each":64,"./helpers/helper-missing":65,"./helpers/if":66,"./helpers/log":67,"./helpers/lookup":68,"./helpers/with":69}],63:[function(require,module,exports){
+},{"./helpers/block-helper-missing":62,"./helpers/each":63,"./helpers/helper-missing":64,"./helpers/if":65,"./helpers/log":66,"./helpers/lookup":67,"./helpers/with":68}],62:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -12905,7 +12884,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":74}],64:[function(require,module,exports){
+},{"../utils":73}],63:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -13001,7 +12980,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../exception":61,"../utils":74}],65:[function(require,module,exports){
+},{"../exception":60,"../utils":73}],64:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -13028,7 +13007,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../exception":61}],66:[function(require,module,exports){
+},{"../exception":60}],65:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -13059,7 +13038,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":74}],67:[function(require,module,exports){
+},{"../utils":73}],66:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -13087,7 +13066,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{}],68:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -13101,7 +13080,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{}],69:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -13136,7 +13115,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":74}],70:[function(require,module,exports){
+},{"../utils":73}],69:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -13185,7 +13164,7 @@ exports['default'] = logger;
 module.exports = exports['default'];
 
 
-},{"./utils":74}],71:[function(require,module,exports){
+},{"./utils":73}],70:[function(require,module,exports){
 (function (global){
 /* global window */
 'use strict';
@@ -13209,7 +13188,7 @@ module.exports = exports['default'];
 
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],72:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -13518,7 +13497,7 @@ function executeDecorators(fn, prog, container, depths, data, blockParams) {
 }
 
 
-},{"./base":58,"./exception":61,"./utils":74}],73:[function(require,module,exports){
+},{"./base":57,"./exception":60,"./utils":73}],72:[function(require,module,exports){
 // Build out our basic SafeString type
 'use strict';
 
@@ -13535,7 +13514,7 @@ exports['default'] = SafeString;
 module.exports = exports['default'];
 
 
-},{}],74:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -13661,12 +13640,12 @@ function appendContextPath(contextPath, id) {
 }
 
 
-},{}],75:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 // Create a simple path alias to allow browserify to resolve
 // the runtime on a supported path.
 module.exports = require('./dist/cjs/handlebars.runtime')['default'];
 
-},{"./dist/cjs/handlebars.runtime":57}],76:[function(require,module,exports){
+},{"./dist/cjs/handlebars.runtime":56}],75:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v3.3.1
  * https://jquery.com/
@@ -24032,7 +24011,7 @@ if ( !noGlobal ) {
 return jQuery;
 } );
 
-},{}],77:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 /*!
  * JavaScript Cookie v2.2.0
  * https://github.com/js-cookie/js-cookie
@@ -24199,7 +24178,7 @@ return jQuery;
 	return init(function () {});
 }));
 
-},{}],78:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 //! moment.js
 //! version : 2.20.1
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
@@ -28736,7 +28715,7 @@ return hooks;
 
 })));
 
-},{}],79:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 (function (global){
 /**!
  * @fileOverview Kickass library to create and place poppers near their reference elements.
@@ -31185,7 +31164,7 @@ return Popper;
 
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],80:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 //     Underscore.js 1.8.3
 //     http://underscorejs.org
 //     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors

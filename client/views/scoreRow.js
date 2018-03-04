@@ -1,7 +1,7 @@
 'use strict';
 
 var Marionette = require('backbone.marionette');
-var Template = require('../templates/resultRow.handlebars');
+var Template = require('../templates/scoreRow.handlebars');
 
 module.exports = Marionette.View.extend({
 

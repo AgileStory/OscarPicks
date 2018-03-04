@@ -2,9 +2,9 @@
 
 /*jslint nomen: true */
 
-var ListView = require('../views/results');
+var ListView = require('../views/scores');
 var Marionette = require('backbone.marionette');
-var Results = require('../../collections/results');
+var Scores = require('../../collections/scores');
 
 module.exports = Marionette.Object.extend({
 
@@ -14,19 +14,19 @@ module.exports = Marionette.Object.extend({
 
     list: function () {
 
-        var self, results, view;
+        var self, scores, view;
 
         self = this;
 
-        results = new Results();
+        scores = new Scores();
 
-        results.fetch({
+        scores.fetch({
             success: function (collection) {
 
                 view = new ListView({ collection: collection });
 
                 self._showMainView(view);
-                self._updateUrl('/results');
+                self._updateUrl('/scores');
             }
         });
     },
@@ -36,6 +36,6 @@ module.exports = Marionette.Object.extend({
     },
 
     _updateUrl: function (url) {
-        this.application.ResultRouter.navigate(url);
+        this.application.ScoreRouter.navigate(url);
     }
 });

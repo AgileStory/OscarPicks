@@ -12,8 +12,8 @@ var HomeRouter = require('./routers/home');
 var Marionette = require('backbone.marionette');
 var PickController = require('./controllers/pick');
 var PickRouter = require('./routers/pick');
-var ResultController = require('./controllers/result');
-var ResultRouter = require('./routers/result');
+var ScoreController = require('./controllers/score');
+var ScoreRouter = require('./routers/score');
 var UserController = require('./controllers/user');
 var UserRouter = require('./routers/user');
 var UserModel = require('../models/user');
@@ -34,8 +34,8 @@ module.exports = Marionette.Application.extend({
         this.PickController = new PickController({ application: this });
         this.PickRouter = new PickRouter({ controller: this.PickController });
 
-        this.ResultController = new ResultController({ application: this });
-        this.ResultRouter = new ResultRouter({ controller: this.ResultController });
+        this.ScoreController = new ScoreController({ application: this });
+        this.ScoreRouter = new ScoreRouter({ controller: this.ScoreController });
 
         this.UserController = new UserController({ application: this });
         this.UserRouter = new UserRouter({ controller: this.UserController });
@@ -65,7 +65,7 @@ module.exports = Marionette.Application.extend({
                         self.listenTo(self.layout, "show:categories", function () { self.showCategoriesMainView(); });
                         self.listenTo(self.layout, "show:home", function () { self.showHomeMainView(); });
                         self.listenTo(self.layout, "show:picks", function () { self.showPicksMainView(); });
-                        self.listenTo(self.layout, "show:results", function () { self.showResultsMainView(); });
+                        self.listenTo(self.layout, "show:scores", function () { self.showScoresMainView(); });
                         self.listenTo(self.layout, "show:users", function () { self.showUserMainView(); });
                         self.listenTo(self.layout, "render", function () {
 
@@ -100,8 +100,8 @@ module.exports = Marionette.Application.extend({
         this.PickController.list();
     },
 
-    showResultsMainView: function () {
-        this.ResultController.list();
+    showScoresMainView: function () {
+        this.ScoreController.list();
     },
 
     showUserMainView: function () {
