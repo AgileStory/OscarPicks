@@ -445,6 +445,7 @@ module.exports = Marionette.Object.extend({
 
 /*jslint nomen: true */
 
+var Backbone = require('backbone');
 var ListView = require('../views/scores');
 var Marionette = require('backbone.marionette');
 var Scores = require('../../collections/scores');
@@ -470,8 +471,24 @@ module.exports = Marionette.Object.extend({
 
                 self._showMainView(view);
                 self._updateUrl('/scores');
+
+                self._queueRefresh();
             }
         });
+    },
+
+    _queueRefresh: function () {
+
+        var self = this;
+
+        setTimeout(function () { self._refresh(); }, 2000);
+    },
+
+    _refresh: function () {
+
+        if (Backbone.history.getFragment() === 'scores') {
+            this.list();
+        }
     },
 
     _showMainView: function (view) {
@@ -483,7 +500,7 @@ module.exports = Marionette.Object.extend({
     }
 });
 
-},{"../../collections/scores":44,"../views/scores":38,"backbone.marionette":52}],6:[function(require,module,exports){
+},{"../../collections/scores":44,"../views/scores":38,"backbone":54,"backbone.marionette":52}],6:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
