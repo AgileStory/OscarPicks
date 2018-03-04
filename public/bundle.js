@@ -780,7 +780,7 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
 },"useData":true});
 },{"handlebars/runtime":74}],22:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
-    return "\n<div id=\"pick-list\"></div>\n";
+    return "\n<div id=\"pick-list\" class=\"mb-3\"></div>\n";
 },"useData":true});
 },{"handlebars/runtime":74}],23:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
