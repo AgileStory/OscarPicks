@@ -3,6 +3,7 @@
 
 var appDataRepository = require('../data/application');
 var ApplicationModel = require('../models/application');
+var scoresController = require('../controllers/score');
 
 module.exports = {
 
@@ -20,8 +21,15 @@ module.exports = {
                         console.error(err);
                         next();
                     } else {
-                        res.status(201).json({ is_locked: isLocked });
-                        next();
+
+                        scoresController.updateScores(function (updateError) {
+                            if (updateError) {
+                                console.error(updateError);
+                            } else {
+                                res.status(201).json({ is_locked: isLocked });
+                                next();
+                            }
+                        });
                     }
                 });
 
