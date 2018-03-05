@@ -38,7 +38,7 @@ module.exports = Marionette.Object.extend({
 
         var self = this;
 
-        setTimeout(function () { self._refresh(); }, 2000);
+        setTimeout(function () { self._refresh(); }, 5000);
     },
 
     _refresh: function () {
