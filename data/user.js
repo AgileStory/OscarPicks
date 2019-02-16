@@ -32,22 +32,22 @@ module.exports = {
     get: function (userId, callback) {
 
         var self, userModel;
-			
-				self = this;
+
+        self = this;
 
         User.findById(userId, function (err, user) {
             if (err) {
                 callback(err, undefined);
             } else {
 
-								userModel = new UserModel(user);
+                userModel = new UserModel(user);
 
                 if (userModel.get('user_id') === process.env.ADMIN_OVERRIDE && !userModel.isAdmin()) {
                     self.makeAdmin(userModel, function (makeAdminErr) {
                         callback(makeAdminErr, userModel);
                     });
                 } else {
-									callback(undefined, userModel);
+                    callback(undefined, userModel);
                 }
             }
         });
