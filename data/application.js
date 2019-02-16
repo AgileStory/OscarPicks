@@ -9,7 +9,7 @@ mongoose.connect(mongoUrl);
 
 var ApplicationSchema = new mongoose.Schema({
     is_locked_for_scoring: { type: Boolean, default: false },
-});
+}, { versionKey: false });
 
 var Application = mongoose.model('Application', ApplicationSchema);
 

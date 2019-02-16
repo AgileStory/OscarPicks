@@ -12,13 +12,13 @@ var EntrySchema = new mongoose.Schema({
     description: String,
     is_winner: Boolean,
     sort_order: Number,
-});
+}, { versionKey: false });
 
 var CategorySchema = new mongoose.Schema({
     entries: [EntrySchema],
     name: String,
     sort_order: Number,
-});
+}, { versionKey: false });
 
 var CategoriesCollection = require('../collections/categories');
 var Category = mongoose.model('Category', CategorySchema);

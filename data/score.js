@@ -10,7 +10,7 @@ mongoose.connect(mongoUrl);
 var ScoreSchema = new mongoose.Schema({
     score: Number,
     user_name: String,
-});
+}, { versionKey: false });
 
 var Score = mongoose.model('Score', ScoreSchema);
 var ScoreModel = require('../models/score');

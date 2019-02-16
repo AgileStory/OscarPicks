@@ -11,7 +11,7 @@ var PickSchema = new mongoose.Schema({
     name: String,
     first_pick_id: String,
     second_pick_id: String,
-});
+}, { versionKey: false });
 
 var UserSchema = new mongoose.Schema({
     display_name: String,
@@ -20,7 +20,7 @@ var UserSchema = new mongoose.Schema({
     picks: [PickSchema],
     score: Number,
     user_id: String,
-});
+}, { versionKey: false });
 
 var Pick = mongoose.model('Pick', PickSchema);
 var User = mongoose.model('User', UserSchema);
