@@ -310,11 +310,40 @@ module.exports = Marionette.Object.extend({
         //self.listenTo(view, "all", function (eventName) { console.log(eventName); });
         self.listenTo(view, "skip:home", function () { self._skipHome(); });
         self.listenTo(view, "update:displayname", function (child, e) { self._updateDisplayName(child, e); });
+        self.listenTo(view, "export-categories", function (child, e) { self._exportCategories(child, e); });
         self.listenTo(view, "lock", function (child, e) { self._lock(child, e); });
         self.listenTo(view, "unlock", function (child, e) { self._unlock(child, e); });
 
         self._showMainView(view);
         self._updateUrl('/home');
+    },
+
+    _exportCategories: function (childView) {
+
+        var json, self;
+
+        self = this;
+
+        json = this.application.categories.toJSON();
+
+        console.log(Object.keys(childView));
+        //console.log(json);
+        self._exportJSONFile(json, "categories");
+
+        self.home();
+    },
+
+    _exportJSONFile: function (exportObject, exportName) {
+
+        var dataStr, downloadAnchorNode;
+
+        dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObject));
+        downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href",     dataStr);
+        downloadAnchorNode.setAttribute("download", exportName + ".json");
+        document.body.appendChild(downloadAnchorNode); // required for firefox
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
     },
 
     _lock: function () {
@@ -734,7 +763,7 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.display_name : depth0),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.program(3, data, 0),"data":data})) != null ? stack1 : "")
     + "            </div>\n            <div class=\"col-auto\">\n                <button type=\"submit\" class=\"update-display-name btn btn-primary mb-2\">Update</button>\n            </div>\n        </div>\n    </form>\n    <hr/>\n    <p class=\"card-text\">For each category, you can make a primary pick (worth <span class=\"badge badge-primary\">3</span> points) and a secondary pick (worth <span class=\"badge badge-primary\">1</span> point).</p>\n    <p class=\"card-text\">If you are feeling extra confident, you can put both picks on one entry and get <span class=\"badge badge-primary\">4</span> points if it wins, but you risk not having a backup pick for that category if you're wrong.</p>\n    </p>\n    <hr/>\n    <button id=\"skip-home\" type=\"button\" class=\"btn btn-primary mb-2\">Skip this screen on future logins</button>\n"
     + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.is_admin : depth0),{"name":"if","hash":{},"fn":container.program(5, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
-    + "</div>\n";
+    + "    <hr/>\n    <button id=\"export-categories\" type=\"button\" class=\"btn btn-primary mb-2\">Export Categories</button>\n</div>\n";
 },"useData":true});
 },{"handlebars/runtime":74}],20:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"1":function(container,depth0,helpers,partials,data) {
@@ -1091,6 +1120,7 @@ module.exports = Marionette.View.extend({
     triggers: {
         "submit #update-displayname": "update:displayname",
         "click #skip-home": "skip:home",
+        "click #export-categories": "export-categories",
         "click #lock": "lock",
         "click #unlock": "unlock"
     },

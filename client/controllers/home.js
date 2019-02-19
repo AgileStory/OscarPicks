@@ -32,11 +32,40 @@ module.exports = Marionette.Object.extend({
         //self.listenTo(view, "all", function (eventName) { console.log(eventName); });
         self.listenTo(view, "skip:home", function () { self._skipHome(); });
         self.listenTo(view, "update:displayname", function (child, e) { self._updateDisplayName(child, e); });
+        self.listenTo(view, "export-categories", function (child, e) { self._exportCategories(child, e); });
         self.listenTo(view, "lock", function (child, e) { self._lock(child, e); });
         self.listenTo(view, "unlock", function (child, e) { self._unlock(child, e); });
 
         self._showMainView(view);
         self._updateUrl('/home');
+    },
+
+    _exportCategories: function (childView) {
+
+        var json, self;
+
+        self = this;
+
+        json = this.application.categories.toJSON();
+
+        console.log(Object.keys(childView));
+        //console.log(json);
+        self._exportJSONFile(json, "categories");
+
+        self.home();
+    },
+
+    _exportJSONFile: function (exportObject, exportName) {
+
+        var dataStr, downloadAnchorNode;
+
+        dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObject));
+        downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href",     dataStr);
+        downloadAnchorNode.setAttribute("download", exportName + ".json");
+        document.body.appendChild(downloadAnchorNode); // required for firefox
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
     },
 
     _lock: function () {
