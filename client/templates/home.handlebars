@@ -30,6 +30,20 @@
             <button id="lock" type="button" class="btn btn-primary mb-2">Lock</button>
         {{/if}}
     {{/if}}
+    {{#if this.is_admin}}
+    <hr/>
+    <form id="import-categories" enctype="multipart/form-data" method="POST">
+        <div class="form-row align-items-end">
+            <div class="col-auto">
+                <label for="display-name">Categories JSON</label>
+                <input type="file" class="form-control mb-2" id="categories-json" name="categories-json">
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="import-categories btn btn-primary mb-2">Import</button>
+            </div>
+        </div>
+    </form>
     <hr/>
     <button id="export-categories" type="button" class="btn btn-primary mb-2">Export Categories</button>
+    {{/if}}
 </div>

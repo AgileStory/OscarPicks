@@ -14,7 +14,8 @@ module.exports = Marionette.View.extend({
     triggers: {
         "submit #update-displayname": "update:displayname",
         "click #skip-home": "skip:home",
-        "click #export-categories": "export-categories",
+        "submit #import-categories": "import:categories",
+        "click #export-categories": "export:categories",
         "click #lock": "lock",
         "click #unlock": "unlock"
     },

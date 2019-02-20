@@ -3,6 +3,7 @@
 /*jslint nomen: true */
 
 var ApplicationModel = require('../../models/application');
+var CategoriesCollection = require('../../collections/categories');
 var Cookies = require('js-cookie');
 var HomeView = require('../views/home');
 var Marionette = require('backbone.marionette');
@@ -32,7 +33,8 @@ module.exports = Marionette.Object.extend({
         //self.listenTo(view, "all", function (eventName) { console.log(eventName); });
         self.listenTo(view, "skip:home", function () { self._skipHome(); });
         self.listenTo(view, "update:displayname", function (child, e) { self._updateDisplayName(child, e); });
-        self.listenTo(view, "export-categories", function (child, e) { self._exportCategories(child, e); });
+        self.listenTo(view, "import:categories", function (child, e) { self._importCategories(child, e); });
+        self.listenTo(view, "export:categories", function (child, e) { self._exportCategories(child, e); });
         self.listenTo(view, "lock", function (child, e) { self._lock(child, e); });
         self.listenTo(view, "unlock", function (child, e) { self._unlock(child, e); });
 
@@ -66,6 +68,48 @@ module.exports = Marionette.Object.extend({
         document.body.appendChild(downloadAnchorNode); // required for firefox
         downloadAnchorNode.click();
         downloadAnchorNode.remove();
+    },
+
+    _importCategories: function (childView, e) {
+
+        var collection, fileInput, form, formData, self;
+      
+        self = this;
+
+        collection = new CategoriesCollection();
+
+        form = childView.$('#import-categories').get(0);
+        
+        fileInput = childView.$('#import-categories input').get(0);
+        
+        formData = new FormData(form);
+      
+        $.ajax({
+          url: 'categories/import',
+          data: formData,
+          processData: false,
+          contentType: false,
+          type: 'POST',
+          success: function(data){
+            self.home();
+          }
+        });
+        //formData.append('file', fileInput.files[0]);
+/*
+        var request = new XMLHttpRequest();
+        request.open("POST", collection.url + "/import", true);
+        request.send(formData);
+/*dd
+        collection.sync('POST', collection, {
+          url: collection.url + '/import',
+          enctype: 'multipart/form-data',
+          processData: false, // tell jQuery not to process the data
+          type: 'POST',
+          data: formData,
+          success: function () {
+              self.home();
+          }
+        });*/
     },
 
     _lock: function () {

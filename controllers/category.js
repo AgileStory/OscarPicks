@@ -9,6 +9,7 @@ module.exports = {
 
     createCategory: function (req, res, next) {
 
+            console.log('createCategory');
         if (req.userModel.isAdmin() && !req.appIsLocked) {
 
             var category = new Category(req.body);
@@ -31,6 +32,7 @@ module.exports = {
 
     deleteCategory: function (req, res, next) {
 
+          console.log('deleteCategory');
         if (req.userModel.isAdmin() && !req.appIsLocked) {
             repository.delete(req.params.id, function (err) {
 
@@ -53,8 +55,37 @@ module.exports = {
         }
     },
 
+    importCategories: function (req, res, next) {
+
+        var file, json;
+        console.log('importCategories');
+
+        if (req.userModel.isAdmin() && !req.appIsLocked) {
+
+          file = req.file;
+
+          json = JSON.parse(file.buffer.toString());
+
+          console.log(json);
+          
+          //console.log(req.body);
+          //console.log(req.files);
+          var response = {
+              message: "Categories imported"
+          };
+
+          res.status(200).send(response);
+          next();
+
+        } else {
+          res.status(403).send('Only admins can manage categories in unlocked apps');
+          next();
+        }
+    },
+
     list: function (req, res, next) {
 
+            console.log('listCategories');
         req = req || {};
 
         repository.list(function (err, categories) {
@@ -71,6 +102,7 @@ module.exports = {
     },
 
     updateCategory: function (req, res, next) {
+            console.log('updateCategory');
 
         var category = new Category(req.body);
 

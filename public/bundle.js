@@ -281,6 +281,7 @@ module.exports = Marionette.Object.extend({
 /*jslint nomen: true */
 
 var ApplicationModel = require('../../models/application');
+var CategoriesCollection = require('../../collections/categories');
 var Cookies = require('js-cookie');
 var HomeView = require('../views/home');
 var Marionette = require('backbone.marionette');
@@ -310,7 +311,8 @@ module.exports = Marionette.Object.extend({
         //self.listenTo(view, "all", function (eventName) { console.log(eventName); });
         self.listenTo(view, "skip:home", function () { self._skipHome(); });
         self.listenTo(view, "update:displayname", function (child, e) { self._updateDisplayName(child, e); });
-        self.listenTo(view, "export-categories", function (child, e) { self._exportCategories(child, e); });
+        self.listenTo(view, "import:categories", function (child, e) { self._importCategories(child, e); });
+        self.listenTo(view, "export:categories", function (child, e) { self._exportCategories(child, e); });
         self.listenTo(view, "lock", function (child, e) { self._lock(child, e); });
         self.listenTo(view, "unlock", function (child, e) { self._unlock(child, e); });
 
@@ -344,6 +346,48 @@ module.exports = Marionette.Object.extend({
         document.body.appendChild(downloadAnchorNode); // required for firefox
         downloadAnchorNode.click();
         downloadAnchorNode.remove();
+    },
+
+    _importCategories: function (childView, e) {
+
+        var collection, fileInput, form, formData, self;
+      
+        self = this;
+
+        collection = new CategoriesCollection();
+
+        form = childView.$('#import-categories').get(0);
+        
+        fileInput = childView.$('#import-categories input').get(0);
+        
+        formData = new FormData(form);
+      
+        $.ajax({
+          url: 'categories/import',
+          data: formData,
+          processData: false,
+          contentType: false,
+          type: 'POST',
+          success: function(data){
+            self.home();
+          }
+        });
+        //formData.append('file', fileInput.files[0]);
+/*
+        var request = new XMLHttpRequest();
+        request.open("POST", collection.url + "/import", true);
+        request.send(formData);
+/*dd
+        collection.sync('POST', collection, {
+          url: collection.url + '/import',
+          enctype: 'multipart/form-data',
+          processData: false, // tell jQuery not to process the data
+          type: 'POST',
+          data: formData,
+          success: function () {
+              self.home();
+          }
+        });*/
     },
 
     _lock: function () {
@@ -393,7 +437,7 @@ module.exports = Marionette.Object.extend({
     }
 });
 
-},{"../../models/application":46,"../views/home":33,"backbone.marionette":52,"js-cookie":76}],4:[function(require,module,exports){
+},{"../../collections/categories":41,"../../models/application":46,"../views/home":33,"backbone.marionette":52,"js-cookie":76}],4:[function(require,module,exports){
 'use strict';
 
 /*jslint nomen: true */
@@ -756,6 +800,8 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     return "            <hr/>\n            <button id=\"unlock\" type=\"button\" class=\"btn btn-primary mb-2\">Unlock</button>\n";
 },"8":function(container,depth0,helpers,partials,data) {
     return "            <hr/>\n            <button id=\"lock\" type=\"button\" class=\"btn btn-primary mb-2\">Lock</button>\n";
+},"10":function(container,depth0,helpers,partials,data) {
+    return "    <hr/>\n    <form id=\"import-categories\" enctype=\"multipart/form-data\" method=\"POST\">\n        <div class=\"form-row align-items-end\">\n            <div class=\"col-auto\">\n                <label for=\"display-name\">Categories JSON</label>\n                <input type=\"file\" class=\"form-control mb-2\" id=\"categories-json\" name=\"categories-json\">\n            </div>\n            <div class=\"col-auto\">\n                <button type=\"submit\" class=\"import-categories btn btn-primary mb-2\">Import</button>\n            </div>\n        </div>\n    </form>\n    <hr/>\n    <button id=\"export-categories\" type=\"button\" class=\"btn btn-primary mb-2\">Export Categories</button>\n";
 },"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {});
 
@@ -763,7 +809,8 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
     + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.display_name : depth0),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.program(3, data, 0),"data":data})) != null ? stack1 : "")
     + "            </div>\n            <div class=\"col-auto\">\n                <button type=\"submit\" class=\"update-display-name btn btn-primary mb-2\">Update</button>\n            </div>\n        </div>\n    </form>\n    <hr/>\n    <p class=\"card-text\">For each category, you can make a primary pick (worth <span class=\"badge badge-primary\">3</span> points) and a secondary pick (worth <span class=\"badge badge-primary\">1</span> point).</p>\n    <p class=\"card-text\">If you are feeling extra confident, you can put both picks on one entry and get <span class=\"badge badge-primary\">4</span> points if it wins, but you risk not having a backup pick for that category if you're wrong.</p>\n    </p>\n    <hr/>\n    <button id=\"skip-home\" type=\"button\" class=\"btn btn-primary mb-2\">Skip this screen on future logins</button>\n"
     + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.is_admin : depth0),{"name":"if","hash":{},"fn":container.program(5, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
-    + "    <hr/>\n    <button id=\"export-categories\" type=\"button\" class=\"btn btn-primary mb-2\">Export Categories</button>\n</div>\n";
+    + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.is_admin : depth0),{"name":"if","hash":{},"fn":container.program(10, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + "</div>\n";
 },"useData":true});
 },{"handlebars/runtime":74}],20:[function(require,module,exports){
 var templater = require("handlebars/runtime")["default"].template;module.exports = templater({"1":function(container,depth0,helpers,partials,data) {
@@ -1120,7 +1167,8 @@ module.exports = Marionette.View.extend({
     triggers: {
         "submit #update-displayname": "update:displayname",
         "click #skip-home": "skip:home",
-        "click #export-categories": "export-categories",
+        "submit #import-categories": "import:categories",
+        "click #export-categories": "export:categories",
         "click #lock": "lock",
         "click #unlock": "unlock"
     },
