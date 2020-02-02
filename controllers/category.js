@@ -1,6 +1,7 @@
 'use strict';
 /*jslint node: true, nomen: true */
 
+var CategoriesCollection = require('../collections/categories');
 var Category = require('../models/category');
 var repository = require('../data/category');
 var scoresController = require('../controllers/score');
@@ -57,7 +58,7 @@ module.exports = {
 
     importCategories: function (req, res, next) {
 
-        var file, json;
+        var categories, file, json;
         console.log('importCategories');
 
         if (req.userModel.isAdmin() && !req.appIsLocked) {
@@ -66,10 +67,11 @@ module.exports = {
 
           json = JSON.parse(file.buffer.toString());
 
-          console.log(json);
+          //console.log(json);
+          categories = new CategoriesCollection(json);
           
-          //console.log(req.body);
-          //console.log(req.files);
+          console.log(categories.length);
+          
           var response = {
               message: "Categories imported"
           };

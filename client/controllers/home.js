@@ -48,10 +48,8 @@ module.exports = Marionette.Object.extend({
 
         self = this;
 
-        json = this.application.categories.toJSON();
+        json = self.application.categories.toJSON();
 
-        console.log(Object.keys(childView));
-        //console.log(json);
         self._exportJSONFile(json, "categories");
 
         self.home();

@@ -44,7 +44,7 @@ module.exports = Marionette.Application.extend({
         this.HomeRouter = new HomeRouter({ controller: this.HomeController });
     },
 
-    onBeforeStart: function () {
+    onStart: function () {
 
         var self = this;
 

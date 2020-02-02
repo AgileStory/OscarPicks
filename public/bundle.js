@@ -45,7 +45,7 @@ module.exports = Marionette.Application.extend({
         this.HomeRouter = new HomeRouter({ controller: this.HomeController });
     },
 
-    onBeforeStart: function () {
+    onStart: function () {
 
         var self = this;
 
@@ -326,10 +326,8 @@ module.exports = Marionette.Object.extend({
 
         self = this;
 
-        json = this.application.categories.toJSON();
+        json = self.application.categories.toJSON();
 
-        console.log(Object.keys(childView));
-        //console.log(json);
         self._exportJSONFile(json, "categories");
 
         self.home();
