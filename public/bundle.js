@@ -278,7 +278,8 @@ module.exports = Marionette.Object.extend({
 },{"../../collections/categories":41,"../../models/category":47,"../../models/entry":48,"../views/categories":28,"../views/editCategory":30,"backbone.marionette":52,"underscore":81}],3:[function(require,module,exports){
 'use strict';
 
-/*jslint nomen: true */
+/*jslint nomen: true, browser: true  */
+/*global $*/
 
 var ApplicationModel = require('../../models/application');
 var CategoriesCollection = require('../../collections/categories');
@@ -320,7 +321,7 @@ module.exports = Marionette.Object.extend({
         self._updateUrl('/home');
     },
 
-    _exportCategories: function (childView) {
+    _exportCategories: function () {
 
         var json, self;
 
@@ -346,36 +347,35 @@ module.exports = Marionette.Object.extend({
         downloadAnchorNode.remove();
     },
 
-    _importCategories: function (childView, e) {
+    _importCategories: function (childView) {
 
-        var collection, fileInput, form, formData, self;
-      
+        // var collection, fileInput, form, formData, self;
+        var form, formData, self;
         self = this;
 
-        collection = new CategoriesCollection();
+        // collection = new CategoriesCollection();
 
         form = childView.$('#import-categories').get(0);
-        
-        fileInput = childView.$('#import-categories input').get(0);
-        
+
+        // fileInput = childView.$('#import-categories input').get(0);
+
         formData = new FormData(form);
-      
+
         $.ajax({
-          url: 'categories/import',
-          data: formData,
-          processData: false,
-          contentType: false,
-          type: 'POST',
-          success: function(data){
-            self.home();
-          }
+            url: 'categories/import',
+            data: formData,
+            processData: false,
+            contentType: false,
+            type: 'POST',
+            success: function () {
+                self.home();
+            }
         });
         //formData.append('file', fileInput.files[0]);
 /*
         var request = new XMLHttpRequest();
         request.open("POST", collection.url + "/import", true);
         request.send(formData);
-/*dd
         collection.sync('POST', collection, {
           url: collection.url + '/import',
           enctype: 'multipart/form-data',
@@ -536,7 +536,11 @@ module.exports = Marionette.Object.extend({
         scores = new Scores();
 
         scores.fetch({
-            success: function (collection) {
+            success: function (collection, response, xhr) {
+
+                console.log(collection);
+                console.log(response);
+                console.log(xhr);
 
                 view = new ListView({ collection: collection });
 
@@ -858,7 +862,7 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
 
   return "<div class=\"card my-3\"><div class=\"card-body\">\n\n    <form id=\"update-displayname\">\n        <div class=\"form-row align-items-end\">\n            <div class=\"col-auto\">\n                <label for=\"display-name\">Name to show</label>\n"
     + ((stack1 = lookupProperty(helpers,"if").call(alias1,(depth0 != null ? lookupProperty(depth0,"display_name") : depth0),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.program(3, data, 0),"data":data,"loc":{"start":{"line":7,"column":16},"end":{"line":11,"column":23}}})) != null ? stack1 : "")
-    + "            </div>\n            <div class=\"col-auto\">\n                <button type=\"submit\" class=\"update-display-name btn btn-primary mb-2\">Update</button>\n            </div>\n        </div>\n    </form>\n    <hr/>\n    <p class=\"card-text\">For each category, you can make a primary pick (worth <span class=\"badge badge-primary\">3</span> points) and a secondary pick (worth <span class=\"badge badge-primary\">1</span> point).</p>\n    <p class=\"card-text\">If you are feeling extra confident, you can put both picks on one entry and get <span class=\"badge badge-primary\">4</span> points if it wins, but you risk not having a backup pick for that category if you're wrong.</p>\n    <p class=\"card-text\">The entries are in the order and format copied from <a href=\"Oscars2020.pdf\">the printable list from the official Oscars site</a>.</p>\n    <hr/>\n    <button id=\"skip-home\" type=\"button\" class=\"btn btn-primary mb-2\">Skip this screen on future logins</button>\n"
+    + "            </div>\n            <div class=\"col-auto\">\n                <button type=\"submit\" class=\"update-display-name btn btn-primary mb-2\">Update</button>\n            </div>\n        </div>\n    </form>\n    <hr/>\n    <p class=\"card-text\">For each category, you can make a primary pick (worth <span class=\"badge badge-primary\">3</span> points) and a secondary pick (worth <span class=\"badge badge-primary\">1</span> point).</p>\n    <p class=\"card-text\">If you are feeling extra confident, you can put both picks on one entry and get <span class=\"badge badge-primary\">4</span> points if it wins, but you risk not having a backup pick for that category if you're wrong.</p>\n    <p class=\"card-text\">The entries are in the order and format copied from <a href=\"https://www.oscars.org/oscars/ceremonies/2023\">the printable list from the official Oscars site</a>.</p>\n    <hr/>\n    <button id=\"skip-home\" type=\"button\" class=\"btn btn-primary mb-2\">Skip this screen on future logins</button>\n"
     + ((stack1 = lookupProperty(helpers,"if").call(alias1,(depth0 != null ? lookupProperty(depth0,"is_admin") : depth0),{"name":"if","hash":{},"fn":container.program(5, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":24,"column":4},"end":{"line":32,"column":11}}})) != null ? stack1 : "")
     + ((stack1 = lookupProperty(helpers,"if").call(alias1,(depth0 != null ? lookupProperty(depth0,"is_admin") : depth0),{"name":"if","hash":{},"fn":container.program(10, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":33,"column":4},"end":{"line":48,"column":11}}})) != null ? stack1 : "")
     + "</div>\n";
@@ -949,7 +953,9 @@ var templater = require("handlebars/runtime")["default"].template;module.exports
         return undefined
     };
 
-  return "<td>"
+  return "<td><img class=\"img-fluid img-thumbnail\" src=\""
+    + alias2(alias1((depth0 != null ? lookupProperty(depth0,"user_image_url") : depth0), depth0))
+    + "\" style=\"height: 3em; width: 3em;\"/>&nbsp;&nbsp;"
     + alias2(alias1((depth0 != null ? lookupProperty(depth0,"user_name") : depth0), depth0))
     + "</td>\n<td>"
     + alias2(alias1((depth0 != null ? lookupProperty(depth0,"score") : depth0), depth0))
@@ -1843,6 +1849,10 @@ module.exports = Backbone.Model.extend({
             score.set('user_name', this.get('display_name'));
         } else {
             score.set('user_name', this.get('user_id'));
+        }
+
+        if (this.has('profile_image_url') && this.get('profile_image_url') !== '') {
+            score.set('user_image_url', this.get('profile_image_url'));
         }
 
         score.updateScore(this.getPicks(categoriesCollection), categoriesCollection);

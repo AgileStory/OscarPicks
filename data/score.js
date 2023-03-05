@@ -10,6 +10,7 @@ mongoose.connect(mongoUrl);
 var ScoreSchema = new mongoose.Schema({
     score: Number,
     user_name: String,
+    user_image_url: String,
 }, { versionKey: false });
 
 var Score = mongoose.model('Score', ScoreSchema);

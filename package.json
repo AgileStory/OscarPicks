@@ -30,6 +30,7 @@
     "bcrypt-nodejs": "*",
     "body-parser": "^1.18.2",
     "bootstrap": "^4.3.1",
+    "cookie-session": "^2.0.0",
     "dotenv": "^5.0.0",
     "ejs": "*",
     "express": "^4.16.2",
@@ -39,6 +40,8 @@
     "moment": "^2.20.1",
     "mongoose": "^5.7.5",
     "multer": "^1.4.1",
+    "passport": "^0.5.3",
+    "passport-google-oauth2": "^0.2.0",
     "popper.js": "^1.12.9",
     "serve-favicon": "^2.4.5",
     "underscore": "*"
