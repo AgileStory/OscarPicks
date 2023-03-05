@@ -20,6 +20,8 @@ var UserSchema = new mongoose.Schema({
     picks: [PickSchema],
     score: Number,
     user_id: String,
+    profile_image_url: String, 
+    original_display_name: String,
 }, { versionKey: false });
 
 var Pick = mongoose.model('Pick', PickSchema);
@@ -135,7 +137,27 @@ module.exports = {
             }
         );
     },
+    
+    withUserModelByPassportData: function (passportUser, callback) {
 
+        var self = this;
+
+        User.findOne({ user_id: passportUser.email }, function (err, data) {
+            if (err) {
+                console.error(err);
+                callback(err, undefined);
+            } else {
+                if (data === undefined || data === null) {
+                    self._createPassportUserRecord(passportUser, function (createErr, createdData) {
+                        callback(createErr, new UserModel(createdData));
+                    });
+                } else {
+                    callback(undefined, new UserModel(data));
+                }
+            }
+        });
+    },
+    
     withUserModel: function (userId, callback) {
 
         var self = this;
@@ -152,6 +174,27 @@ module.exports = {
                 } else {
                     callback(undefined, new UserModel(data));
                 }
+            }
+        });
+    },
+
+    _createPassportUserRecord: function (user, callback) {
+
+        var userModel = new UserModel({ 
+            user_id: user.email, 
+            display_name: user.displayName, 
+            original_display_name: user.displayName,
+            profile_image_url: user.picture, 
+            is_admin: false, 
+            score: 0, 
+            last_accessed: Date.now() });
+
+        User.create(userModel.toJSON(), function (err, data) {
+            if (err) {
+                console.error(err);
+                callback(err, undefined);
+            } else {
+                callback(undefined, data);
             }
         });
     },

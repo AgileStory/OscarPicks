@@ -22,7 +22,11 @@ module.exports = Marionette.Object.extend({
         scores = new Scores();
 
         scores.fetch({
-            success: function (collection) {
+            success: function (collection, response, xhr) {
+
+                console.log(collection);
+                console.log(response);
+                console.log(xhr);
 
                 view = new ListView({ collection: collection });
 

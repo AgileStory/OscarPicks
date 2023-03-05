@@ -51,6 +51,10 @@ module.exports = Backbone.Model.extend({
             score.set('user_name', this.get('user_id'));
         }
 
+        if (this.has('profile_image_url') && this.get('profile_image_url') !== '') {
+            score.set('user_image_url', this.get('profile_image_url'));
+        }
+
         score.updateScore(this.getPicks(categoriesCollection), categoriesCollection);
 
         return score;

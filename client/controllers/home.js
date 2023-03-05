@@ -1,6 +1,7 @@
 'use strict';
 
-/*jslint nomen: true */
+/*jslint nomen: true, browser: true  */
+/*global $*/
 
 var ApplicationModel = require('../../models/application');
 var CategoriesCollection = require('../../collections/categories');
@@ -42,7 +43,7 @@ module.exports = Marionette.Object.extend({
         self._updateUrl('/home');
     },
 
-    _exportCategories: function (childView) {
+    _exportCategories: function () {
 
         var json, self;
 
@@ -68,36 +69,35 @@ module.exports = Marionette.Object.extend({
         downloadAnchorNode.remove();
     },
 
-    _importCategories: function (childView, e) {
+    _importCategories: function (childView) {
 
-        var collection, fileInput, form, formData, self;
-      
+        // var collection, fileInput, form, formData, self;
+        var form, formData, self;
         self = this;
 
-        collection = new CategoriesCollection();
+        // collection = new CategoriesCollection();
 
         form = childView.$('#import-categories').get(0);
-        
-        fileInput = childView.$('#import-categories input').get(0);
-        
+
+        // fileInput = childView.$('#import-categories input').get(0);
+
         formData = new FormData(form);
-      
+
         $.ajax({
-          url: 'categories/import',
-          data: formData,
-          processData: false,
-          contentType: false,
-          type: 'POST',
-          success: function(data){
-            self.home();
-          }
+            url: 'categories/import',
+            data: formData,
+            processData: false,
+            contentType: false,
+            type: 'POST',
+            success: function () {
+                self.home();
+            }
         });
         //formData.append('file', fileInput.files[0]);
 /*
         var request = new XMLHttpRequest();
         request.open("POST", collection.url + "/import", true);
         request.send(formData);
-/*dd
         collection.sync('POST', collection, {
           url: collection.url + '/import',
           enctype: 'multipart/form-data',
